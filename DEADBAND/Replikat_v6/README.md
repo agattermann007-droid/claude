@@ -47,8 +47,10 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `pg_fade.py` | Fade-Signale mit Signal-Kerze, Extrem, Stop, Ziel (`gen_fade_info` = `scan6.gen_fade` plus Angaben) und Grid-Merkmale |
 | `pg_study.py`, `pg_scan.py`, `pg_spread.py` | Vorstudie auf Signal-Ebene: Merkmale gegen Ergebnis je Periode (2006–13, 2014–21, 2022–23, 2024–25), Parameter-Raster der Regeln A/S/B, Grid-Ziel (`pg_study.py ziel`), Abhängigkeit vom Spread |
 | `pg_study_old.py` | dasselbe für RSI21-Folgesignale und NAS-Noise (kein stabiler Effekt) |
+| `pg_module.py` | Wirkung der Grid-Regel je Fade-Modul (ausgelassene Signale, PF und R je Jahr vorher/nachher) |
 | `pg_blocks.py`, `pg_old.py`, `pg_rules.py` | Fade-Blöcke für eng6 mit Grid-Regel (Filter, Ziel, Gewicht; Wächter auf gefiltertem oder ganzem Strom), Auslass-Masken für RSI21/Noise, Varianten |
 | `x40.py` | **Konto-Screening 6.20**: `python x40.py gft\|ext "Variante\|..." Störungen Schritt` → `ergebnisse/x40_*.json` |
+| `x41.py` | **Endbewertung 6.20** gegen 6.10 (Ertrag/Sicher, Grid mit und ohne N1800, `GridNurLive`), Wächter wie im EA nur über die letzten 600 Tage; 16 Störungen, Startjahre, Streuung → `ergebnisse/x41_*.json` |
 | `mk_proxy.py` | Ersatz der GFT-Exporte aus den Fremddaten 03.01.2022–31.12.2025 (Spread wie `gext`), wenn `../data/*.csv` fehlen |
 | `t_port_grid.py` | **Abgleich EA ↔ Replikat** für das Grid: wörtliche Übertragung von `GridM5`/`GridKerze`/`GridRang`/`GridFadeOk` gegen `pgrid` für alle Fade-Signale 2006–2025 |
 | `t_mq5.py` | statische Prüfung des EA (Klammern, Format-Argumente, Makros/Globale vor Verwendung, unbekannte Funktionen) |
@@ -66,6 +68,8 @@ python x39.py ext                          # Fremddaten 2006-21
 python pg_scan.py                          # Vorstudie: Parameter-Raster der Grid-Regeln (Signal-Ebene)
 python x40.py gft "6.10 Ertrag|E S M5 L15 s70" 16 1   # Konto, 16 Stoerungen, jeden Handelstag ein Konto
 python x40.py ext "6.10 Ertrag|E S M5 L15 s70" 4      # Fremddaten 2006-21
+python x41.py gft                          # Endbewertung 6.20 gegen 6.10 (GFT-Daten bzw. Ersatz)
+python x41.py ext                          # dasselbe auf den Fremddaten 2006-21
 python t_port_grid.py 5 15 1000 0.70 0     # Abgleich EA <-> Replikat (Grid)
 python t_mq5.py                            # statische Pruefung des EA
 ```

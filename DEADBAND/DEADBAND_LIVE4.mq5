@@ -12,8 +12,10 @@
 //|     Groesse bis zum Stop / Anteil ueber der bisherigen Groesse.  |
 //|     Ab 70 % (GridMaxStopChance) kein Signal - auch nicht         |
 //|     virtuell, der Regime-Waechter sieht den gefilterten Strom.   |
-//|     Wirkt vor allem bei engen Stops (N1800, X0300S, X0400,       |
-//|     N1030); Fades in Laufrichtung bleiben wie 6.10.              |
+//|     Wirkt vor allem bei engen Stops (X0300S, X0400, N1030);      |
+//|     Fades in Laufrichtung bleiben wie 6.10. N1800 ohne Grid      |
+//|     (GridOhne): mit Grid blieben ihm < 30 Signale in 600 Tagen,  |
+//|     der Waechter liesse es nie live handeln.                     |
 //|  3) RSI21 und Noise unveraendert (Grid dort ohne stabilen Effekt)|
 //|  Replikat: Kurse 2022-2025 aus Fremddaten (GFT-Exporte fehlten), |
 //|  Vorstudie aller Fade-Signale 2006-2025, Konto mit allen GFT-    |
