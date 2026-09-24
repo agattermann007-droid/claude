@@ -18,34 +18,36 @@ die langen Verlustserien und vertrug sich nicht mit den Fades (Abschnitt 2.4).
 
 Replikat auf den M5-Kursen des GFT-Terminals (03.01.2022–02.09.2026): alle drei Handelstage ein neues
 10k-Konto, Laufzeit 1, 2 und 3 Jahre, 16 Störungen (8 % der Signale ausgelassen, Einstiegsschlupf),
-strenge Regel-Lesart. Alle drei Varianten zahlen erst ab 3 % Gewinn (300 $) aus:
+strenge Regel-Lesart. Alle drei Varianten zahlen erst ab 3 % Gewinn (300 $) aus. Die Zahlen für 6.00
+enthalten die Schutzfilter aus dem Code-Review (Abschnitt 7: keine Fades an US-Feiertagen und verkürzten
+Tagen, Stop mindestens 6 Spreads):
 
 | Kennzahl | 5.10 (Ausz. ab 3 %) | **6.00 Sicher** | **6.00 Ertrag** (Echtbetrieb-Set) |
 |---|---:|---:|---:|
-| Auszahlungen je Jahr | 5,51 | **6,08** | **7,46** |
-| Auszahlung im Mittel (brutto) | 361 $ | 350 $ | 388 $ |
+| Auszahlungen je Jahr | 5,51 | **5,89** | **7,20** |
+| Auszahlung im Mittel (brutto) | 361 $ | 351 $ | 386 $ |
 | kleinste Auszahlung | 300 $ | 300 $ | 300 $ |
-| Busts je Jahr | 0,17 | **0,00** | **0,02** |
-| Konten mit Bust im 1. Jahr | 13,7 % | **0 %** | **2,1 %** |
-| Netto je Jahr (80 % Anteil, 3 % Gebühr, Neukäufe) | 1517 $ | 1653 $ | **2243 $** |
-| Serien ≥ 5 Verluste je Jahr | 11,8 | **0,65** | 2,26 |
-| Serien ≥ 6 Verluste je Jahr | 6,15 | **0,04** | 0,62 |
-| längste Serie: Mittel je Konto / schlimmste | 9,4 / 13 | **4,8 / 7** | 6,0 / 11 |
-| Trades je Jahr / Trefferquote | 424 / 45 % | 216 / 68 % | 315 / 61 % |
+| Busts je Jahr | 0,17 | **0,00** | **0,00** |
+| Konten mit Bust im 1. Jahr | 13,7 % | **0 %** | **0 %** |
+| Netto je Jahr (80 % Anteil, 3 % Gebühr, Neukäufe) | 1517 $ | 1601 $ | **2158 $** |
+| Serien ≥ 5 Verluste je Jahr | 11,8 | **0,62** | 2,26 |
+| Serien ≥ 6 Verluste je Jahr | 6,15 | **0,06** | 0,49 |
+| längste Serie: Mittel je Konto / schlimmste | 9,4 / 13 | **4,9 / 10** | 6,4 / 10 |
+| Trades je Jahr / Trefferquote | 424 / 45 % | 212 / 68 % | 311 / 61 % |
 
-Gegenüber 5.10 mit derselben 3-%-Schwelle bringt „Ertrag“ **+35 % Auszahlungen, +48 % Netto, 90 % weniger
-Busts und 80 % weniger lange Serien**. „Sicher“ hat im Replikat keinen einzigen Bust und fast nie mehr als
-5 Verluste in Folge, verdient aber weniger.
+Gegenüber 5.10 mit derselben 3-%-Schwelle bringt „Ertrag“ **+31 % Auszahlungen, +42 % Netto, keine Busts
+mehr (0,17 → 0,00) und 81 % weniger Serien ≥ 5**. „Sicher“ hat im Replikat keinen Bust und im Mittel keine
+Serie über 5, verdient aber weniger (+6 % Netto gegenüber 5.10).
 
 **Anforderungen – ehrlich bewertet:**
 
 | Anforderung | Sicher | Ertrag | Bewertung |
 |---|---|---|---|
 | Auszahlung ≥ 3 % | ja (Minimum 300 $) | ja (Minimum 300 $) | erfüllt (`MinProfitPct=3`) |
-| 10 Auszahlungen je Jahr | 6,1 | 7,5 (Startjahr 2022: 9,7) | **nicht erfüllt** |
-| keine Busts | 0,00 | 0,02 | im Replikat erfüllt bzw. fast |
-| keine Serie über 5 | Mittel 4,8, schlimmste 7 | Mittel 6,0, schlimmste 11 | **nur „Sicher“ annähernd** |
-| mehr Ertrag, nicht mehr Busts | +9 % Netto, Busts 0 | +48 % Netto, Busts −90 % | erfüllt |
+| 10 Auszahlungen je Jahr | 5,9 | 7,2 (Startjahr 2022: 9,4) | **nicht erfüllt** |
+| keine Busts | 0,00 | 0,00 | im Replikat 2022–26 erfüllt (2006–21 nicht, Abschnitt 6.3) |
+| keine Serie über 5 | Mittel 4,9, schlimmste 10 | Mittel 6,4, schlimmste 10 | **nur „Sicher“ im Mittel** |
+| mehr Ertrag, nicht mehr Busts | +6 % Netto, Busts 0 | +42 % Netto, Busts 0 | erfüllt |
 | GFT-Regeln mit absoluter Sicherheit | | | so weit ein EA es kann (Abschnitt 5); absolut geht nicht |
 
 Alle Ziele **zugleich** erreicht keine geprüfte Variante robust. Die Rechnung dazu (Abschnitt 2.1):
@@ -125,9 +127,10 @@ Die Frage war: Läuft ein neuer Ansatz **ohne** einen alten besser? Replikat GFT
 | 5.10 + 10 Fades (Budget 0,9 %) | 8,06 | **0,41** | 2248 $ | 8,7 | 579 |
 | 10 Fades allein (bewacht) | 6,46 | 0,00 | 1758 $ | 0,8 | 226 |
 | 10 Fades + RSI21 + Noise, **ohne DEADBAND** | 7,71 | 0,06 | 2394 $ | 2,6 | 325 |
-| dasselbe, RSI21 0,50 %, Noise 0,35 %, Serien-Stopp 3 (= Ertrag) | 7,46 | 0,02 | 2243 $ | 2,3 | 315 |
+| dasselbe, RSI21 0,50 %, Noise 0,35 %, Serien-Stopp 3 | 7,46 | 0,02 | 2243 $ | 2,3 | 315 |
+| dasselbe + Schutzfilter aus dem Review (= **Ertrag**) | 7,20 | 0,00 | 2158 $ | 2,3 | 311 |
 
-Zeilen 2–5: Einzelversuche mit 8 Störungen und 3 % ausgelassenen Signalen. Zeilen 1 und 6: Endbewertung
+Zeilen 2–5: Einzelversuche mit 8 Störungen und 3 % ausgelassenen Signalen. Zeilen 1, 6 und 7: Endbewertung
 mit 16 Störungen und 8 % ausgelassenen Signalen. Die Einzelversuche liegen dadurch etwas höher
 („10 Fades allein“ in der Endbewertung: 6,08 statt 6,46).
 
@@ -151,6 +154,7 @@ Dieselben 10 Fades allein (= „Sicher“) auf beiden Datensätzen:
 | Summe der letzten 40 > 0 R ¹ | 7,52 / 0,00 / 2092 $ | 0,54 / 0,62 / 49 $ |
 | PF der letzten 30 > 1,2 ¹ | 6,46 / 0,00 / 1758 $ | 0,61 / 0,31 / 121 $ |
 | **PF der letzten 30 > 1,2 (6.00)** ² | 6,08 / 0,00 / 1653 $ | 0,55 / **0,31** / 104 $ |
+| dasselbe + Schutzfilter (= Sicher) ² | 5,89 / 0,00 / 1601 $ | 0,56 / 0,33 / 104 $ |
 | PF der letzten 180 Tage > 1,2 ² | 5,63 / 0,00 / 1554 $ | 0,55 / 0,37 / 95 $ |
 
 ¹ Einzelversuch: GFT 8 Störungen, 3 % ausgelassen. ² Endbewertung: GFT 16 Störungen, 8 % ausgelassen.
@@ -172,7 +176,9 @@ eher zurück in die Spanne. Das ist eine Vermutung. Genau deshalb gibt es den W�
 | `FadeRiskPct` (neu) | – | 0,75 % | Risiko je Fade-Trade × Pufferkurve |
 | `FadeWaechterN` / `FadeWaechterPF` / `FadeWaechterMin` (neu) | – | 30 / 1,20 / 30 | Regime-Wächter je Modul |
 | `FadeHistTage` (neu) | – | 600 | Historie für den Wächter beim Start |
-| `FadeZielAbSek` (neu) | – | 130 | Ziel erst nach 130 s setzen (120-s-Regel) |
+| `FadeZielAbSek` (neu) | – | 130 | Ziel erst nach 130 s setzen (120-s-Regel; unter 120 lehnt der EA ab) |
+| `FadeMinStopSpreads` (neu) | – | 6 | Einstieg nur mit Stop ≥ 6 aktuelle Spreads (Reserve der −1-%-Regel bei Kurssprüngen) |
+| US-Feiertage/verkürzte Tage | – | keine Fades | eingebaute Liste 2019–2027 plus `WeSonderTage`: kein Einstieg, wenn Signal- oder Ausstiegstag betroffen ist |
 | `FadeListe` / `FadeAus` (neu) | – | leer / leer | leer = Standard-Liste im Code; `FadeAus` schaltet einzelne Module ab (z. B. `N1800;X0300S`) |
 | `DbAktiv` (neu) | (an) | **false** | DEADBAND-Einstiege aus; offene Positionen werden weiter verwaltet |
 | `MinProfitPct` | 0 | **3,0** | Auszahlung erst ab 300 $ Gewinn |
@@ -222,10 +228,11 @@ GFT-Seiten selbst ließen sich aus dieser Umgebung nicht öffnen. GFT kann die R
 
 | Regel (Instant Premium) | Umsetzung in 6.00 |
 |---|---|
-| Floating-Verlust −1 % = harter Bruch (Kauf ab 02.09.2026, inkl. Swap und Kommission) | Summe aller offenen Stop-Risiken ≤ **0,9 %** (Gesamtbudget, jedes Modul), je Idee ≤ 0,9 %; eben eröffnete, noch nicht sichtbare Fade-Positionen zählen mit. Bremse bei −0,8 % auf die Summe der **Verlierer**, Notbremse −1,0 %, Swap-Vorsorge vor dem Rollover. Fades sind intraday (kein Swap). |
+| Floating-Verlust −1 % = harter Bruch (Kauf ab 02.09.2026, inkl. Swap und Kommission) | Summe aller offenen Stop-Risiken ≤ **0,9 %** (Gesamtbudget, jedes Modul), je Idee ≤ 0,9 %. Eben eröffnete, noch nicht sichtbare Positionen **aller** Module und vorgemerkte Wochenend-Wiederaufnahmen zählen für die Fades mit. Fade-Stop mindestens 6 Spreads (bei 0,75 % Risiko bleibt ⅓ des Stop-Abstands als Reserve für Kurssprünge). Bremse bei −0,8 % auf die Summe der **Verlierer**, Notbremse −1,0 %, Swap-Vorsorge vor dem Rollover. Fades sind intraday (kein Swap). |
 | Trailender Maximalverlust 6 % | Boden vom Equity-Hoch inkl. Buchgewinn (strengste Lesart), Pufferkurve verkleinert alle Module nahe am Boden |
 | Tagesverlust 3 % | Tagesstopp 2,4 %, Notbremse 3 % auf min(Startsaldo, Tagesreferenz) |
-| Gewinne aus Trades < 120 s gestrichen | Fade-Ziel erst nach **130 s** gesetzt; eigene Gewinnschließungen (Zeit-Ausstieg, Reife) erst ab 130 s |
+| Gewinne aus Trades < 120 s gestrichen | Fade-Ziel erst nach **130 s** gesetzt (Eingaben unter 120 s lehnt der EA ab); eigene Gewinnschließungen (Zeit-Ausstieg, Reife) erst ab 130 s |
+| Feiertage, verkürzte Handelstage | keine Fades, wenn der Signal- oder der Ausstiegstag in der eingebauten US-Feiertagsliste (2019–2027) oder in `WeSonderTage` steht – sonst könnte die Schließung den Zeit-Ausstieg überholen |
 | News ±5 min (Gewinne > 1 % gekappt) | ±6 min keine Einstiege, keine eigenen Gewinnschließungen > 1 %. Ein Server-Ziel kann im Fenster auslösen; bei den Zielen „Gegenseite“ (X0630, N1100) kann der Gewinn 1 % übersteigen – dann kappt GFT den Überschuss, das Konto bleibt |
 | Hedging verboten (auch über eigene Konten) | Hedging-Sperre im Konto: kein Fade gegen eine offene oder eben gesendete Position im selben Symbol, egal welches Modul |
 | Martingale/Grid | nie: feste Prozent-Größe × Pufferkurve, nach Verlusten kleiner, nie größer |
@@ -244,15 +251,17 @@ Verbindungsabbruch, eine andere Lesart von GFT oder eine Regeländerung liegen a
 
 | Startjahr | 5.10 (ab 3 %): Ausz. / Busts / Netto / längste Serie | **Sicher** | **Ertrag** |
 |---|---|---|---|
-| 2022 | 7,49 / 0,14 / 2114 $ / 9,4 | 5,81 / 0,00 / 1622 $ / 4,7 | 9,74 / 0,00 / 3101 $ / 5,2 |
-| 2023 | 5,26 / 0,23 / 1446 $ / 9,2 | 6,40 / 0,00 / 1743 $ / 4,1 | 7,69 / 0,00 / 2325 $ / 5,8 |
-| 2024 | 4,52 / 0,18 / 1274 $ / 8,5 | 5,27 / 0,00 / 1382 $ / 4,4 | 5,62 / 0,03 / 1634 $ / 5,5 |
-| 2025 | 6,32 / 0,01 / 1732 $ / 8,1 | 6,62 / 0,00 / 1897 $ / 4,9 | 7,92 / 0,06 / 2359 $ / 6,1 |
+| 2022 | 7,49 / 0,14 / 2114 $ / 9,4 | 5,27 / 0,00 / 1483 $ / 4,8 | 9,40 / 0,00 / 3013 $ / 5,4 |
+| 2023 | 5,26 / 0,23 / 1446 $ / 9,2 | 6,40 / 0,00 / 1760 $ / 4,0 | 7,65 / 0,00 / 2277 $ / 6,2 |
+| 2024 | 4,52 / 0,18 / 1274 $ / 8,5 | 5,03 / 0,00 / 1309 $ / 4,3 | 5,24 / 0,00 / 1529 $ / 5,0 |
+| 2025 | 6,32 / 0,01 / 1732 $ / 8,1 | 6,39 / 0,00 / 1809 $ / 5,6 | 7,73 / 0,00 / 2287 $ / 6,7 |
 
-„Ertrag“ ist in jedem Startjahr besser als 5.10. „Sicher“ hat in keinem Startjahr einen Bust; 2022 liegt
-es bei den Auszahlungen unter 5.10.
+„Ertrag“ ist in jedem Startjahr besser als 5.10 und hat in keinem einen Bust. „Sicher“ hat in keinem
+Startjahr einen Bust; 2022 liegt es bei den Auszahlungen unter 5.10.
 
 ### 6.2 Auszahlung ab 4 % (`MinProfitPct=4`)
+
+Gerechnet vor den Review-Filtern; diese ändern die Zahlen nur um wenige Prozent.
 
 | | Ausz./J | Ø Auszahlung | Busts/J | Netto/J |
 |---|---:|---:|---:|---:|
@@ -268,8 +277,8 @@ Netto ändert sich kaum; ab 4 % gibt es weniger, dafür größere Auszahlungen. 
 | | Ausz./J | Busts/J | Netto/J | Konten mit Bust im 1. Jahr |
 |---|---:|---:|---:|---:|
 | 5.10 (ab 3 %) | 3,18 | 1,30 | 765 $ | 72 % |
-| 6.00 Sicher | 0,55 | 0,31 | 104 $ | 22 % |
-| 6.00 Ertrag | 1,89 | 0,39 | 502 $ | 31 % |
+| 6.00 Sicher | 0,56 | 0,33 | 104 $ | 23 % |
+| 6.00 Ertrag | 2,00 | 0,43 | 524 $ | 35 % |
 
 In diesem Regime verdienen die Fades nichts; der Wächter hält sie meist still. Auch 5.10 wäre dort
 schlecht gelaufen (1,3 Busts je Jahr). Kommt so ein Regime zurück, wird 6.00 **seltener auszahlen** und kann
@@ -278,7 +287,7 @@ Wochen reift kein Zyklus.
 
 ### 6.4 Streuung
 
-Über die 16 Störungen (Standardabweichung / Standardfehler des Mittels):
+Über die 16 Störungen (Standardabweichung / Standardfehler des Mittels; gemessen vor den Review-Filtern):
 
 | | Auszahlungen/J | Busts/J | Netto/J |
 |---|---|---|---|
@@ -306,8 +315,22 @@ Regime (6.3) ist viel größer als die statistische.
   (`Replikat_v6/t_port.py`) und auf den GFT-Daten gegen den Nachbau gerechnet: **1 750 von 1 753 Signalen
   identisch** (Einstiegskerze, Richtung, Stop-Abstand, Ergebnis in R). Die 3 Abweichungen liegen alle am
   21.01.2022, dem ersten Tag mit Tages-ATR am Datenbeginn; live hat MT5 genug D1-Historie.
-- Dazu ein unabhängiger Code-Review auf Kompilierfehler und Regelverstöße durch einen Sub-Agenten.
-  **Nicht** geprüft: Kompilieren in MetaEditor, Strategietester, Demo.
+- **Code-Review** durch einen Sub-Agenten (Compiler-Sicht, Logik, GFT-Regeln, eigene Simulation mit
+  2 466 Zufallssignalen inkl. Wochenenden, Lücken, Feiertagen, negativem r0): **keine Kompilierfehler**, keine
+  Rückschritte im alten Code, Zustandsautomat korrekt. Umgesetzt wurden daraufhin:
+  1. Register frisch eröffneter Positionen **aller** Module (DEADBAND, RSI21, Noise, Wiederaufnahme, Fade):
+     Öffnen Noise/RSI21 und ein Fade im selben Durchlauf (z. B. 13:00 und 15:00 NY), zählt das noch
+     unsichtbare Risiko jetzt mit – vorher konnte NAS long kurz 1,4 % Stop-Risiko erreichen.
+  2. Vorgemerkte Wochenend-Wiederaufnahmen zählen im Fade-Budget mit.
+  3. Fade-Zeiten mit festem Versatz `NYOffsetHours` (wie Replikat und RSI21). Geprüft: Der GFT-Server steht
+     in allen Sommerzeit-Phasen auf NY + 7 h (Gold-Tagespause 2022–2026 immer 00:00–01:00 Serverzeit).
+  4. Live nur, wenn die Signalkerze unmittelbar vor der neuen Kerze liegt (nach Verbindungsabbrüchen kein
+     verspätetes Signal).
+  5. Stop mindestens 6 Spreads, keine Fades an US-Feiertagen/verkürzten Tagen, `FadeZielAbSek` ≥ 120.
+  6. Position gehört nur zu ihrem Modul, wenn auch der Kommentar passt (nach Änderung der Liste wird sie als
+     Waise geschlossen); Magic-Prüfung auch gegen RSI21; kürzere Wartezeit, wenn die Server-Historie kürzer
+     als 600 Tage ist; gedrosselte Fehlermeldungen.
+- **Nicht** geprüft: Kompilieren in MetaEditor, Strategietester, Demo.
 
 ## 8. Grenzen, Risiken, Hinweise
 
@@ -329,9 +352,11 @@ Regime (6.3) ist viel größer als die statistische.
 7. **VPS/Server:** Für Instant Premium (Kauf ab 12.08.2026) ist VPS verboten; Trustpilot-Berichte nennen
    Kontosperren bei der Auszahlung wegen VPS-Nutzung. Ein gemieteter Windows-Server zählt vermutlich genauso.
    Nur auf dem eigenen PC betreiben und `NurAufPcPfad` setzen.
-8. **Nachtmodul N1800** (NAS 21:00–00:00 NY = 04:00–07:00 Serverzeit) handelt in der ruhigsten Zeit mit
+8. **Enge Stops und Spreads:** Der Mindest-Stop von 6 Spreads nutzt den Spread beim Einstieg. Ist er in
+   ruhigen Stunden (Gold 03:00–08:00 NY) breiter als im Replikat, lässt der EA dort mehr Signale aus.
+9. **Nachtmodul N1800** (NAS 21:00–00:00 NY = 04:00–07:00 Serverzeit) handelt in der ruhigsten Zeit mit
    breiterem Spread. Wer das nicht will: `FadeAus=N1800`.
-9. **Öffentliches Repository:** Strategie und Einstellungen sind für jeden sichtbar. Empfehlung: auf
+10. **Öffentliches Repository:** Strategie und Einstellungen sind für jeden sichtbar. Empfehlung: auf
    „Private“ stellen.
 
 ## 9. Inbetriebnahme
@@ -360,4 +385,5 @@ abschalten, sonst 6.00: `FadeAktiv=false` (rechnet virtuell weiter), für das Ve
 ## Anhang: Replikat
 
 Code, Anleitung und Ergebnisse: `Replikat_v6/` (ohne Kursdaten), Fremddaten-Aufbau: `extdata/`.
-Endbewertung: `Replikat_v6/x31.py` (GFT) und `Replikat_v6/x33.py ext` (Fremddaten).
+Endbewertung nach dem Code-Review: `Replikat_v6/x35.py gft` bzw. `x35.py ext`; vorher `x31.py`/`x33.py`.
+Abgleich EA ↔ Replikat: `Replikat_v6/t_port.py`.

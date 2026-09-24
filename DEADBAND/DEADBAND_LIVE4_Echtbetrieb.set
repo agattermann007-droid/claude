@@ -1,12 +1,13 @@
 ; DEADBAND LIVE 6.00 FADE - Echtbetrieb = Auspraegung ERTRAG, GFT Instant Premium 10k (Konto ab 02.09.2026). Alle Werte = Voreinstellung des EA.
-; 6.00: 10 Fehlausbruch-Fades (0,75 % je Trade, Regime-Waechter PF der letzten 30 Signale > 1,2) + RSI21 0,50 % + NAS-Noise 0,35 %,
-;   DEADBAND-Einstiege aus (DbAktiv=false), Serien-Stopp nach 3 Verlusten, Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 % (MinProfitPct=3).
-; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
+; 6.00: 10 Fehlausbruch-Fades (0,75 % je Trade, Regime-Waechter PF der letzten 30 Signale > 1,2, Stop >= 6 Spreads, keine Fades an
+;   US-Feiertagen) + RSI21 0,50 % + NAS-Noise 0,35 %, DEADBAND-Einstiege aus (DbAktiv=false), Serien-Stopp nach 3 Verlusten,
+;   Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 % (MinProfitPct=3).
+; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $, inkl. Schutzfilter):
 ;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
 ;   5.10 (Ausz >= 3 %): 5,51 / 0,17 / 1517 $ / 6,15 / 9,4/13
-;   6.00 Sicher:        6,08 / 0,00 / 1653 $ / 0,04 / 4,8/7
-;   6.00 Ertrag:        7,46 / 0,02 / 2243 $ / 0,62 / 6,0/11
-; Fremddaten 2006-21 (anderes Marktregime, Fades ohne Vorteil): Sicher 0,55/0,31/104 $, Ertrag 1,89/0,39/502 $.
+;   6.00 Sicher:        5,89 / 0,00 / 1601 $ / 0,06 / 4,9/10
+;   6.00 Ertrag:        7,20 / 0,00 / 2158 $ / 0,49 / 6,4/10
+; Fremddaten 2006-21 (anderes Marktregime, Fades ohne Vorteil): Sicher 0,56/0,33/104 $, Ertrag 2,00/0,43/524 $.
 ; Das Ziel 10 Auszahlungen/J + 0 Busts + nie > 5 Verluste in Folge erreicht keine gepruefte Variante robust.
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart, kein zweites Konto mit Gegenposition (Hedging-Verbot).
@@ -201,6 +202,7 @@ FadeWaechterPF=1.20
 FadeWaechterMin=30
 FadeHistTage=600
 FadeZielAbSek=130
+FadeMinStopSpreads=6.0
 FadeMagicOffset=50
 ShowPanel=true
 ShowLeiter=true

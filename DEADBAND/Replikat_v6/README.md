@@ -34,6 +34,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `x32.py` | dasselbe mit Wächter „180 Tage“ (verworfen) |
 | `t_feas.py`, `t_diag.py`, `t_se2.py` | Machbarkeit 5.10 bei 3/4 % Mindestauszahlung, Engpass-Diagnose, Streuung |
 | `x34.py`, `t_se3.py` | 6.00 mit Auszahlung ab 4 %; Streuung von 6.00 über die 16 Störungen |
+| `x35.py` | **Endzahlen 6.00 nach dem Code-Review** (Fades ohne US-Feiertage, Stop ≥ 6 Spreads) auf GFT-Daten (mit Startjahren) und Fremddaten |
 | `t_port.py` | **Abgleich EA ↔ Replikat**: wörtliche Übertragung von `FadeKerze` (MQL5) gegen `scan6.gen_fade` + `gsig.simulate` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
@@ -43,8 +44,8 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 pip install numpy pandas numba
 python prep5.py && python sig5.py          # GFT-Daten -> cache/
 python sig_ext.py                          # Fremddaten -> cache/ (braucht ../extdata/*.csv)
-python x31.py                              # Endbewertung GFT 2022-26 (4 Prozesse, ~10 min)
-python x33.py ext                          # Fremddaten 2006-21
+python x35.py gft                          # Endbewertung 6.00 GFT 2022-26 (4 Prozesse, ~10 min)
+python x35.py ext                          # Fremddaten 2006-21
 ```
 
 ## Konventionen
