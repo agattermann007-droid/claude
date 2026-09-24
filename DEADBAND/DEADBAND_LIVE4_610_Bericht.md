@@ -94,26 +94,27 @@ Preset **Sicher** (`DEADBAND_LIVE4_610_Sicher.set`): wie 6.00 Sicher, Abschluss-
 ## 4. Kontoerkennung beim Laden
 
 Ziel: Sobald der EA geladen ist, kennt er genau den Kontozustand, mit dem GFT rechnet. Das gilt auch nach einem
-Neustart mitten im Zyklus, mitten am Tag, mit offenen Positionen oder nach einer Auszahlung. Ein Sub-Agent hat die
-Kontoerkennung Zeile für Zeile geprüft. Umgesetzt wurde:
+Neustart mitten im Zyklus, mitten am Tag, mit offenen Positionen oder nach einer Auszahlung. Zwei Sub-Agenten haben die
+Kontoerkennung nacheinander Zeile für Zeile geprüft; die Befunde beider Durchgänge sind umgesetzt:
 
 | Bereich | bis 6.00 | 6.10 |
 |---|---|---|
-| **Vollständigkeit der Historie** | nur „nicht leer“ geprüft | Start erst, wenn die Summe aller Buchungen den Saldo ergibt (höchstens 5 min warten, sonst Warnung und gesicherte Spitze). Liegt die Einzahlung außerhalb des 400-Tage-Fensters, wird einmal die ganze Historie geladen. |
-| **Auszahlung erkennen** | jede Saldo-Abbuchung ab 50 $ | nur, wenn der Saldo danach auf den Startsaldo fällt (bzw. Startsaldo + Rest über dem 6-%-Deckel) oder der Buchungskommentar zu `AuszahlungKennung` passt. Korrekturen, gestrichene Gewinne und Gebühren setzen Zyklus und Boden **nicht** zurück (sonst läge der Boden des EA unter dem von GFT). Unklare Abbuchungen meldet der EA per Push. Ausnahmen: `KeineAuszahlung`. |
+| **Vollständigkeit der Historie** | nur „nicht leer“ geprüft | Start erst, wenn die Summe aller Buchungen den Saldo ergibt (höchstens 3 min warten, sonst Warnung und gesicherte Spitze). Liegt die Einzahlung außerhalb des 400-Tage-Fensters, wird einmal die ganze Historie geladen; eine bekannte Einzahlung bleibt auch im Dauerlauf im Fenster. |
+| **Auszahlung erkennen** | jede Saldo-Abbuchung ab 50 $ | nur, wenn der Saldo danach auf den Startsaldo fällt (bzw. Startsaldo + Rest über dem 6-%-Deckel) oder der Buchungskommentar zu `AuszahlungKennung` passt. Abbuchungen binnen 1 h ohne Trade dazwischen zählen zusammen (Auszahlung in Teilen). Korrekturen, gestrichene Gewinne und Gebühren setzen Zyklus und Boden **nicht** zurück (sonst läge der Boden des EA unter dem von GFT). Unklare Abbuchungen meldet der EA per Push. Von Hand: `AuszahlungZeiten` (ist eine Auszahlung, z. B. Teilauszahlung), `KeineAuszahlung` (ist keine). |
 | Buchungen vor dem ersten Trade | Plus summiert, Minus als Auszahlung | netto = Startsaldo |
-| **Gültige Tage** | Positionsergebnis am Ausstiegstag | zwei Lesarten (Ausstiegstag / jeder Deal an seinem Tag inkl. Kommissions-Buchungen); gültig nur, wenn **beide** ≥ 0,5 % + 0,50 $ Rundungsreserve (`ValidDayReserveUSD`). Gebühren (DEAL_FEE) zählen mit. |
+| **Gültige Tage** | Positionsergebnis am Ausstiegstag | zwei Lesarten (Ausstiegstag / jeder Deal an seinem Tag inkl. Kommissions-Buchungen); gültig nur, wenn **beide** ≥ 0,5 % + 0,50 $ Rundungsreserve (`ValidDayReserveUSD`). Gebühren (DEAL_FEE) und Abbuchungen, die keine Auszahlung sind, zählen mit. Ein Einstieg, dessen Kommission einen heute schon gültigen Tag wieder ungültig machte, wird ausgelassen. |
 | 10-Tage-Frist | 10 Prop-Tage (ab 9 Tagen + 1 min möglich) | zusätzlich volle 10 × 24 h seit dem ersten Trade des Zyklus |
-| **Tagesreferenz 17:00 NY** | Equity beim ersten Tick nach dem Tageswechsel (bei Gold/NAS erst 18:00 NY, nach der Eröffnungslücke) oder nach Neustart nur der Saldo | obere Schranke des Buchgewinns um 17:00 NY aus den Kursen der letzten 2 Minuten (M1) und der Deal-Historie; auch nach einem Neustart. Fehlen Kurse: heute keine neuen Einstiege. Abzüge während des Tages zählen wie bei GFT als Tagesverlust. |
-| **Equity-Spitze (Boden)** | aus der Historie beim Start, dann nur live abgetastet | beim Start enger (nur Kerzen, in denen die Position offen war, mit offenem Volumen; weiterhin nie zu tief); **jede Minute aus den M5-Hochs nachgeholt**, nach Verbindungsabbrüchen über die ganze Lücke; neu gerechnet, sobald die Historie wächst. Gesichert wird nur mit geprüfter Historie, täglich aufgefrischt. |
-| Unvollständige Kurse für die Spitze | nur „keine Kerzen“ erkannt | auch Lücken am Anfang/Ende erkannt → Größe × 0,6, bis nachgeholt |
-| **Boden-Sperre** | nur kleinere Größe nahe am Boden | vor jedem Einstieg (alle Module, auch Wiederaufnahme): offenes Stop-Risiko + neues Risiko muss 0,2 % über dem Boden bleiben |
-| **Kontowechsel** im selben Terminal | alter Zustand blieb im Speicher | Zustand wird beim Laden und bei Login-Wechsel vollständig zurückgesetzt |
+| **Tagesreferenz 17:00 NY** | Equity beim ersten Tick nach dem Tageswechsel (bei Gold/NAS erst 18:00 NY, nach der Eröffnungslücke) oder nach Neustart nur der Saldo | obere Schranke des Buchgewinns um 17:00 NY aus den Kursen der letzten 2 Minuten (M1) und der Deal-Historie; auch nach einem Neustart. Nur synchrone Kurse zählen (eine Lücke nach einer Offline-Zeit liefert sonst einen alten Kurs). Fehlen Kurse: keine neuen Einstiege (Ernten und Ausstiege laufen weiter), neuer Versuch jede Minute, Push nach 15 min; die Sperre übersteht einen Neustart. Abzüge während des Tages zählen wie bei GFT als Tagesverlust. |
+| **Equity-Spitze (Boden)** | aus der Historie beim Start, dann nur live abgetastet | beim Start enger (nur Kerzen, in denen die Position offen war, mit offenem Volumen; weiterhin nie zu tief); **jede Minute aus den M5-Hochs nachgeholt**, nach Verbindungsabbrüchen über die ganze Lücke, bis die Kurse synchron sind; neu gerechnet, sobald die Historie wächst – immer direkt nach dem Laden einer Historie, die den Saldo erklärt (sonst zählte ein eben geschlossener Trade doppelt). Gesichert wird nur mit geprüfter Historie, täglich aufgefrischt; eine gesicherte Spitze aus einem früheren Zyklus gilt nie. |
+| Unvollständige Kurse für die Spitze | nur „keine Kerzen“ erkannt | auch Lücken am Anfang/Ende und nicht synchrone Kurse erkannt → Größe × 0,6, bis nachgeholt |
+| **Boden-Sperre** | nur kleinere Größe nahe am Boden | vor jedem Einstieg (alle Module, auch Wiederaufnahme): Equity, wenn **alle** offenen Positionen an ihrem Stop schließen (auch Buchgewinn, der bis zum Stop zurückgegeben werden kann), minus neues Risiko muss 0,2 % über dem Boden bleiben |
+| **Kontowechsel** im selben Terminal | alter Zustand blieb im Speicher | Zustand wird beim Laden und bei Login-Wechsel vollständig zurückgesetzt (auch Wochenend-Vormerkungen, Tageszähler, Kommissions-Cache) |
 | Tagesbremse vor dem Laden der Kontodaten | nur Floating-Bremse | auch 2,4-%-Tagesbremse aus der gesicherten Tagesreferenz |
-| Auszahlung beantragt, noch nicht gebucht | EA handelte wieder, wenn die Reife verloren ging | `AuszahlungAngefordertAm` hält das Konto flach, bis die Auszahlung gebucht ist |
+| Auszahlung beantragt, noch nicht gebucht | EA handelte wieder, wenn die Reife verloren ging | `AuszahlungAngefordertAm` hält das Konto flach, bis die Auszahlung gebucht ist; die Erinnerung sagt dann „beantragt, noch nicht gebucht“ statt „jetzt beantragen“ |
+| Auszahlung, während der EA die Historie gerade neu lädt | konnte übersehen werden (Boden blieb auf dem alten Hoch → keine Einstiege) | wird gegen die zuletzt verarbeitete Auszahlung geprüft, egal wo die Historie geladen wurde |
 | Tag der Auszahlung | sofort wieder Einstiege | keine neuen Einstiege bis 17:00 NY |
 | Vormerkungen (Wochenende) aus dem alten Zyklus | konnten nach einer Auszahlung wieder öffnen | werden verworfen |
-| `CycleStartOverride` / `FloorOverride` | galten auch nach späteren Auszahlungen | gelten nur im laufenden Zyklus; `FloorOverrideZeit` = Zeitpunkt der Dashboard-Ablesung |
+| `CycleStartOverride` / `FloorOverride` | galten auch nach späteren Auszahlungen | gelten nur im laufenden Zyklus; `FloorOverride` nur zusammen mit `FloorOverrideZeit` (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht |
 | NY-Versatz | automatisch aus der PC-Uhr | fest 7 h (`AutoNYOffset=false`); Abweichung der PC-Uhr nur als Hinweis |
 | Ernte-Schätzung | überschrieb den realisierten Tagesgewinn (konnte eine falsche Reife auslösen) | getrennt geführt, Reife nur aus bestätigten Deals |
 | Vorlauf offener RSI21-Positionen nach Neustart | 0 | aus den M5-Kerzen seit dem Einstieg |
@@ -135,7 +136,7 @@ Was MT5 allein nicht wissen kann, lässt sich per Eingabe festlegen:
 - `StartBalanceOverride`,
 - `FloorOverride` + `FloorOverrideZeit`,
 - `CycleStartOverride`,
-- `AuszahlungKennung` / `KeineAuszahlung`,
+- `AuszahlungKennung` / `KeineAuszahlung` / `AuszahlungZeiten`,
 - `AuszahlungAngefordertAm`.
 
 ## 5. Echtbetrieb: Dateien
@@ -163,16 +164,18 @@ Was MT5 allein nicht wissen kann, lässt sich per Eingabe festlegen:
    GFT-Dashboard vergleichen: Startsaldo, gültige Tage, Boden (Max-Loss-Level), Tagesgrenze. Weicht der Boden ab:
    `FloorOverride` = Dashboard-Wert und `FloorOverrideZeit` = Zeitpunkt der Ablesung.
 7. Nach dem Beantragen einer Auszahlung: `AuszahlungAngefordertAm` = Zeitpunkt (Serverzeit). Der EA bleibt dann flach,
-   bis die Auszahlung gebucht ist.
-8. Kommt die Push-Meldung „Abbuchung ... ist KEINE Auszahlung“, obwohl es eine war: den Buchungskommentar (steht in
-   der Meldung) als `AuszahlungKennung` eintragen.
+   bis die Auszahlung gebucht ist. Nach der Buchung das Feld wieder leeren.
+8. Kommt die Push-Meldung „Abbuchung ... ist KEINE Auszahlung“, obwohl es eine war (z. B. Teilauszahlung): die
+   Buchungszeit aus der Meldung als `AuszahlungZeiten` eintragen (oder den Buchungskommentar als `AuszahlungKennung`).
 
 ## 7. Grenzen und Hinweise
 
 1. **Regime-Abhängigkeit** der Fades (Bericht 6.00, Abschnitt 6.3): Auf 2006–2021 verdienen sie nicht; der Wächter
    begrenzt die Verluste erst nach einigen Signalen.
-2. **Nicht kompiliert, nicht im Tester.** Die Änderungen wurden statisch geprüft (Klammern, alle Format-Aufrufe,
-   Deklarationsreihenfolge) und von zwei Sub-Agenten gegengelesen; Kompilieren und Tester bleiben Pflicht.
+2. **Nicht kompiliert, nicht im Tester.** Die Zwischenstände 0704e96 bis dfd9120 kompilierten **nicht** (`MAXFADE`
+   vor seiner Definition verwendet); behoben ab 1aaeb9f. Die statische Prüfung erkennt diesen Fehlertyp jetzt
+   (Makros und globale Variablen vor der Verwendung, Klammern, alle Format-Aufrufe, unbekannte Funktionen), und
+   drei Sub-Agenten haben den Code gegengelesen. Kompilieren in MetaEditor und der Tester bleiben Pflicht.
 3. **Replikat statt Tick-Test:** M5-Kerzen, News-Sperre nicht abgebildet. Die Kontoerkennung (Abschnitt 4) ist im
    Replikat nicht nachgebildet; sie ändert das Handeln nur in Ausnahmefällen (Neustart, Lücken, Abzüge, nahe am
    Boden).
