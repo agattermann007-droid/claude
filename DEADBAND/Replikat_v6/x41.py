@@ -1,26 +1,32 @@
 """Endbewertung Build 6.20 (Probability Grid, Regel S: M5, Laenge 15, 1000 Schenkel, Stop-Chance >= 70 % -> kein Fade gegen
-den Lauf) gegen 6.10 - wie x39: 16 Stoerungen, 1/2/3 Jahre, Startjahre (1-Jahres-Konten), Streuung je Stoerung.
+den Lauf; N1800 ohne Grid) gegen 6.10 - wie x39: 16 Stoerungen, 1/2/3 Jahre, Startjahre (1-Jahres-Konten), Streuung je
+Stoerung. Waechter EA-getreu: nur Signale der letzten 600 Tage (FadeHistTage) zaehlen fuer die Mindestzahl 30.
 gft = GFT-Daten bzw. GFT-Ersatz (mk_proxy; hier jeden Handelstag ein neues Konto), ext = Fremddaten 2006-21 (16 Stoerungen,
 jeder 3. Tag). Aufruf: python x41.py gft|ext"""
 import numpy as np, sys, json, os
 import eng6 as E, evl6 as V, r6, x40, pg_rules as RU
 from concurrent.futures import ProcessPoolExecutor
 
-S70 = RU.fade_filter(5, 15, 1000, RU.c_stop_survival(0.70))
-S70_LIVE = RU.fade_filter(5, 15, 1000, RU.c_stop_survival(0.70), guard_all=True)
+W = 600                                                   # EA: Waechter-Historie FadeHistTage = 600 Tage (Mindestzahl 30 im Fenster)
+BASE = dict(RU.NONE, window_days=W)
+S70 = dict(RU.fade_filter(5, 15, 1000, RU.c_stop_survival(0.70)), window_days=W)
+S70_OHNE = dict(S70, exempt=("N1800",))                   # N1800 ohne Grid (mit Grid bleiben ihm < 30 Signale in 600 Tagen)
+S70_LIVE = dict(RU.fade_filter(5, 15, 1000, RU.c_stop_survival(0.70), guard_all=True), window_days=W)
 H = dict(harv=1)
 CFG = {
-    "6.10 Ertrag": (x40.ERT, H, RU.NONE),
-    "6.20 Ertrag": (x40.ERT, H, S70),
-    "6.20 Ertrag GridNurLive": (x40.ERT, H, S70_LIVE),
-    "6.10 Sicher": (x40.SIC, {}, RU.NONE),
-    "6.20 Sicher": (x40.SIC, {}, S70),
+    "6.10 Ertrag": (x40.ERT, H, BASE),
+    "6.20 Ertrag": (x40.ERT, H, S70_OHNE),
+    "6.20 Ertrag, Grid auch N1800": (x40.ERT, H, S70),
+    "6.20 Ertrag GridNurLive": (x40.ERT, H, dict(S70_LIVE, exempt=("N1800",))),
+    "6.10 Sicher": (x40.SIC, {}, BASE),
+    "6.20 Sicher": (x40.SIC, {}, S70_OHNE),
+    "6.20 Sicher, Grid auch N1800": (x40.SIC, {}, S70),
 }
 
 if __name__ == "__main__":
     target = sys.argv[1]
     step = 1 if target == "gft" else 3
-    fn = os.path.join("ergebnisse", f"x41_{target}.json")
+    fn = os.path.join(os.environ.get("X41_OUT", "ergebnisse"), f"x41_{target}.json")
     res = json.load(open(fn)) if os.path.exists(fn) else {}
     for lbl, (kw, gpx, rule) in CFG.items():
         if lbl in res:

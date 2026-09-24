@@ -90,15 +90,28 @@ def apply_rule(f, rule):
     return keep, live, tp, w
 
 
-def blocks(target, rule, guard=("pf", 30, 1.2), names=F10, filters=True, info=False):
-    """Bloecke fuer eng6 (Stroeme 0..9) auf dem Ziel-Datensatz ('gft' = GFT bzw. Ersatz, 'ext' = Fremddaten bis 2021)."""
+def guard_window(t, n_min, days):
+    """EA-getreu: Der EA rekonstruiert beim Start nur die Signale der letzten FadeHistTage Tage. Ein Signal kann nur live
+    gehen, wenn davor mindestens n_min Signale in diesem Fenster liegen (FadeWaechterMin)."""
+    t = np.asarray(t, np.int64)
+    lo = np.searchsorted(t, t - int(days) * 1440, side="left")
+    cnt = np.arange(len(t)) - lo
+    return cnt >= n_min
+
+
+def blocks(target, rule, guard=("pf", 30, 1.2), names=F10, filters=True, info=False, window_days=None):
+    """Bloecke fuer eng6 (Stroeme 0..9) auf dem Ziel-Datensatz ('gft' = GFT bzw. Ersatz, 'ext' = Fremddaten bis 2021).
+    window_days: Waechter nur mit den Signalen der letzten X Tage (EA: FadeHistTage 600), None = ganze Historie.
+    rule['exempt']: Module ohne Grid-Regel."""
     out = []; stats = []
     guard = rule.get("guard", guard)                                   # Regel kann den Waechter aendern
+    window_days = rule.get("window_days", window_days)
+    exempt = set(rule.get("exempt", ()))
     for s_, nm in enumerate(names):
         per = {}
         for ds in ("ext", "gft"):
             f = fi(ds, nm)
-            keep, live, tp, w = apply_rule(f, rule)
+            keep, live, tp, w = apply_rule(f, rule if nm not in exempt else dict(kind="none"))
             if np.any(np.abs(tp - f["tp"]) > 1e-12):
                 ST._use(ds)
                 R = G.simulate(f["sym"], f["ie"], f["d"], f["rd"], tp, f["ix"])[0]
@@ -112,6 +125,9 @@ def blocks(target, rule, guard=("pf", 30, 1.2), names=F10, filters=True, info=Fa
         Rv = np.r_[R1[v1], R2[k2]]
         mode, N, th = guard
         g_live = ST.guard_mask(Rv, N, mode, th) if mode != "off" else np.ones(len(Rv), bool)
+        if window_days and mode != "off":
+            tv = np.r_[f1["t_entry"][v1], f2["t_entry"][k2]]
+            g_live &= guard_window(tv, N, window_days)
         n1 = int(v1.sum())
         if target == "ext":
             f, keep, live, tp, w = f1, k1, l1, tp1, w1

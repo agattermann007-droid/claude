@@ -662,7 +662,8 @@ input int    GridMaxSchenkel  = 1000;       // Maximum Reversals: je Richtung za
 input int    GridMinSchenkel  = 30;         // weniger Schenkel je Richtung: Grid filtert nicht (wie 6.10)
 input double GridMaxStopChance= 0.70;       // Regel S: kein Fade gegen den Lauf, wenn die Grid-Chance, dass der Lauf bis zum Stop weiterlaeuft, >= X ist (0 = aus)
 input double GridMinReife     = 0.0;        // Regel A: kein Fade gegen einen Lauf, der kleiner ist als das X-Perzentil der Schenkel (0 = aus; getestet 0,33)
-input int    GridVorlaufTage  = 240;        // M5-Historie vor der Fade-Historie fuer die Schenkel-Statistik (Kalendertage; Max. Balken im Chart = Unbegrenzt)
+input int    GridVorlaufTage  = 300;        // M5-Historie vor der Fade-Historie fuer die Schenkel-Statistik (Kalendertage; Max. Balken im Chart = Unbegrenzt)
+input string GridOhne         = "N1800";    // Fade-Module ohne Grid, getrennt mit ; (N1800: mit Grid blieben < 30 Signale in FadeHistTage - der Waechter liesse es nie live)
 input bool   GridNurLive      = false;      // true = Grid sperrt nur den Live-Einstieg, der Regime-Waechter zaehlt alle Signale wie 6.10 (weniger Zusatz-Ertrag, Serien wie 6.10)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
@@ -2630,7 +2631,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND LIVE 6.10 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND LIVE 6.20 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3392,7 +3393,7 @@ void ZyklusPanel()
       txt += StringFormat("=== AUSZAHLUNG BEANTRAGEN: Konto flach, Gewinn %.2f, auszahlbar %.2f, Anteil %.2f ===\n", bal-kStart, AuszahlbarJetzt(), AuszahlbarJetzt()*ProfitSplit);
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    txt += StringFormat(
-      "DEADBAND LIVE 6.10 FADE   %s\n"
+      "DEADBAND LIVE 6.20 GRID   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -4985,6 +4986,7 @@ struct FadeDef
    datetime logZeit;         // letzte Fehlermeldung (gedrosselt)
    datetime tpVersuch, schlussVersuch;
    int      nGrid;           // 6.20: vom Probability Grid ausgelassene Signale (Historie + live)
+   bool     gridAus;         // 6.20: Modul steht in GridOhne (kein Grid-Filter)
   };
 FadeDef  F[MAXFADE];
 int      nFade = 0;
@@ -5067,6 +5069,7 @@ bool FadeListeLesen()
         { PrintFormat("DEADBAND4: FadeListe Eintrag %d ungueltig (L 15-600, tlen 5-600, xoff >= 0, buf >= 0, tgt 0/1, dir -1/0/1, mx > 0, -420 <= r0, r0+L <= 990): %s", i+1, x); return false; }
       for(int q=0;q<m;q++) if(F[q].name == F[m].name) { PrintFormat("DEADBAND4: FadeListe Name %s doppelt", F[m].name); return false; }
       F[m].aus = FadeNameInListe(F[m].name, FadeAus);
+      F[m].gridAus = FadeNameInListe(F[m].name, GridOhne);                          // 6.20
       F[m].day = -1; F[m].nbar = 0; F[m].hh = -DBL_MAX; F[m].ll = DBL_MAX; F[m].rng = 0.0; F[m].exHi = 0.0; F[m].exLo = 0.0;
       F[m].ready = false; F[m].done = false; F[m].skip = false; F[m].vOn = false; F[m].vDir = 0;
       F[m].vEnt = 0.0; F[m].vSl = 0.0; F[m].vTp = 0.0; F[m].vRd = 0.0; F[m].vBar = 0; F[m].vX = 0;
@@ -5221,7 +5224,7 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    if(r <= 0.0 || g <= 0.0) return;
    bool gridSperre = false;
    string gg = "";
-   if(GridAktiv && !GridFadeOk(F[m].k, nx.time, d, st, gg))                    // 6.20: Probability Grid
+   if(GridAktiv && !F[m].gridAus && !GridFadeOk(F[m].k, nx.time, d, st, gg))   // 6.20: Probability Grid
      {
       F[m].nGrid++;
       gridSperre = true;
@@ -5479,7 +5482,7 @@ void FadeWaisen()
 bool FadeHistorie(const int m)
   {
    string s = S[F[m].k].sym;
-   if(!GridBereit(F[m].k) && F[m].histFehl < 20) { F[m].histFehl++; return false; }   // 6.20: erst die Schenkel-Statistik des Grids
+   if(!F[m].gridAus && !GridBereit(F[m].k)) return false;                        // 6.20: erst die Schenkel-Statistik (GridHistorie gibt nach 20 Versuchen selbst auf)
    datetime bis = iTime(s, PERIOD_M5, 0);
    if(bis <= 0) return false;
    datetime von = bis - (datetime)FadeHistTage*86400;
@@ -5514,8 +5517,9 @@ bool FadeHistorie(const int m)
                (F[m].tgt == 0 ? "Mitte" : "Gegenseite"), (F[m].dir > 0 ? "long" : (F[m].dir < 0 ? "short" : "beide")), F[m].mx,
                TimeToString(F[m].histAb, TIME_DATE), n, F[m].nSig, nn, pf, (FadeWaechterOk(m) ? "LIVE" : "nur virtuell"));
    if(FadeWaechterPF > 0.0 && nn < FadeWaechterMin)
-      PrintFormat("DEADBAND4 FADE %s: nur %d virtuelle Signale in der Historie (Waechter braucht %d) - Modul bleibt virtuell, bis genug Signale da sind. Abhilfe: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt, Terminal neu starten.",
-                  FadeName(m), nn, FadeWaechterMin);
+      PrintFormat("DEADBAND4 FADE %s: nur %d virtuelle Signale in der Historie (Waechter braucht %d) - Modul bleibt virtuell, bis genug Signale da sind. Abhilfe: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt, Terminal neu starten.%s",
+                  FadeName(m), nn, FadeWaechterMin,
+                  (F[m].nGrid > 0 && !GridNurLive ? StringFormat(" Das Probability Grid hat %d Signale ausgelassen - Modul in GridOhne eintragen oder GridNurLive=true.", F[m].nGrid) : ""));
    return true;
   }
 
@@ -5541,7 +5545,7 @@ void FadeDurchlauf(const bool dayLocked)
          MqlRates r[];
          ArraySetAsSeries(r, false);
          int n = CopyRates(s, PERIOD_M5, F[m].lastBar, b0, r);
-         if(n >= 2 && r[n-1].time == b0 && GridAktuell(F[m].k, r[n-2].time))   // 6.20: das Grid muss die Kerze vor b0 kennen
+         if(n >= 2 && r[n-1].time == b0 && (F[m].gridAus || GridAktuell(F[m].k, r[n-2].time)))   // 6.20: das Grid muss die Kerze vor b0 kennen
            {
             bool frisch = (TimeCurrent() - b0 < 60) && (b0 - r[n-2].time == PeriodSeconds(PERIOD_M5));   // nur die unmittelbar vorige Kerze, sofort nach Beginn der neuen (nach Datenluecken nie live)
             for(int i=0;i<n-1;i++)
@@ -5576,6 +5580,7 @@ void FadeBeiReifeSchliessen()
 bool FadeAnlegen()
   {
    fadeOk = false; nFade = 0; fadeSperreTag = false; fadeWaisenVersuch = 0; fadeReifeVersuch = 0; fadeLetzte = "";
+   gridOk = false; for(int k=0;k<MAXSYM;k++) GridReset(k);                   // 6.20: kein Grid-Zustand aus einem frueheren Lauf
    for(int i=0;i<NEUMAX;i++) { gNeuRisk[i] = 0.0; gNeuTk[i] = 0; gNeuMs[i] = 0; gNeuSym[i] = ""; gNeuDir[i] = 0; }
    gNeuPos = 0;
    for(int k=0;k<MAXSYM;k++) fadeAtr[k] = INVALID_HANDLE;
@@ -5591,7 +5596,7 @@ bool FadeAnlegen()
       int k = F[m].k;
       if(fadeAtr[k] == INVALID_HANDLE) fadeAtr[k] = iATR(S[k].sym, PERIOD_D1, 14);   // laedt die D1-Historie vor (Rechnung in FadeAtr)
      }
-   if(!GridAnlegen()) { Print("DEADBAND4: Probability Grid ungueltig - Fade-Module AUS (GridAktiv=false schaltet nur das Grid ab)"); nFade = 0; return false; }   // 6.20
+   if(!GridAnlegen()) { Print("DEADBAND4: Probability Grid - Eingaben ungueltig, der EA startet nicht (Eingaben korrigieren oder GridAktiv=false)"); nFade = 0; return false; }   // 6.20
    fadeOk = true;
    return true;
   }
@@ -5614,7 +5619,7 @@ void FadeInitMeldung()
    PrintFormat("DEADBAND4: 6.20 Probability Grid %s | Zeitebene M%d aus M5, Swing Length %d, je Richtung die letzten %d Schenkel (mind. %d) | Regel S: kein Fade gegen den Lauf ab %.0f %% Stop-Chance%s | Regel A: %s | Vorlauf %d Tage vor der Fade-Historie | %s",
                (GridAktiv ? (gridOk ? "AN" : "AUS (Eingaben ungueltig)") : "aus (Fades wie 6.10)"), PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, GridMinSchenkel,
                GridMaxStopChance*100.0, (GridMaxStopChance > 0.0 ? "" : " (aus)"), (GridMinReife > 0.0 ? StringFormat("Lauf mind. %.0f. Perzentil", GridMinReife*100.0) : "aus"), GridVorlaufTage,
-               (GridNurLive ? "gesperrte Signale zaehlen im Waechter mit (GridNurLive)" : "gesperrte Signale entfallen auch im Waechter"));
+               (GridNurLive ? "gesperrte Signale zaehlen im Waechter mit (GridNurLive)" : "gesperrte Signale entfallen auch im Waechter") + (StringLen(GridOhne) > 0 ? " | ohne Grid: " + GridOhne : ""));
    if(fadeOk && nyOff != NYOffsetHours)
       PrintFormat("DEADBAND4: ACHTUNG - gemessener NY-Versatz %d h, die Fade-Module rechnen fest mit NYOffsetHours=%d h (GFT: Server = NY + 7 h). Broker-Serverzeit und PC-Uhr pruefen.", nyOff, NYOffsetHours);
   }
@@ -5674,6 +5679,7 @@ void GridReset(const int k)
 // eine abgeschlossene Zeitebenen-Kerze (Beginn t, Open o, Close c): fetchPivot + fetchData (LuxAlgo)
 void GridKerze(const int k, const datetime t, const double o, const double c)
   {
+   if(GR[k].n > 0 && t <= GR[k].t[GR[k].n - 1]) return;                         // nie doppelt oder rueckwaerts (nachgeladene Kurse)
    int i = GR[k].n;
    if(i >= ArraySize(GR[k].t))
      {
@@ -5826,7 +5832,17 @@ bool GridHistorie(const int k)
    MqlRates r[];
    ArraySetAsSeries(r, false);
    int n = CopyRates(s, PERIOD_M5, von, bis, r);
-   if((n < 3 || r[n-1].time != bis) && GR[k].histFehl < 20) { GR[k].histFehl++; return false; }
+   bool genug = false;
+   if(n >= 3 && r[n-1].time == bis)                                            // wie FadeHistorie: Kurse bis zum Beginn des Fensters (oder Grenze erreicht)
+     {
+      int maxBars = TerminalInfoInteger(TERMINAL_MAXBARS);
+      datetime srvAb = (datetime)SeriesInfoInteger(s, PERIOD_M5, SERIES_SERVER_FIRSTDATE);
+      genug = (r[0].time <= von + 20*86400 || (maxBars > 0 && n >= maxBars - 1000) || (srvAb > 0 && r[0].time <= srvAb + 3*86400));
+     }
+   if(!genug && GR[k].histFehl < 20) { GR[k].histFehl++; return false; }       // Kurse werden noch geladen: spaeter erneut (bis 20 Versuche)
+   if(n >= 3 && r[0].time > von + 20*86400)
+      PrintFormat("DEADBAND4 GRID %s: WARNUNG - M5-Historie erst ab %s statt %s (Max. Balken im Chart %d). Die Schenkel-Statistik ist anfangs duenner als im Replikat; Max. Balken im Chart = Unbegrenzt setzen.",
+                  s, TimeToString(r[0].time, TIME_DATE), TimeToString(von, TIME_DATE), TerminalInfoInteger(TERMINAL_MAXBARS));
    bool an = GR[k].an;
    GridReset(k);
    GR[k].an = an;
@@ -5860,6 +5876,7 @@ void GridDurchlauf()
       string s = S[k].sym;
       datetime b0 = iTime(s, PERIOD_M5, 0);
       if(b0 <= 0 || b0 == GR[k].b0Seen) continue;
+      if(!SeriesInfoInteger(s, PERIOD_M5, SERIES_SYNCHRONIZED)) continue;      // nach Verbindungsluecken erst mit vollstaendigen Kursen weiter (Fade-Kerzen warten mit, Ausstiege nicht)
       if(GR[k].lastM5 <= 0) { GR[k].lastM5 = iTime(s, PERIOD_M5, 1); GR[k].b0Seen = b0; continue; }   // ohne Historie: ab jetzt fortschreiben
       MqlRates r[];
       ArraySetAsSeries(r, false);
@@ -5878,12 +5895,12 @@ bool GridAnlegen()
    for(int k=0;k<MAXSYM;k++) GridReset(k);
    if(!GridAktiv) return true;
    int tfs = PeriodSeconds(GridTF);
-   if(tfs < 300 || tfs > 3600 || tfs % 300 != 0 || 3600 % tfs != 0)
+   if(GridTF == PERIOD_CURRENT || tfs < 300 || tfs > 3600 || tfs % 300 != 0 || 3600 % tfs != 0)
      { Print("DEADBAND4: GridTF muss M5, M10, M15, M20, M30 oder H1 sein (wird aus M5 gebildet) - Probability Grid AUS"); return false; }
    if(GridLaenge < 2 || GridLaenge > 500 || GridMaxSchenkel < 10 || GridMaxSchenkel > 5000 || GridMinSchenkel < 1 || GridMinSchenkel > GridMaxSchenkel
       || GridMaxStopChance < 0.0 || GridMaxStopChance >= 1.0 || GridMinReife < 0.0 || GridMinReife >= 1.0 || GridVorlaufTage < 0 || GridVorlaufTage > 2000)
      { Print("DEADBAND4: Grid-Eingaben ungueltig (GridLaenge 2-500, GridMaxSchenkel 10-5000, 1 <= GridMinSchenkel <= GridMaxSchenkel, 0 <= GridMaxStopChance/GridMinReife < 1, GridVorlaufTage 0-2000) - Probability Grid AUS"); return false; }
-   for(int m=0;m<nFade;m++) GR[F[m].k].an = true;
+   for(int m=0;m<nFade;m++) if(!F[m].gridAus) GR[F[m].k].an = true;
    gridOk = true;
    return true;
   }
@@ -5911,6 +5928,7 @@ string GridStatusText()
      }
    int ns = 0;
    for(int m=0;m<nFade;m++) ns += F[m].nGrid;
-   t += StringFormat(" | ausgelassen %d (Historie + live)", ns);
+   t += StringFormat(" | %s %d (Historie + live)", (GridNurLive ? "nur virtuell" : "ausgelassen"), ns);
+   if(StringLen(GridOhne) > 0) t += " | ohne Grid: " + GridOhne;
    return t;
   }

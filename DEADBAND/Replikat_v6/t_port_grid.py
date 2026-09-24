@@ -22,6 +22,8 @@ class GridEA:
         self.b = 0; self.cbar = -1; self.pbar = -1; self.lbar = -1; self.cpx = 0.0; self.ppx = 0.0; self.lpx = 0.0
 
     def kerze(self, t, o, c):                      # GridKerze
+        if self.t and t <= self.t[-1]:
+            return                                 # nie doppelt oder rueckwaerts
         i = len(self.t)
         self.t.append(t); self.bo.append(o); self.bc.append(c)
         if i == 0:
