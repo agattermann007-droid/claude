@@ -2751,7 +2751,8 @@ void Durchlauf()
      }
    // 6.10: Saldo ohne Handel veraendert (Auszahlung, Abbuchung): sofort neu laden - sonst misst die Tagesgrenze bis zum
    //       naechsten Laden von der alten Tagesreferenz (falscher Notbremse-Alarm nach jeder Auszahlung)
-   if(SaldoSprung()) kLastRecalc = 0;
+   static uint sprungMs = 0;                                              // Sprung gesehen, Historie erklaert ihn noch nicht
+   if(SaldoSprung()) { kLastRecalc = 0; sprungMs = GetTickCount(); if(sprungMs == 0) sprungMs = 1; }
    // Historie alle 5 s: Auszahlung erkannt? Tagesstand?
    if(now - kLastRecalc >= 5)
      {
@@ -2763,6 +2764,7 @@ void Durchlauf()
       static int nDPeak = -1;
       bool vorher = histOk;
       histOk = HistorieKonsistent();
+      if(histOk) sprungMs = 0;                                             // Saldo erklaert -> Tagesreferenz stimmt
       if(histOk && kLastPayout < kPayoutVerarbeitet)                       // 6.10: im Rueckfall verarbeitete Auszahlung ist mit stimmiger
         {                                                                  //       Historie keine mehr -> Zyklus und Spitze neu
          PrintFormat("DEADBAND4: Auszahlung %s ist nach vollstaendiger Historie keine - Zyklus ab %s, Equity-Spitze wird neu bestimmt",
@@ -2811,9 +2813,9 @@ void Durchlauf()
       // 6.10: die Auszahlung war schon bekannt (Historie war beim Start unvollstaendig) - nur den Boden des Zyklus neu bestimmen
       kPayoutVerarbeitet = kLastPayout; kPeakVorlaeufig = payOhneHist;
       if(payOhneHist) peakOk = false;
-      kEqMaxZyklus = AccountInfoDouble(ACCOUNT_EQUITY);
       kPeakEq = MathMax(PeakRekonstruktion(true), MathMax(AccountInfoDouble(ACCOUNT_BALANCE), AccountInfoDouble(ACCOUNT_EQUITY)));
       if(GlobalVariableCheck(KontoGv("PEAK"))) kPeakEq = MathMax(kPeakEq, GlobalVariableGet(KontoGv("PEAK")));
+      kPeakEq = MathMax(kPeakEq, kEqMaxZyklus);                            // Auszahlung lag vor dieser Sitzung: gesehene Hochs zaehlen
       PrintFormat("DEADBAND4: Historie vervollstaendigt - letzte Auszahlung %s, Equity-Spitze %.2f", TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES), kPeakEq);
      }
    else if(payBereit)
@@ -2906,9 +2908,10 @@ void Durchlauf()
    double dayRef = kDayStartBal + (TagesRefEquity ? kDayRefPlus : 0.0);   // 4.90: max(Saldo, Equity) um 17:00 NY
    double dayEq = eqNow - dayRef;
    double dayBasis = (kStart > 0.0 ? MathMin(dayRef, kStart) : dayRef);    // 5.10: 3 % auf die kleinere Basis (Startsaldo oder Tagesreferenz)
-   // 6.10: Tagesreferenz veraltet (Saldo-Sprung ohne Handel, Neuladen fehlgeschlagen): Tagesgrenzen hoechstens 10 s aufschieben
+   // 6.10: Tagesreferenz veraltet (Saldo-Sprung ohne Handel, die Historie erklaert ihn noch nicht): Tagesgrenzen hoechstens
+   //       10 s aufschieben, keine Einstiege
    static uint refAltMs = 0;
-   bool refAlt = SaldoSprung();
+   bool refAlt = SaldoSprung() || (sprungMs != 0 && GetTickCount() - sprungMs < 10000);   // auch nach dem Neuladen, bis der Deal da ist
    if(!refAlt) refAltMs = 0; else if(refAltMs == 0) { refAltMs = GetTickCount(); if(refAltMs == 0) refAltMs = 1; }
    bool tagAufschub = refAlt && GetTickCount() - refAltMs < 10000;
    if(!tagAufschub && RuleDayLossPct>0.0 && dayRef>0.0 && dayEq <= -dayBasis*RuleDayLossPct/100.0)
@@ -2958,7 +2961,7 @@ void Durchlauf()
          else { kMode = 0; reifGemeldet = false; }     // Reife durch den letzten Deal verloren
         }
      }
-   if(kMode==2 && !reif && !payOffen)
+   if(kMode==2 && !reif && !payOffen && !refAlt)
      {
       // Reife verloren (z. B. fremder Trade, Korrekturbuchung): zurueck in den Handel
       kMode = 0; reifGemeldet = false;
