@@ -1,16 +1,17 @@
-; DEADBAND LIVE 6.10 FADE - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: 10 Fehlausbruch-Fades (0,75 %, Regime-Waechter PF der letzten 30 > 1,2, Stop >= 6 Spreads,
-;   keine Fades an US-Feiertagen) + RSI21 0,50 % + NAS-Noise 0,35 %, DEADBAND-Einstiege aus, Serien-Stopp nach 3 Verlusten,
-;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte aller Module (3 gueltige Tage fehlen, Vorlauf >= 0,3 R).
-; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
+; DEADBAND LIVE 6.00 FADE - Echtbetrieb = Auspraegung ERTRAG, GFT Instant Premium 10k (Konto ab 02.09.2026). Alle Werte = Voreinstellung des EA.
+; 6.00: 10 Fehlausbruch-Fades (0,75 % je Trade, Regime-Waechter PF der letzten 30 Signale > 1,2, Stop >= 6 Spreads, keine Fades an
+;   US-Feiertagen) + RSI21 0,50 % + NAS-Noise 0,35 %, DEADBAND-Einstiege aus (DbAktiv=false), Serien-Stopp nach 3 Verlusten,
+;   Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 % (MinProfitPct=3).
+; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $, inkl. Schutzfilter):
 ;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   6.10 Ertrag (Echtbetrieb): 7,56 / 0,00 / 2142 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
-;   6.10 Sicher:               5,89 / 0,00 / 1601 $ / 0,06 / 4,9/10
-; Fremddaten 2006-21 (anderes Marktregime): Ertrag 2,05/0,40/515 $, Sicher 0,56/0,33/104 $.
+;   5.10 (Ausz >= 3 %): 5,51 / 0,17 / 1517 $ / 6,15 / 9,4/13
+;   6.00 Sicher:        5,89 / 0,00 / 1601 $ / 0,06 / 4,9/10
+;   6.00 Ertrag:        7,20 / 0,00 / 2158 $ / 0,49 / 6,4/10
+; Fremddaten 2006-21 (anderes Marktregime, Fades ohne Vorteil): Sicher 0,56/0,33/104 $, Ertrag 2,00/0,43/524 $.
+; Das Ziel 10 Auszahlungen/J + 0 Busts + nie > 5 Verluste in Folge erreicht keine gepruefte Variante robust.
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
-; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
-; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.
-; Zurueck auf 6.00: rollback_6.00/. Bericht: DEADBAND_LIVE4_610_Bericht.md.
+; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart, kein zweites Konto mit Gegenposition (Hedging-Verbot).
+; Zurueck auf 5.10: rollback_5.10/ (mq5 + set). Bericht: DEADBAND_LIVE4_600_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -185,11 +186,10 @@ SwapVorsorgePct=0.80
 SwapVorsorgeMin=10
 IdeeMaxRisikoPct=0.90
 NurAufPcPfad=
-AbschlussLetzte=3
-AbschlussMinR=0.3
+AbschlussLetzte=2
+AbschlussMinR=0.5
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
-AbschlussModule=15
 SerienStopp=3
 SerienPauseTage=0
 DbAktiv=false

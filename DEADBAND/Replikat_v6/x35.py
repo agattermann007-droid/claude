@@ -20,7 +20,7 @@ for e in sd_txt.split(";"):
     if float(hh) * 60 < 955 + 5:
         FREI.add(int(np.datetime64(dstr.replace(".", "-"), "D").astype(np.int64)))
 MINSP = 6.0
-target = sys.argv[1]
+target = sys.argv[1] if len(sys.argv) > 1 and __name__ == "__main__" else "gft"
 
 
 def spread_at(dataset, sym, t_entry):
@@ -50,34 +50,35 @@ CFG = {
     "6.00 Sicher (Review)": (dict(B, db_on=0, r21_on=0, nz_on=0, gesamtbudget=0.9, idea_cap=0.9), [0.75] * 10),
     "6.00 Ertrag (Review)": (dict(B, db_on=0, r21_risk=0.5, nz_risk=0.35, cool_n=3, gesamtbudget=0.9, idea_cap=0.9), [0.75] * 10),
 }
-if target == "ext":
-    V._MK = E.Market(D=pickle.load(open(os.path.join(P.OUT, "DXfull.pkl"), "rb")), S=pickle.load(open(os.path.join(P.OUT, "sig5_ext.pkl"), "rb")))
-res = {}
-blks = blocks_filtered(F10, target)
-if target == "ext":
-    V._MK = E.Market(D=pickle.load(open(os.path.join(P.OUT, "DXfull.pkl"), "rb")), S=pickle.load(open(os.path.join(P.OUT, "sig5_ext.pkl"), "rb")))
-for lbl, (kw, risks) in CFG.items():
-    GP = E.gparams([dict(on=1, risk=r, maxtrades=1) for r in risks])
-    V.set_generic(blks, GP)
-    Pv = E.params(**dict(r6.SAFE, **kw))
+if __name__ == "__main__":
     if target == "ext":
-        r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=9, seeds=(0, 1, 2, 3), warm="2006-09-01", end="2021-12-31")
-    else:
-        r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(16)), skip=0.08)
-    res[lbl] = {k: v for k, v in r["mean"].items()}
-    print(V.line(f"{target} {lbl}", r["mean"]), flush=True)
-    if target != "ext":
-        m = V.mk()
-        jobs = [(Pv, a, b, s, 0.08, 0.3, GP) for (a, b) in V.starts(m, 250, 3) for s in range(16)]
-        with ProcessPoolExecutor(4) as ex:
-            outs = list(ex.map(V._job, jobs, chunksize=32))
-        by = {}
-        for j, o in zip(jobs, outs):
-            y = str(np.datetime64(int(m.days[j[1]]), "D"))[:4]
-            by.setdefault(y, []).append(o)
-        res[lbl]["jahre"] = {}
-        for y, rows in sorted(by.items()):
-            a = V.agg(rows)
-            res[lbl]["jahre"][y] = {k: a[k] for k in ("pay", "paymean", "bust", "net", "s6", "mx", "mxmax")}
-            print(f"     Start {y}: Ausz {a['pay']:5.2f} Ø{a['paymean']:4.0f}$ Bust {a['bust']:5.3f} Netto {a['net']:5.0f} S6 {a['s6']:4.2f} maxS {a['mx']:4.1f}/{a['mxmax']:.0f} n={a['n']}", flush=True)
-json.dump(res, open(f"x35_{target}.json", "w"), indent=1, default=float)
+        V._MK = E.Market(D=pickle.load(open(os.path.join(P.OUT, "DXfull.pkl"), "rb")), S=pickle.load(open(os.path.join(P.OUT, "sig5_ext.pkl"), "rb")))
+    res = {}
+    blks = blocks_filtered(F10, target)
+    if target == "ext":
+        V._MK = E.Market(D=pickle.load(open(os.path.join(P.OUT, "DXfull.pkl"), "rb")), S=pickle.load(open(os.path.join(P.OUT, "sig5_ext.pkl"), "rb")))
+    for lbl, (kw, risks) in CFG.items():
+        GP = E.gparams([dict(on=1, risk=r, maxtrades=1) for r in risks])
+        V.set_generic(blks, GP)
+        Pv = E.params(**dict(r6.SAFE, **kw))
+        if target == "ext":
+            r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=9, seeds=(0, 1, 2, 3), warm="2006-09-01", end="2021-12-31")
+        else:
+            r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(16)), skip=0.08)
+        res[lbl] = {k: v for k, v in r["mean"].items()}
+        print(V.line(f"{target} {lbl}", r["mean"]), flush=True)
+        if target != "ext":
+            m = V.mk()
+            jobs = [(Pv, a, b, s, 0.08, 0.3, GP) for (a, b) in V.starts(m, 250, 3) for s in range(16)]
+            with ProcessPoolExecutor(4) as ex:
+                outs = list(ex.map(V._job, jobs, chunksize=32))
+            by = {}
+            for j, o in zip(jobs, outs):
+                y = str(np.datetime64(int(m.days[j[1]]), "D"))[:4]
+                by.setdefault(y, []).append(o)
+            res[lbl]["jahre"] = {}
+            for y, rows in sorted(by.items()):
+                a = V.agg(rows)
+                res[lbl]["jahre"][y] = {k: a[k] for k in ("pay", "paymean", "bust", "net", "s6", "mx", "mxmax")}
+                print(f"     Start {y}: Ausz {a['pay']:5.2f} Ø{a['paymean']:4.0f}$ Bust {a['bust']:5.3f} Netto {a['net']:5.0f} S6 {a['s6']:4.2f} maxS {a['mx']:4.1f}/{a['mxmax']:.0f} n={a['n']}", flush=True)
+    json.dump(res, open(f"x35_{target}.json", "w"), indent=1, default=float)

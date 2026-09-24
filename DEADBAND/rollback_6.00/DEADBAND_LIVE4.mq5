@@ -1,28 +1,5 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND LIVE 4  -  Build 6.10 FADE, 24.09.2026                 |
-//|  BUILD 6.10: ECHTBETRIEB - ERNTE ALLER MODULE, KONTOERKENNUNG    |
-//|  Handelslogik = 6.00, dazu:                                      |
-//|  1) Abschluss-Ernte fuer ALLE Module (AbschlussModule 15):       |
-//|     fehlen nur noch <= 3 gueltige Tage, wird offener Gewinn      |
-//|     (Vorlauf >= 0,3 R) so weit realisiert, dass der Tag gueltig  |
-//|     wird. Bis 6.00 nur DEADBAND - bei DbAktiv=false wirkungslos. |
-//|  2) Fade-Ziel erst ab der Kerze nach der Einstiegskerze (wie im  |
-//|     getesteten Replikat), Kommission Hin- und Rueckweg.          |
-//|  3) Kontoerkennung beim Laden: Tagesreferenz 17:00 NY wird nach- |
-//|     gerechnet, wenn der EA nicht lief; Equity-Spitze enger (je   |
-//|     Position nur offene Kerzen, weiter obere Schranke); Warten   |
-//|     auf die vollstaendige Historie; Kontozustand ins Journal und |
-//|     nach MQL5/Files/DEADBAND4_Konto_<Login>.txt.                 |
-//|  Replikat GFT-Daten 2022-26 (16 Stoerungen), Ausz / Busts /      |
-//|  Netto je Jahr, Serien >= 6 je Jahr, laengste Serie Mittel/max:  |
-//|    6.00 Ertrag:        7,20 / 0,00 / 2158 / 0,49 / 6,4/10        |
-//|    6.10 Ertrag (Set):  7,56 / 0,00 / 2142 / 0,36 / 5,9/10        |
-//|    6.10 Sicher:        5,89 / 0,00 / 1601 / 0,06 / 4,9/10        |
-//|  Startjahr 2022: Ertrag 10,1 Auszahlungen. Fremddaten 2006-21:   |
-//|  Ertrag 2,05/0,40/515, Sicher 0,56/0,33/104.                     |
-//|  Bericht DEADBAND_LIVE4_610_Bericht.md. Zurueck: rollback_6.00/. |
-//|                                                                  |
-//|  Build 6.00 FADE, 24.09.2026                                     |
+//|  DEADBAND LIVE 4  -  Build 6.00 FADE, 24.09.2026                 |
 //|  BUILD 6.00: FEHLAUSBRUCH-FADES MIT REGIME-WAECHTER              |
 //|  Ziel: Auszahlungen >= 3 % (300 $ auf 10k), mehr Ertrag, keine   |
 //|  zusaetzlichen Busts, kurze Verlustserien.                       |
@@ -398,7 +375,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "6.10"
+#property version   "6.00"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -596,11 +573,10 @@ input int    SwapVorsorgeMin  = 10;     // ... in den letzten X Minuten vor dem 
 input double IdeeMaxRisikoPct = 0.90;   // Summe offener Stop-Risiken je Idee (Symbol + Richtung, alle Module) in % vom Startsaldo (0 = aus; 6.00: 0,9; 5.10: 1,25)
 input string NurAufPcPfad     = "";     // nicht leer: Start nur, wenn der Terminal-Datenpfad diesen Text enthaelt (z. B. Windows-Benutzername des Heim-PCs) - Schutz gegen Start auf Server/VPS
 input group             "=== 5.10: Auszahlungstakt und Serienschutz ==="
-input int    AbschlussLetzte  = 3;      // fehlen nur noch <= X gueltige Tage: offenen Gewinn jederzeit so weit realisieren, dass heute gueltig wird (0 = aus, >= 5 = immer; 6.10: 3, bis 6.00: 2)
-input double AbschlussMinR    = 0.3;    // ... nur Positionen, deren bester Kurs >= X R erreicht hat (6.10: 0,3; bis 6.00: 0,5)
+input int    AbschlussLetzte  = 2;      // fehlen nur noch <= X gueltige Tage: DEADBAND-Gewinn jederzeit so weit realisieren, dass heute gueltig wird (0 = aus)
+input double AbschlussMinR    = 0.5;    // ... nur Positionen, deren bester Kurs >= X R erreicht hat
 input double AbschlussAbNY    = 0.0;    // ... Fenster ab X NY
 input double AbschlussBisNY   = 17.0;   // ... bis X NY (Tageswechsel)
-input int    AbschlussModule  = 15;     // 6.10: ... aus diesen Modulen (Summe): 1 DEADBAND, 2 RSI21, 4 Noise, 8 Fades (15 = alle; bis 6.00: 1)
 input int    SerienStopp      = 3;      // nach N Verlusttrades in Folge (alle Module, Noise-Signal = 1 Trade) keine neuen Einstiege bis 17:00 NY (0 = aus; 6.00: 3, 5.10: 4)
 input int    SerienPauseTage  = 0;      // ... zusaetzlich X weitere Prop-Tage Pause (0 = nur Rest des Tages)
 input group             "=== 6.00: Fade-Module (Fehlausbruch einer Sitzungs-Range, Regime-Waechter) ==="
@@ -688,7 +664,6 @@ datetime kCycleStart = 0;            // erster Trade nach der letzten Auszahlung
 int      kValidDays = 0, kTradeDays = 0;
 double   kCycleReal = 0.0;           // realisiert seit Zyklusbeginn (abgeschlossene Tage + heute)
 double   kTodayReal = 0.0;
-long     kTagIdx[]; double kTagErg[]; int kTagN = 0;   // 6.10: realisiert je Prop-Tag im Zyklus (Kontobericht)
 double   kPeakEq = 0.0;              // Equity-Spitze seit letzter Auszahlung (mit Aufschlag)
 double   kDayStartBal = 0.0;         // Saldo um 17:00 NY
 long     kDayIdx = -1;               // laufender Prop-Tag
@@ -940,8 +915,7 @@ int OnInit()
                (IdeeMaxRisikoPct > 0.0 ? StringFormat("%.2f %%", IdeeMaxRisikoPct) : "aus"), (StringLen(NurAufPcPfad) > 0 ? "\"" + NurAufPcPfad + "\"" : "aus"));
    PrintFormat("DEADBAND4: 5.10 Auszahlungstakt: DEADBAND Teilverkauf %.0f %% bei %.2f R, Stop auf +%.2f R | Abschluss-Ernte %s | Gewinn-Ernte Rueckgang %.2f R | Serien-Stopp %s | Noise %.2f %%",
                Tp1F*100.0, Tp1R, BeAfterT1R,
-               (AbschlussLetzte > 0 ? StringFormat("ab %d fehlenden gueltigen Tagen, Vorlauf >= %.2f R, %s-%s NY, Module%s%s%s%s", AbschlussLetzte, AbschlussMinR, NYStundeText(AbschlussAbNY), NYStundeText(AbschlussBisNY),
-                                                    ((AbschlussModule & 1) != 0 ? " DEADBAND" : ""), ((AbschlussModule & 2) != 0 ? " RSI21" : ""), ((AbschlussModule & 4) != 0 ? " Noise" : ""), ((AbschlussModule & 8) != 0 ? " Fades" : "")) : "aus"),
+               (AbschlussLetzte > 0 ? StringFormat("ab %d fehlenden gueltigen Tagen, Vorlauf >= %.2f R, %s-%s NY", AbschlussLetzte, AbschlussMinR, NYStundeText(AbschlussAbNY), NYStundeText(AbschlussBisNY)) : "aus"),
                GeRueckgangR, (SerienStopp > 0 ? StringFormat("nach %d Verlusten in Folge bis 17:00 NY%s", SerienStopp, (SerienPauseTage > 0 ? StringFormat(" + %d Tag(e)", SerienPauseTage) : "")) : "aus"), NzRiskPct);
    NzInitMeldung();                                                     // 5.00
    FadeInitMeldung();                                                   // 6.00
@@ -1340,18 +1314,6 @@ bool KontoStart()
       Print("DEADBAND4: Deal-Historie nach 2 min noch leer - Rueckfall auf den Saldo (StartBalanceOverride pruefen!)");
      }
    RekonstruiereKonto(true);
-   // 6.10: Historie unvollstaendig? Ohne Einzahlungs-Deal (und ohne Auszahlung, nach der der Startsaldo sicher ist)
-   // bis 5 min warten, bevor der Startsaldo aus dem Saldo abgeleitet wird - sonst stimmen Zyklus und gueltige Tage nicht.
-   if(!MQLInfoInteger(MQL_TESTER) && StartBalanceOverride <= 0.0 && kAccountFrom == 0 && kLastPayout == 0)
-     {
-      if(kWarteMs == 0) kWarteMs = GetTickCount();
-      if(GetTickCount() - kWarteMs < 300000)
-        {
-         static uint hinweis = 0;
-         if(hinweis == 0 || GetTickCount() - hinweis > 60000) { hinweis = GetTickCount(); Print("DEADBAND4: Einzahlungs-Deal noch nicht in der Historie - warte auf die vollstaendige Historie (bis 5 min), keine Einstiege"); }
-         return false;
-        }
-     }
    return (kStart > 0.0);
   }
 
@@ -1380,46 +1342,7 @@ void TagesRefLaden()
    kDayRefPlus = 0.0; kRefTag = kDayIdx;
    if(MQLInfoInteger(MQL_TESTER)) return;
    if(GlobalVariableCheck(KontoGv("DAYIDX")) && (long)GlobalVariableGet(KontoGv("DAYIDX")) == kDayIdx)
-     { kDayRefPlus = MathMax(0.0, GlobalVariableGet(KontoGv("DAYPLUS"))); return; }
-   // 6.10: Der EA lief um 17:00 NY nicht - Buchgewinn zum Tageswechsel aus Deals und M5-Kursen nachrechnen
-   kDayRefPlus = MathMax(0.0, BuchZumZeitpunkt(PropDayStart(kDayIdx)));
-   GlobalVariableSet(KontoGv("DAYIDX"), (double)kDayIdx); GlobalVariableSet(KontoGv("DAYPLUS"), kDayRefPlus); GlobalVariablesFlush();
-   if(kDayRefPlus > 0.0) PrintFormat("DEADBAND4: Tagesreferenz 17:00 NY nachgerechnet: Saldo + Buchgewinn %.2f (EA lief zum Tageswechsel nicht)", kDayRefPlus);
-  }
-
-// 6.10: Buchergebnis aller gezaehlten Positionen zum Zeitpunkt tb (Serverzeit) aus der Deal-Historie und den M5-Kursen:
-// Volumen offen vor tb, Kurs = Schluss der letzten M5-Kerze vor tb (Long zum Bid, Short zum Ask = Bid + Spread der Kerze).
-double BuchZumZeitpunkt(const datetime tb)
-  {
-   long ids[]; double vol[], px[]; int dir[]; string sy[]; int np = 0;
-   for(int i=0;i<nD;i++)
-     {
-      if(!IstHandel(i) || !ZaehltDeal(i) || D[i].time >= tb) continue;
-      int j=-1; for(int q=0;q<np;q++) if(ids[q]==D[i].posid) { j=q; break; }
-      if(D[i].entry == DEAL_ENTRY_IN)
-        {
-         if(j < 0)
-           {
-            ArrayResize(ids,np+1); ArrayResize(vol,np+1); ArrayResize(px,np+1); ArrayResize(dir,np+1); ArrayResize(sy,np+1);
-            ids[np] = D[i].posid; vol[np] = 0.0; px[np] = D[i].price; dir[np] = (D[i].type==DEAL_TYPE_BUY ? 1 : -1); sy[np] = D[i].sym; j = np; np++;
-           }
-         else px[j] = (px[j]*vol[j] + D[i].price*D[i].volume)/MathMax(vol[j] + D[i].volume, 1e-9);
-         vol[j] += D[i].volume;
-        }
-      else if(j >= 0) vol[j] -= D[i].volume;
-     }
-   double f = 0.0;
-   for(int q=0;q<np;q++)
-     {
-      if(vol[q] <= 1e-9) continue;
-      int sh = iBarShift(sy[q], PERIOD_M5, tb - 1, false);
-      MqlRates r[];
-      if(sh < 0 || CopyRates(sy[q], PERIOD_M5, sh, 1, r) != 1) continue;
-      double pt = SymbolInfoDouble(sy[q], SYMBOL_POINT);
-      double kurs = (dir[q] > 0 ? r[0].close : r[0].close + r[0].spread*pt);
-      f += (kurs - px[q])*dir[q]*vol[q]*MoneyPerPricePerLot(sy[q]);
-     }
-   return f;
+      kDayRefPlus = MathMax(0.0, GlobalVariableGet(KontoGv("DAYPLUS")));
   }
 
 // Tageszaehler DEADBAND ueberlebt einen Neustart
@@ -1974,7 +1897,7 @@ void RekonstruiereKonto(bool mitBoden)
          if(IstHandel(i) && D[i].entry==DEAL_ENTRY_IN && D[i].time > von && ZaehltDeal(i)) { kCycleStart = D[i].time; break; }
    // 3) realisiert je Prop-Tag seit Zyklusbeginn (Positionsgesamtergebnis am Tag des Ausstiegs)
    long today = PropDayIndex(now);
-   kValidDays = 0; kTradeDays = 0; kCycleReal = 0.0; kTodayReal = 0.0; kTagN = 0;
+   kValidDays = 0; kTradeDays = 0; kCycleReal = 0.0; kTodayReal = 0.0;
    if(kCycleStart > 0)
      {
       long tage[]; double erg[]; int nt = 0;
@@ -1998,8 +1921,6 @@ void RekonstruiereKonto(bool mitBoden)
          erg[k] += p;
         }
       double schwelle = kStart*ValidDayPct/100.0;
-      ArrayResize(kTagIdx, nt); ArrayResize(kTagErg, nt); kTagN = nt;
-      for(int i=0;i<nt;i++) { kTagIdx[i] = tage[i]; kTagErg[i] = erg[i]; }
       for(int i=0;i<nt;i++)
         {
          kCycleReal += erg[i];
@@ -2119,21 +2040,17 @@ string SerienText()
 // Equity-Spitze: Saldo-Pfad plus beste Kurse aller Positionen je M5-Kerze seit 'von'
 double RekonstruierePeak(datetime von)
   {
-   // 6.10: obere Schranke der Equity je M5-Kerze, aber enger als bis 6.00: je Position nur die Kerzen, in denen sie offen war,
-   // mit dem in der Kerze offenen Volumen und dem bestmoeglichen Ergebnis der Position in dieser Kerze (auch negativ).
-   // Saldo zu Kerzenbeginn + Summe der Bestwerte >= Equity zu jedem Zeitpunkt der Kerze -> der Boden liegt nie zu tief.
    datetime now = TimeCurrent();
    double bal0 = AccountInfoDouble(ACCOUNT_BALANCE);
    // Saldo VOR allen Deals ab 'von' (rueckwaerts abziehen)
    for(int i=nD-1;i>=0;i--) { if(D[i].time <= von) break; bal0 -= DealGeld(i); }
+   // DealGeld enthaelt bei Saldo-Deals den Betrag selbst (profit), also korrekt abgezogen.
    double peak = bal0;
    datetime t0 = von; if(t0 <= 0) t0 = now - 86400;
-   t0 = (datetime)((long)t0 - (long)t0 % 300);
    long nGrid = (now - t0)/300 + 2;
-   if(nGrid > 120000) { t0 = (datetime)((long)(now - 120000*300) - (long)(now - 120000*300) % 300); nGrid = 120002; }
+   if(nGrid > 120000) { t0 = now - 120000*300; nGrid = 120002; }
    double fav[]; ArrayResize(fav, (int)nGrid); ArrayInitialize(fav, 0.0);
-   bool   hat[]; ArrayResize(hat, (int)nGrid); ArrayInitialize(hat, false);
-   // Positionen aus Deals (ab von): Einstieg, Durchschnittskurs, Volumenverlauf
+   // Positionen aus Deals (ab von) plus offene
    long ids[]; datetime tin[], tout[]; int dir[]; double vol[], px[]; string sy[]; int np=0;
    for(int i=0;i<nD;i++)
      {
@@ -2150,44 +2067,34 @@ double RekonstruierePeak(datetime von)
            }
          else { px[j] = (px[j]*vol[j] + D[i].price*D[i].volume)/(vol[j]+D[i].volume); vol[j] += D[i].volume; }
         }
-      else if(j>=0) tout[j] = D[i].time;     // letzter (Teil-)Ausstieg
+      else if(j>=0) tout[j] = D[i].time;     // (Teil-)Ausstieg: Volumen bleibt als Obergrenze stehen
      }
    for(int q=0;q<np;q++)
      {
       double mpp = MoneyPerPricePerLot(sy[q]);
-      // Volumen, das zu Beginn jeder Kerze noch offen war (Teilschliessungen verringern es erst ab der Kerze danach)
-      double outV[]; datetime outT[]; int no = 0;
-      for(int i=0;i<nD;i++)
-         if(IstHandel(i) && D[i].posid == ids[q] && D[i].entry != DEAL_ENTRY_IN) { ArrayResize(outV,no+1); ArrayResize(outT,no+1); outV[no]=D[i].volume; outT[no]=D[i].time; no++; }
       MqlRates r[];
-      int n = CopyRates(sy[q], PERIOD_M5, (datetime)((long)tin[q] - (long)tin[q] % 300), tout[q], r);
-      if(n <= 0) { peakOk = false; PrintFormat("DEADBAND4: M5-Kurse %s fuer die Equity-Spitze nicht verfuegbar (Fehler %d) - wird nachgeholt, bis dahin kleinere Groesse", sy[q], GetLastError()); continue; }
+      int n = CopyRates(sy[q], PERIOD_M5, tin[q]-300, tout[q]+300, r);
+      if(n <= 0) { peakOk = false; PrintFormat("DEADBAND4: M5-Kurse %s fuer die Equity-Spitze nicht verfuegbar (Fehler %d) - wird nachgeholt, bis dahin kleinere Groesse", sy[q], GetLastError()); }
       for(int i=0;i<n;i++)
         {
-         if(r[i].time + 300 <= tin[q] || r[i].time > tout[q]) continue;          // Position in dieser Kerze nicht offen
          long g = (r[i].time - t0)/300;
          if(g < 0 || g >= nGrid) continue;
-         double v = vol[q];
-         for(int o=0;o<no;o++) if(outT[o] < r[i].time) v -= outV[o];             // vor Kerzenbeginn geschlossen
-         if(v <= 1e-9) continue;
-         double f = (dir[q]>0 ? (r[i].high - px[q]) : (px[q] - r[i].low)) * v * mpp;   // Short zum Bid-Tief: obere Schranke
-         if(r[i].time < tin[q] && f < 0.0) f = 0.0;                              // Einstiegskerze: vor dem Einstieg gab es die Position noch nicht
-         fav[(int)g] += f; hat[(int)g] = true;
+         double f = (dir[q]>0 ? (r[i].high - px[q]) : (px[q] - r[i].low)) * vol[q] * mpp;
+         if(f > 0.0) fav[(int)g] += f;
         }
      }
-   // Saldo-Pfad ueber das Gitter (Saldo zu Kerzenbeginn)
+   // Saldo-Pfad ueber das Gitter
    double bal = bal0; int di = 0;
    while(di < nD && D[di].time <= von) di++;
    for(long g=0; g<nGrid; g++)
      {
       datetime tg = t0 + (datetime)(g*300);
       while(di < nD && D[di].time <= tg) { bal += DealGeld(di); di++; }
-      double e = bal + (hat[(int)g] ? fav[(int)g] : 0.0);
+      double e = bal + fav[(int)g];
       if(e > peak) peak = e;
      }
    return peak;
   }
-
 
 //+------------------------------------------------------------------+
 //| Zyklusstand / Modus                                               |
@@ -2260,53 +2167,6 @@ void KontoMeldung(string anlass)
                bal, eq, bal-kStart, kMinProfit,
                (kCycleStart>0 ? TimeToString(kCycleStart, TIME_DATE) : "noch kein Trade"), (int)zykTag, CycleDays,
                GueltigeTageMitHeute(), NeedValidDays, boden, PufferPct(), modus);
-   // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
-   string z[]; int nz = 0;
-   ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND LIVE 6.10 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
-                          AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
-   z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
-                          (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
-                          (kPayouts < PayoutCapCount ? StringFormat("%.0f %% (%.2f)", PayoutCapPct, kStart*PayoutCapPct/100.0) : "keiner"));
-   z[nz++] = StringFormat("Saldo %.2f | Equity %.2f | Gewinn %.2f | Mindestgewinn fuer die Auszahlung %.2f (%.1f %%) | auszahlbar jetzt %.2f", bal, eq, bal-kStart, kMinProfit, kStart > 0.0 ? kMinProfit/kStart*100.0 : 0.0, AuszahlbarJetzt());
-   z[nz++] = StringFormat("Zyklus seit %s (%s) | Zyklustag %d von mind. %d | gueltige Tage %d/%d (Schwelle %.2f), Handelstage %d | realisiert im Zyklus %.2f, heute %.2f",
-                          (kCycleStart>0 ? TimeToString(kCycleStart, TIME_DATE|TIME_MINUTES) : "noch kein Trade"), (StringLen(CycleStartOverride) >= 8 ? "CycleStartOverride" : "erster Trade nach der letzten Auszahlung"),
-                          (int)zykTag, CycleDays, GueltigeTageMitHeute(), NeedValidDays, kStart*ValidDayPct/100.0, kTradeDays, kCycleReal, kTodayReal);
-   string tl = "Tage im Zyklus (Prop-Tag ab 17:00 NY, realisiert inkl. Swap/Kommission):";
-   for(int i=0;i<kTagN;i++)
-      tl += StringFormat(" %s %+.2f%s", TimeToString(PropDayStart(kTagIdx[i]), TIME_DATE), kTagErg[i],
-                         (kTagErg[i] >= kStart*ValidDayPct/100.0 ? (kTagIdx[i] == PropDayIndex(TimeCurrent()) ? "*heute" : "*") : ""));
-   if(kTagN == 0) tl += " keine";
-   z[nz++] = tl;
-   z[nz++] = StringFormat("Equity-Spitze %.2f (%s) | Boden %.2f | Puffer %.2f (%.2f %%) | Groessenfaktor %.2f", kPeakEq,
-                          (FloorOverride > 0.0 ? "FloorOverride" : (peakOk ? "rekonstruiert + Sicherheitsaufschlag" : "UNVOLLSTAENDIG - wird nachgeholt")),
-                          boden, eq - boden, PufferPct(), DDFaktor(PufferPct())*(eq < kStart ? BelowStartMult : 1.0));
-   z[nz++] = StringFormat("Tagesstart (17:00 NY) Saldo %.2f + Buchgewinn %.2f = Referenz %.2f | Tagesverlust-Grenze %.2f (Bremse %.2f)", kDayStartBal, kDayRefPlus, kDayStartBal + kDayRefPlus,
-                          -MathMin(kDayStartBal + kDayRefPlus, kStart)*RuleDayLossPct/100.0, -kStart*DayStopPct/100.0);
-   z[nz++] = StringFormat("Buchverlust Verlierer %.2f (Firmengrenze %.2f, Bremse %.2f) | offenes Stop-Risiko %.2f von %.2f", FloatingVerlierer(CountForeignPositions),
-                          -FloatBasis()*kRuleFloatPct/100.0, -FloatBasis()*FloatStopPct/100.0, OffenesRisiko(0), kStart*GesamtBudgetPct/100.0);
-   int nPos = 0;
-   for(int i=PositionsTotal()-1;i>=0 && nz < 60;i--)
-     {
-      ulong tk = PositionGetTicket(i); if(tk == 0) continue;
-      long mg = PositionGetInteger(POSITION_MAGIC);
-      string modul = IsDbMagic(mg) ? "DEADBAND" : (IsR21Magic(mg) ? "RSI21" : (IsNzMagic(mg) ? "Noise" : (IsFadeMagic(mg) ? "Fade " + PositionGetString(POSITION_COMMENT) : "FREMD")));
-      z[nz++] = StringFormat("Position #%I64u %s %s %.2f Lot zu %.5g, Stop %.5g, Ziel %.5g, seit %s, Ergebnis %.2f (%s)", tk, PositionGetString(POSITION_SYMBOL),
-                             (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? "LONG" : "SHORT"), PositionGetDouble(POSITION_VOLUME), PositionGetDouble(POSITION_PRICE_OPEN),
-                             PositionGetDouble(POSITION_SL), PositionGetDouble(POSITION_TP), TimeToString((datetime)PositionGetInteger(POSITION_TIME), TIME_DATE|TIME_MINUTES),
-                             PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP), modul);
-      nPos++;
-     }
-   if(nPos == 0) z[nz++] = "keine offenen Positionen";
-   z[nz++] = StringFormat("%s | Modus: %s | NY-Versatz %d h | Kontodaten %s", SerienText(), modus, nyOff, (kBereit ? "vollstaendig" : "unvollstaendig"));
-   ArrayResize(z, nz);
-   for(int i=0;i<nz;i++) Print("DEADBAND4:   ", z[i]);
-   if(!MQLInfoInteger(MQL_TESTER))
-     {
-      string fn = StringFormat("DEADBAND4_Konto_%I64d.txt", AccountInfoInteger(ACCOUNT_LOGIN));
-      int fh = FileOpen(fn, FILE_WRITE|FILE_TXT|FILE_ANSI);
-      if(fh != INVALID_HANDLE) { for(int i=0;i<nz;i++) FileWriteString(fh, z[i] + "\r\n"); FileClose(fh); PrintFormat("DEADBAND4: Kontozustand gespeichert in MQL5\\Files\\%s", fn); }
-     }
    if(UsePush && !MQLInfoInteger(MQL_TESTER))
      {
       string kurz = StringFormat("DEADBAND4 KONTO ERKANNT (%s): Start %.0f, Saldo %.0f, Zyklus Tag %d/%d, gueltig %d/%d, Puffer %.1f %%, %s",
@@ -2314,7 +2174,6 @@ void KontoMeldung(string anlass)
       if(!SendNotification(kurz)) Print("DEADBAND4: Push nicht gesendet (MetaQuotes ID pruefen), Fehler ", GetLastError());
      }
   }
-
 
 // 4.90: Schliessversuche alle 0,5 s (Wanduhr), Meldung hoechstens je Minute
 void Notbremse(string grund)
@@ -2501,8 +2360,7 @@ void Durchlauf()
       double flt2 = FloatingPnlDb();                                     // 4.40: Bedingung nur auf DEADBAND-Floating
       if(flt2 > 0.0) HarvestPruefen(today, flt2);
      }
-   MfeAktualisieren();                                                 // 6.10: Kursvorlauf der Noise-/Fade-Positionen (Abschluss-Ernte)
-   if(AbschlussLetzte > 0 && !dayLocked) AbschlussErntePruefen();      // 5.10: Auszahlungstakt (letzte gueltige Tage); 6.10 alle Module
+   if(AbschlussLetzte > 0 && !dayLocked) AbschlussErntePruefen();      // 5.10: Auszahlungstakt (letzte gueltige Tage)
    if(GeAktiv && kMode==0) GewinnErntePruefen();
    ZyklusPanel();
   }
@@ -2617,7 +2475,6 @@ void HarvestPruefen(long today, double flt)
 //|  realisiert (Teilverkauf), dass der Tag gueltig wird - wie die    |
 //|  Tagesernte, aber ohne 16:00-Fenster und ohne 2-R-Vorlauf.        |
 //+------------------------------------------------------------------+
-datetime abFehl[MAXSYM];                  // 6.10: letzte abgelehnte Ernte je Symbol (Positionen ohne Platz)
 void AbschlussErntePruefen()
   {
    if(AbschlussLetzte <= 0 || kMode > 1 || kCycleStart <= 0 || kStart <= 0.0) return;
@@ -2629,152 +2486,48 @@ void AbschlussErntePruefen()
    double nyH = NYHour(TimeCurrent());
    if(nyH < AbschlussAbNY || nyH >= AbschlussBisNY) return;
    double need = schwelle*(1.0+HarvestMargin);
-   // 6.10: Kandidaten aller gewaehlten Module in der Reihenfolge des Replikats: DEADBAND, RSI21, Noise, Fades
-   ulong ktk[]; double kp[], kmfe[]; int kslot[]; int nk = 0;
    double gain = 0.0;
-   for(int k=0;k<nSlot;k++)                                                 // DEADBAND- und RSI21-Plaetze
+   for(int k=0;k<nSym;k++)                                                  // nur DEADBAND-Plaetze (Replikat: bank_mods 1)
      {
-      bool db = (k < nSym);
-      if(( db && (AbschlussModule & 1) == 0) || (!db && (AbschlussModule & 2) == 0)) continue;
       ulong tk=0; if(!HavePosition(k,tk) || !PositionSelectByTicket(tk)) continue;
       if(!ErnteMoeglich(k)) continue;
-      double p = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP)
-                 - KomRundJeLot(S[k].sym)*PositionGetDouble(POSITION_VOLUME);         // netto: GFT rechnet die Kommission dem Tag an
-      if(p<=0.0 || S[k].mfeR<AbschlussMinR || !GewinnSchlussOk(tk, p)) continue;
-      ArrayResize(ktk,nk+1); ArrayResize(kp,nk+1); ArrayResize(kmfe,nk+1); ArrayResize(kslot,nk+1);
-      ktk[nk] = tk; kp[nk] = p; kmfe[nk] = S[k].mfeR; kslot[nk] = k; nk++; gain += p;
+      double p = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP);
+      if(p>0.0 && S[k].mfeR>=AbschlussMinR && GewinnSchlussOk(tk, p)) gain += p;
      }
-   for(int art=0;art<2;art++)                                               // Noise-Teile, dann Fades (Modul-Reihenfolge)
+   if(real + gain < need) return;
+   for(int k=0;k<nSym;k++)
      {
-      if(art == 0 && (AbschlussModule & 4) == 0) continue;
-      if(art == 1 && (AbschlussModule & 8) == 0) continue;
-      int nMax = (art == 0 ? 8 : MAXFADE);
-      for(int q=0;q<nMax;q++)
-        {
-         long mg = (art == 0 ? NzMagic(q) : FadeMagic(q));
-         for(int i=PositionsTotal()-1;i>=0;i--)
-           {
-            ulong tk = PositionGetTicket(i); if(tk == 0) continue;
-            if(PositionGetInteger(POSITION_MAGIC) != mg) continue;
-            if(art == 0 ? !IsNzMagic(mg) : !IsFadeMagic(mg)) continue;
-            string sy = PositionGetString(POSITION_SYMBOL);
-            if(!SchliessenMoeglich(sy)) continue;
-            double p = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP)
-                       - KomRundJeLot(sy)*PositionGetDouble(POSITION_VOLUME);
-            double mf = PosMfe(tk);
-            if(!PositionSelectByTicket(tk)) continue;
-            if(p<=0.0 || mf<AbschlussMinR || !GewinnSchlussOk(tk, p)) continue;
-            ArrayResize(ktk,nk+1); ArrayResize(kp,nk+1); ArrayResize(kmfe,nk+1); ArrayResize(kslot,nk+1);
-            ktk[nk] = tk; kp[nk] = p; kmfe[nk] = mf; kslot[nk] = -1; nk++; gain += p;
-           }
-        }
-     }
-   if(nk == 0 || real + gain < need) return;
-   for(int c=0;c<nk;c++)
-     {
-      ulong tk = ktk[c];
-      if(!PositionSelectByTicket(tk)) continue;
-      string sy = PositionGetString(POSITION_SYMBOL);
-      double p = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP) - KomRundJeLot(sy)*PositionGetDouble(POSITION_VOLUME);
-      if(p <= 0.0 || !GewinnSchlussOk(tk, p) || !PositionSelectByTicket(tk)) continue;
+      ulong tk=0; if(!HavePosition(k,tk) || !PositionSelectByTicket(tk)) continue;
+      if(!ErnteMoeglich(k)) continue;
+      double p = PositionGetDouble(POSITION_PROFIT)+PositionGetDouble(POSITION_SWAP);
+      if(p<=0.0 || S[k].mfeR<AbschlussMinR) continue;
+      if(!GewinnSchlussOk(tk, p)) continue;
       double vol = PositionGetDouble(POSITION_VOLUME);
-      double stp = SymbolInfoDouble(sy, SYMBOL_VOLUME_STEP); if(stp<=0.0) stp=0.01;
+      double stp = SymbolInfoDouble(S[k].sym, SYMBOL_VOLUME_STEP); if(stp<=0.0) stp=0.01;
       double perLot = p/vol;
       double lots = MathCeil((need-real)/perLot/stp - 1e-9)*stp;
       if(lots < stp) lots = stp;
       if(lots > vol - stp) lots = vol;
-      double mnv = SymbolInfoDouble(sy, SYMBOL_VOLUME_MIN);                  // Teil- und Restvolumen nie unter dem Mindestlot
+      double mnv = SymbolInfoDouble(S[k].sym, SYMBOL_VOLUME_MIN);           // Teil- und Restvolumen nie unter dem Mindestlot
       if(mnv > 0.0 && lots < mnv) lots = mnv;
       if(mnv > 0.0 && vol - lots < mnv - 1e-9) lots = vol;
       lots = NormalizeDouble(lots, 2);
       bool ok = (lots>=vol) ? Schliesse(tk) : SchliesseTeil(tk, lots);
       if(ok)
         {
-         PrintFormat("DEADBAND4 %s: ABSCHLUSS-ERNTE %.2f von %.2f Lot (%s, Vorlauf %.2f R) - Tag realisiert %.2f, Buchgewinn %.2f, Schwelle %.2f, gueltige Tage %d/%d",
-                     sy, lots, vol, (kslot[c] >= 0 ? (kslot[c] < nSym ? "DEADBAND" : "RSI21") : (IsFadeMagic(PositionGetInteger(POSITION_MAGIC)) ? "Fade" : "Noise")),
-                     kmfe[c], real, p, schwelle, GueltigeTageMitHeute(), NeedValidDays);
+         PrintFormat("DEADBAND4 %s: ABSCHLUSS-ERNTE %.2f von %.2f Lot (Vorlauf %.2f R) - Tag realisiert %.2f, Buchgewinn %.2f, Schwelle %.2f, gueltige Tage %d/%d",
+                     S[k].sym, lots, vol, S[k].mfeR, real, p, schwelle, GueltigeTageMitHeute(), NeedValidDays);
          real += p*(lots/vol);
          kTodayReal = real;
          if(real >= need) break;
         }
       else
         {
-         if(kslot[c] >= 0) S[kslot[c]].lastHarvTry = TimeCurrent();
-         else { int si = SymIndex(sy); if(si >= 0) abFehl[si] = TimeCurrent(); }
-         PrintFormat("DEADBAND4 %s: Abschluss-Ernte abgelehnt (%d %s) - 60 s Pause", sy, trade.ResultRetcode(), trade.ResultRetcodeDescription());
+         S[k].lastHarvTry = TimeCurrent();
+         PrintFormat("DEADBAND4 %s: Abschluss-Ernte abgelehnt (%d %s) - 60 s Pause", S[k].sym, trade.ResultRetcode(), trade.ResultRetcodeDescription());
         }
      }
   }
-
-// 6.10: Schliessen im Symbol moeglich (Handel erlaubt, Kurse frisch, nach Ablehnung 60 s Pause) - fuer Positionen ohne Platz
-bool SchliessenMoeglich(const string sy)
-  {
-   int si = SymIndex(sy);
-   if(si >= 0 && abFehl[si] > 0 && TimeCurrent() - abFehl[si] < 60) return false;
-   if(SymbolInfoInteger(sy, SYMBOL_TRADE_MODE) == SYMBOL_TRADE_MODE_DISABLED) return false;
-   datetime lastTick = (datetime)SymbolInfoInteger(sy, SYMBOL_TIME);
-   if(lastTick > 0 && TimeCurrent() - lastTick > 120) return false;
-   return true;
-  }
-
-// 6.10: bester Kursvorlauf (MFE in R) je Position ohne Platz (Noise, Fades), wie p_mfe im Replikat. R = Stop-Abstand beim
-// ersten Sehen; nach einem Neustart aus den M5-Kerzen seit dem Einstieg rekonstruiert. MfeAktualisieren() laeuft je Durchlauf.
-#define MFEMAX 64
-ulong    gMfeTk[MFEMAX]; double gMfeR[MFEMAX], gMfeRd[MFEMAX]; int gMfeN = 0;
-double PosMfe(const ulong tk)
-  {
-   if(!PositionSelectByTicket(tk)) return 0.0;
-   string sy = PositionGetString(POSITION_SYMBOL);
-   double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
-   int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
-   int i = -1;
-   for(int q=0;q<gMfeN;q++) if(gMfeTk[q] == tk) { i = q; break; }
-   if(i < 0)
-     {
-      double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
-      if(rd <= 0.0) return 0.0;
-      if(gMfeN >= MFEMAX) MfeAufraeumen();
-      if(gMfeN >= MFEMAX) return 0.0;
-      double best = 0.0;
-      datetime t0 = (datetime)PositionGetInteger(POSITION_TIME);
-      double pt = SymbolInfoDouble(sy, SYMBOL_POINT);
-      MqlRates r[];
-      int n = (TimeCurrent() - t0 > 60) ? CopyRates(sy, PERIOD_M5, t0, TimeCurrent(), r) : 0;
-      for(int j=0;j<n;j++)
-        {
-         double f = (d > 0) ? (r[j].high - op) : (op - (r[j].low + r[j].spread*pt));
-         if(f/rd > best) best = f/rd;
-        }
-      i = gMfeN; gMfeTk[i] = tk; gMfeRd[i] = rd; gMfeR[i] = best; gMfeN++;
-      if(!PositionSelectByTicket(tk)) return best;
-     }
-   double bid = SymbolInfoDouble(sy, SYMBOL_BID), ask = SymbolInfoDouble(sy, SYMBOL_ASK);
-   if(bid > 0.0 && ask > 0.0)
-     {
-      double fav = (d > 0) ? (bid - op) : (op - ask);
-      if(fav/gMfeRd[i] > gMfeR[i]) gMfeR[i] = fav/gMfeRd[i];
-     }
-   return gMfeR[i];
-  }
-void MfeAufraeumen()
-  {
-   int w = 0;
-   for(int q=0;q<gMfeN;q++)
-      if(PositionSelectByTicket(gMfeTk[q])) { gMfeTk[w] = gMfeTk[q]; gMfeR[w] = gMfeR[q]; gMfeRd[w] = gMfeRd[q]; w++; }
-   gMfeN = w;
-  }
-void MfeAktualisieren()
-  {
-   static datetime aufr = 0;
-   for(int i=PositionsTotal()-1;i>=0;i--)
-     {
-      ulong tk = PositionGetTicket(i); if(tk == 0) continue;
-      long mg = PositionGetInteger(POSITION_MAGIC);
-      if(IsNzMagic(mg) || IsFadeMagic(mg)) PosMfe(tk);
-     }
-   if(TimeCurrent() - aufr >= 60) { aufr = TimeCurrent(); MfeAufraeumen(); }
-  }
-
 
 //+------------------------------------------------------------------+
 //| 4.20 Gewinn-Ernte: nur der Mindestgewinn fehlt zur Auszahlung.     |
@@ -2868,7 +2621,7 @@ void ZyklusPanel()
       txt += StringFormat("=== AUSZAHLUNG BEANTRAGEN: Konto flach, Gewinn %.2f, auszahlbar %.2f, Anteil %.2f ===\n", bal-kStart, AuszahlbarJetzt(), AuszahlbarJetzt()*ProfitSplit);
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    txt += StringFormat(
-      "DEADBAND LIVE 6.10 FADE   %s\n"
+      "DEADBAND LIVE 6.00 FADE   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -4540,32 +4293,7 @@ double FadeKommPx(const int m)
   {
    string s = S[F[m].k].sym;
    double mpp = MoneyPerPricePerLot(s);
-   return (mpp > 0.0 ? KomRundJeLot(s)/mpp : 0.0);                            // 6.10: Einstieg + Ausstieg wie gebucht
-  }
-
-// 6.10: Kommission je Lot fuer Hin- UND Rueckweg aus der Historie (Einstiegs- plus Ausstiegs-Deals); ohne Ausstiege = 2 x Einstieg
-double KomRundJeLot(const string s)
-  {
-   static datetime zeit = 0; static double cache[MAXSYM];
-   int si = SymIndex(s);
-   if(si < 0) return 0.0;
-   if(zeit == 0 || TimeCurrent() - zeit >= 300)
-     {
-      zeit = TimeCurrent();
-      for(int q=0;q<nSym;q++)
-        {
-         double ci = 0.0, vi = 0.0, co = 0.0, vo = 0.0;
-         for(int i=0;i<nD;i++)
-           {
-            if(D[i].sym != S[q].sym || !IstHandel(i) || D[i].volume <= 0.0) continue;
-            if(D[i].entry == DEAL_ENTRY_IN) { ci += -D[i].comm; vi += D[i].volume; }
-            else { co += -D[i].comm; vo += D[i].volume; }
-           }
-         double kin = (vi > 0.0 ? ci/vi : 0.0);
-         cache[q] = kin + (vo > 0.0 ? co/vo : kin);
-        }
-     }
-   return cache[si];
+   return (mpp > 0.0 ? 2.0*KomJeLotCache(s)/mpp : 0.0);                        // Einstieg + Ausstieg (vorsichtig)
   }
 
 void FadeVirtSchluss(const int m, const double px)
@@ -4842,12 +4570,6 @@ void FadeVerwalten(const int m)
    else if(F[m].day == Dt && F[m].ready) goal = (F[m].tgt == 0) ? 0.5*(F[m].hh + F[m].ll) : (d > 0 ? F[m].hh : F[m].ll);   // nach Neustart aus der Historie
    if(goal <= 0.0) return;
    if(now - tOpen < MathMax(FadeZielAbSek, 120)) return;
-   {                                                                           // 6.10: wie im Replikat erst ab der Kerze nach der Einstiegskerze
-    int ps = PeriodSeconds(PERIOD_M5);
-    datetime b0 = iTime(s, PERIOD_M5, 0);
-    datetime naechste = (datetime)((long)tOpen - (long)tOpen % ps + ps);
-    if(b0 <= 0 || b0 < naechste) return;
-   }
    if(now - F[m].tpVersuch < 10) return;
    F[m].tpVersuch = now;
    double bid = SymbolInfoDouble(s, SYMBOL_BID), ask = SymbolInfoDouble(s, SYMBOL_ASK);
