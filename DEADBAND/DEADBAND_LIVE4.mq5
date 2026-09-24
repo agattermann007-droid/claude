@@ -663,6 +663,7 @@ input int    GridMinSchenkel  = 30;         // weniger Schenkel je Richtung: Gri
 input double GridMaxStopChance= 0.70;       // Regel S: kein Fade gegen den Lauf, wenn die Grid-Chance, dass der Lauf bis zum Stop weiterlaeuft, >= X ist (0 = aus)
 input double GridMinReife     = 0.0;        // Regel A: kein Fade gegen einen Lauf, der kleiner ist als das X-Perzentil der Schenkel (0 = aus; getestet 0,33)
 input int    GridVorlaufTage  = 240;        // M5-Historie vor der Fade-Historie fuer die Schenkel-Statistik (Kalendertage; Max. Balken im Chart = Unbegrenzt)
+input bool   GridNurLive      = false;      // true = Grid sperrt nur den Live-Einstieg, der Regime-Waechter zaehlt alle Signale wie 6.10 (weniger Zusatz-Ertrag, Serien wie 6.10)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -5218,12 +5219,14 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    double goal = (F[m].tgt == 0) ? 0.5*(F[m].hh + F[m].ll) : (d > 0 ? F[m].hh : F[m].ll);
    double r = (ent - st)*d, g = (goal - ent)*d;
    if(r <= 0.0 || g <= 0.0) return;
-   if(GridAktiv)                                                                // 6.20: Probability Grid - das Signal entfaellt ganz (auch virtuell, wie im Replikat)
+   bool gridSperre = false;
+   string gg = "";
+   if(GridAktiv && !GridFadeOk(F[m].k, nx.time, d, st, gg))                    // 6.20: Probability Grid
      {
-      string gg = "";
-      if(!GridFadeOk(F[m].k, nx.time, d, st, gg))
+      F[m].nGrid++;
+      gridSperre = true;
+      if(!GridNurLive)                                                          // Signal entfaellt ganz (auch virtuell, wie im Replikat)
         {
-         F[m].nGrid++;
          if(live)
            {
             fadeLetzte = StringFormat("%s %s %s ausgelassen: Grid - %s", FadeName(m), FadeUhr(FadeNyMin(TimeCurrent())), (d > 0 ? "LONG" : "SHORT"), gg);
@@ -5237,7 +5240,12 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    if(live)
      {
       F[m].sigHeute++;
-      FadeLive(m, d, st, goal, xm);
+      if(gridSperre)                                                            // GridNurLive: nur virtuell (Waechter zaehlt es mit)
+        {
+         fadeLetzte = StringFormat("%s %s %s nur virtuell: Grid - %s", FadeName(m), FadeUhr(FadeNyMin(TimeCurrent())), (d > 0 ? "LONG" : "SHORT"), gg);
+         PrintFormat("DEADBAND4 %s FADE %s: %s-Signal nur virtuell - Probability Grid: %s", S[F[m].k].sym, FadeName(m), (d > 0 ? "LONG" : "SHORT"), gg);
+        }
+      else FadeLive(m, d, st, goal, xm);
      }
   }
 
@@ -5603,9 +5611,10 @@ void FadeInitMeldung()
    PrintFormat("DEADBAND4: 6.00 Fade-Module %s | %d Modul(e): %s | Risiko %.2f %% je Trade x Pufferkurve | Waechter PF > %.2f aus den letzten %d virtuellen Signalen (mind. %d) | Historie %d Tage (Max. Balken im Chart %d) | Ziel ab %d s | Stop mind. %.1f Spreads | Zeiten NY = Server - %d h (fest) | Magic %I64d-%I64d | DEADBAND-Einstiege %s",
                (fadeOk ? (FadeAktiv ? "AN" : "aus (nur Verwaltung, virtuell)") : "AUS"), nFade, (StringLen(FadeListe) > 0 ? "eigene Liste: " : "Standard: ") + t, FadeRiskPct, FadeWaechterPF, FadeWaechterN, FadeWaechterMin,
                FadeHistTage, TerminalInfoInteger(TERMINAL_MAXBARS), FadeZielAbSek, FadeMinStopSpreads, NYOffsetHours, FadeMagic(0), FadeMagic(MAXFADE - 1), (DbAktiv ? "AN" : "AUS (DbAktiv=false)"));
-   PrintFormat("DEADBAND4: 6.20 Probability Grid %s | Zeitebene M%d aus M5, Swing Length %d, je Richtung die letzten %d Schenkel (mind. %d) | Regel S: kein Fade gegen den Lauf ab %.0f %% Stop-Chance%s | Regel A: %s | Vorlauf %d Tage vor der Fade-Historie",
+   PrintFormat("DEADBAND4: 6.20 Probability Grid %s | Zeitebene M%d aus M5, Swing Length %d, je Richtung die letzten %d Schenkel (mind. %d) | Regel S: kein Fade gegen den Lauf ab %.0f %% Stop-Chance%s | Regel A: %s | Vorlauf %d Tage vor der Fade-Historie | %s",
                (GridAktiv ? (gridOk ? "AN" : "AUS (Eingaben ungueltig)") : "aus (Fades wie 6.10)"), PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, GridMinSchenkel,
-               GridMaxStopChance*100.0, (GridMaxStopChance > 0.0 ? "" : " (aus)"), (GridMinReife > 0.0 ? StringFormat("Lauf mind. %.0f. Perzentil", GridMinReife*100.0) : "aus"), GridVorlaufTage);
+               GridMaxStopChance*100.0, (GridMaxStopChance > 0.0 ? "" : " (aus)"), (GridMinReife > 0.0 ? StringFormat("Lauf mind. %.0f. Perzentil", GridMinReife*100.0) : "aus"), GridVorlaufTage,
+               (GridNurLive ? "gesperrte Signale zaehlen im Waechter mit (GridNurLive)" : "gesperrte Signale entfallen auch im Waechter"));
    if(fadeOk && nyOff != NYOffsetHours)
       PrintFormat("DEADBAND4: ACHTUNG - gemessener NY-Versatz %d h, die Fade-Module rechnen fest mit NYOffsetHours=%d h (GFT: Server = NY + 7 h). Broker-Serverzeit und PC-Uhr pruefen.", nyOff, NYOffsetHours);
   }
@@ -5888,6 +5897,7 @@ string GridStatusText()
    if(GridMaxStopChance > 0.0) regel += StringFormat(" S: Stop-Chance < %.0f %%", GridMaxStopChance*100.0);
    if(GridMinReife > 0.0) regel += StringFormat(" A: Reife >= %.0f.", GridMinReife*100.0);
    if(regel == "") regel = " keine Regel aktiv";
+   if(GridNurLive) regel += " (nur live, Waechter zaehlt alle)";
    string t = StringFormat("M%d L%d, %d Schenkel |%s |", PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, regel);
    for(int k=0;k<nSym;k++)
      {
