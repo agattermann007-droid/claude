@@ -21,10 +21,10 @@
 //|  Replikat GFT-Daten 2022-26 (16 Stoerungen), Ausz / Busts /      |
 //|  Netto je Jahr, Serien >= 6 je Jahr, laengste Serie Mittel/max:  |
 //|    6.00 Ertrag:        7,20 / 0,00 / 2158 / 0,49 / 6,4/10        |
-//|    6.10 Ertrag (Set):  7,56 / 0,00 / 2142 / 0,36 / 5,9/10        |
-//|    6.10 Sicher:        5,89 / 0,00 / 1601 / 0,06 / 4,9/10        |
+//|    6.10 Ertrag (Set):  7,51 / 0,00 / 2143 / 0,36 / 5,9/10        |
+//|    6.10 Sicher:        5,86 / 0,00 / 1603 / 0,07 / 5,0/10        |
 //|  Startjahr 2022: Ertrag 10,1 Auszahlungen. Fremddaten 2006-21:   |
-//|  Ertrag 2,05/0,40/515, Sicher 0,56/0,33/104.                     |
+//|  Ertrag 2,02/0,40/503, Sicher 0,56/0,33/104.                     |
 //|  Bericht DEADBAND_LIVE4_610_Bericht.md. Zurueck: rollback_6.00/. |
 //|                                                                  |
 //|  Build 6.00 FADE, 24.09.2026                                     |

@@ -37,6 +37,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `x35.py` | **Endzahlen 6.00 nach dem Code-Review** (Fades ohne US-Feiertage, Stop ≥ 6 Spreads) auf GFT-Daten (mit Startjahren) und Fremddaten |
 | `x36.py` | **Build 6.10**: Screening letzter Verbesserungen (Abschluss-Ernte aller Module, Wächter-Schwelle, Fade-Risiko, Serien-Stopp) auf GFT- und Fremddaten |
 | `x37.py` | **Endbewertung 6.10** (16 Störungen, Startjahre, Streuung) auf GFT-Daten und Fremddaten |
+| `x38.py`, `x39.py` | 6.10 mit gültigem Tag erst ab 52 $ bzw. **50,50 $** (Reserve `ValidDayReserveUSD` wie im EA; x39 = Endzahlen) |
 | `t_diag3.py` | Engpass-Diagnose 6.00: was hält die Auszahlung auf (gültige Tage oder Mindestgewinn)? |
 | `t_port.py` | **Abgleich EA ↔ Replikat**: wörtliche Übertragung von `FadeKerze` (MQL5) gegen `scan6.gen_fade` + `gsig.simulate` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
@@ -47,8 +48,8 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 pip install numpy pandas numba
 python prep5.py && python sig5.py          # GFT-Daten -> cache/
 python sig_ext.py                          # Fremddaten -> cache/ (braucht ../extdata/*.csv)
-python x37.py gft                          # Endbewertung 6.10 GFT 2022-26 (4 Prozesse, ~10 min)
-python x37.py ext                          # Fremddaten 2006-21
+python x39.py gft                          # Endbewertung 6.10 (wie der EA) GFT 2022-26 (4 Prozesse, ~10 min)
+python x39.py ext                          # Fremddaten 2006-21
 ```
 
 ## Konventionen

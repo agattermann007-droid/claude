@@ -5,9 +5,9 @@
 ;   Kontoerkennung 6.10 (Historie muss den Saldo erklaeren, Auszahlung per Saldo-Test, NY-Versatz fest 7 h).
 ; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
 ;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   6.10 Ertrag (Echtbetrieb): 7,56 / 0,00 / 2142 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
-;   6.10 Sicher:               5,89 / 0,00 / 1601 $ / 0,06 / 4,9/10
-; Fremddaten 2006-21 (anderes Marktregime): Ertrag 2,05/0,40/515 $, Sicher 0,56/0,33/104 $.
+;   6.10 Ertrag (Echtbetrieb): 7,51 / 0,00 / 2143 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
+;   6.10 Sicher:               5,86 / 0,00 / 1603 $ / 0,07 / 5,0/10
+; Fremddaten 2006-21 (anderes Marktregime): Ertrag 2,02/0,40/503 $, Sicher 0,56/0,33/104 $.
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.

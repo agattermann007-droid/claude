@@ -18,28 +18,29 @@ Regime-Wächter, RSI21, NAS-Noise, DEADBAND-Einstiege aus). Neu sind drei Dinge:
 3. **Kontoerkennung beim Laden** (Abschnitt 4).
 
 Replikat auf den GFT-Kursen 2022–2026 (16 Störungen, rollierend 1/2/3 Jahre, strenge Regel-Lesart,
-Auszahlung ab 3 % = 300 $):
+Auszahlung ab 3 % = 300 $; 6.10 mit gültigem Tag ab 50,50 $ wie im EA):
 
 | Kennzahl | 5.10 | 6.00 Ertrag | **6.10 Ertrag** (Echtbetrieb) | 6.10 Sicher |
 |---|---:|---:|---:|---:|
-| Auszahlungen je Jahr | 5,51 | 7,20 | **7,56** | 5,89 |
-| Auszahlung im Mittel | 361 $ | 386 $ | 365 $ | 351 $ |
+| Auszahlungen je Jahr | 5,51 | 7,20 | **7,51** | 5,86 |
+| Auszahlung im Mittel | 361 $ | 386 $ | 368 $ | 353 $ |
 | Busts je Jahr | 0,17 | 0,00 | **0,00** | 0,00 |
-| Netto je Jahr | 1517 $ | 2158 $ | 2142 $ | 1601 $ |
+| Netto je Jahr | 1517 $ | 2158 $ | 2143 $ | 1603 $ |
 | Serien ≥ 5 Verluste je Jahr | 11,8 | 2,26 | **1,87** | 0,62 |
-| Serien ≥ 6 Verluste je Jahr | 6,15 | 0,49 | **0,36** | 0,06 |
-| längste Serie: Mittel / schlimmste | 9,4 / 13 | 6,4 / 10 | **5,9 / 10** | 4,9 / 10 |
+| Serien ≥ 6 Verluste je Jahr | 6,15 | 0,49 | **0,36** | 0,07 |
+| längste Serie: Mittel / schlimmste | 9,4 / 13 | 6,4 / 10 | **5,9 / 10** | 5,0 / 10 |
 | Trefferquote | 45 % | 61 % | 63 % | 68 % |
 
-Nach Startjahr (1-Jahres-Konten, 6.10 Ertrag): **2022: 10,1 Auszahlungen**, 2023: 8,6, 2024: 4,9, 2025: 7,9
-– in keinem Startjahr ein Bust. Streuung über die 16 Störungen: 7,56 ± 0,47 Auszahlungen (Standardfehler
-0,12), Busts 0.
+Nach Startjahr (1-Jahres-Konten, 6.10 Ertrag): **2022: 10,1 Auszahlungen**, 2023: 8,6, 2024: 4,9, 2025: 7,5
+– Busts praktisch 0 (höchstens 0,001 je Jahr). Streuung über die 16 Störungen: 7,51 ± 0,49 Auszahlungen
+(Standardfehler 0,12), Busts 0. Die 0,50-$-Reserve für gültige Tage kostet 0,05 Auszahlungen je Jahr, 2 $
+hätten 0,21 gekostet.
 
-Fremddaten 2006–2021 (anderes Regime, 4 Störungen): 6.10 Ertrag 2,05 Auszahlungen / 0,40 Busts / 515 $
+Fremddaten 2006–2021 (anderes Regime, 4 Störungen): 6.10 Ertrag 2,02 Auszahlungen / 0,40 Busts / 503 $
 je Jahr (6.00: 2,00 / 0,43 / 524 $); Sicher 0,56 / 0,33 / 104 $.
 
 **Die Anforderungen bleiben ehrlich bewertet wie in 6.00:** 10 Auszahlungen je Jahr erreicht nur das
-Startjahr 2022; im Mittel sind es 7,6. Busts 0 auf 2022–26, nicht auf 2006–21. Serien über 5 Verluste:
+Startjahr 2022; im Mittel sind es 7,5. Busts 0 auf 2022–26, nicht auf 2006–21. Serien über 5 Verluste:
 selten (0,36 je Jahr mit ≥ 6), aber nicht ausgeschlossen.
 
 ## 2. Was gesucht und geprüft wurde
