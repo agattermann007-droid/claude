@@ -1,18 +1,25 @@
-; DEADBAND LIVE 6.10 FADE - Auspraegung SICHER, GFT Instant Premium 10k (Konto ab 02.09.2026).
+; DEADBAND LIVE 6.20 GRID - Auspraegung SICHER, GFT Instant Premium 10k (Konto ab 02.09.2026).
 ; Nur die 10 Fehlausbruch-Fades (R21Aktiv=false, NzAktiv=false, DbAktiv=false), Serien-Stopp nach 4 Verlusten, Abschluss-Ernte aus,
-;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %. Weniger Ertrag, keine Busts im Replikat, kuerzeste Serien.
-; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
-;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   6.10 Ertrag (Echtbetrieb): 7,51 / 0,00 / 2143 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
-;   6.10 Sicher:               5,86 / 0,00 / 1603 $ / 0,07 / 5,0/10
-; Fremddaten 2006-21 (anderes Marktregime): Ertrag 2,02/0,40/503 $, Sicher 0,56/0,33/104 $.
-; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
+;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %, dazu 6.20 Probability Grid wie im Echtbetrieb-Set (Regel S: Stop-Chance >= 70 %
+;   -> kein Fade gegen den M5-Schwung, auch nicht virtuell; N1800 ohne Grid).
+; Replikat GFT-Ersatz 2022-25 (Fremddaten, breitere Spreads als GFT; 16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 %,
+;   Waechter wie im EA ueber 600 Tage): Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
+;   6.10 Ertrag:              6,42 / 0,195 / 1877 $ / 0,75 / 7,2/10
+;   6.20 Ertrag (Echtbetrieb): 7,34 / 0,032 / 2152 $ / 1,45 / 7,6/13
+;   6.20 Ertrag GridNurLive:  6,78 / 0,130 / 1979 $ / 0,86 / 7,3/10
+;   6.10 Sicher:              3,02 / 0,001 / 835 $ / 0,27 / 5,2/7
+;   6.20 Sicher:              4,12 / 0,000 / 1162 $ / 0,24 / 5,5/10
+; Fremddaten 2006-21 (anderes Marktregime): Ertrag 6.10 1,99/0,360/511 $, 6.20 1,97/0,395/497 $;
+;   Sicher 6.10 0,49/0,261/98 $, 6.20 0,43/0,246/82 $.
+; Mit den GFT-Exporten nachrechnen: Replikat_v6/x41.py gft (die GFT-Daten fehlten in dieser Sitzung).
+; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
-; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.
+; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG).
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.00: rollback_6.00/. Bericht: DEADBAND_LIVE4_610_Bericht.md.
+; Zurueck auf 6.10: GridAktiv=false (Handelslogik wie 6.10) oder rollback_6.10/. Bericht: DEADBAND_LIVE4_620_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -213,6 +220,16 @@ FadeHistTage=600
 FadeZielAbSek=130
 FadeMinStopSpreads=6.0
 FadeMagicOffset=50
+GridAktiv=true
+GridTF=5
+GridLaenge=15
+GridMaxSchenkel=1000
+GridMinSchenkel=30
+GridMaxStopChance=0.70
+GridMinReife=0.0
+GridVorlaufTage=300
+GridOhne=N1800
+GridNurLive=false
 ShowPanel=true
 ShowLeiter=true
 Barreserve=0.0

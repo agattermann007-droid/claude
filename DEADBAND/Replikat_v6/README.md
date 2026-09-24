@@ -54,6 +54,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `mk_proxy.py` | Ersatz der GFT-Exporte aus den Fremddaten 03.01.2022–31.12.2025 (Spread wie `gext`), wenn `../data/*.csv` fehlen |
 | `t_port_grid.py` | **Abgleich EA ↔ Replikat** für das Grid: wörtliche Übertragung von `GridM5`/`GridKerze`/`GridRang`/`GridFadeOk` gegen `pgrid` für alle Fade-Signale 2006–2025 |
 | `t_mq5.py` | statische Prüfung des EA (Klammern, Format-Argumente, Makros/Globale vor Verwendung, unbekannte Funktionen) |
+| `t_window.py` | Reicht die Wächter-Historie des EA (600 Tage) mit Grid für die Mindestzahl 30? (nur N1800 nicht → `GridOhne`) |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
