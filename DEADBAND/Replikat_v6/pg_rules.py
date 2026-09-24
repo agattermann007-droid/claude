@@ -69,5 +69,19 @@ def variants():
         ("E S M5 L15 s70 Waechter alle", "ERT", H, S(0.70, ga=True), None, None),
         ("S A M5 L20 p33", "SIC", {}, A(0.33), None, None),
         ("S S M5 L15 s70", "SIC", {}, S(0.70), None, None),
+        # Nachbarn der besten Regel S
+        ("E S M5 L15 s65", "ERT", H, S(0.65), None, None),
+        ("E S M5 L15 s70 max500", "ERT", H, S(0.70, mp=500), None, None),
+        ("E S M5 L10 s70", "ERT", H, S(0.70, L=10), None, None),
+        ("S S M5 L15 s65", "SIC", {}, S(0.65), None, None),
+        ("S S M5 L15 s75", "SIC", {}, S(0.75), None, None),
+        ("S S M5 L20 s75", "SIC", {}, S(0.75, L=20), None, None),
+        ("S S M5 L15 s70 max500", "SIC", {}, S(0.70, mp=500), None, None),
+        ("S S M5 L10 s70", "SIC", {}, S(0.70, L=10), None, None),
+        # strengerer Waechter zur Regel S (weniger schwache Module live)
+        ("E S M5 L15 s70 W1.3", "ERT", H, dict(S(0.70), guard=("pf", 30, 1.3)), None, None),
+        ("E S M5 L15 s70 W1.4", "ERT", H, dict(S(0.70), guard=("pf", 30, 1.4)), None, None),
+        ("E 6.10 W1.3", "ERT", H, dict(NONE, guard=("pf", 30, 1.3)), None, None),
+        ("S S M5 L15 s70 W1.3", "SIC", {}, dict(S(0.70), guard=("pf", 30, 1.3)), None, None),
     ]
     return v

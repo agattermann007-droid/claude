@@ -93,6 +93,7 @@ def apply_rule(f, rule):
 def blocks(target, rule, guard=("pf", 30, 1.2), names=F10, filters=True, info=False):
     """Bloecke fuer eng6 (Stroeme 0..9) auf dem Ziel-Datensatz ('gft' = GFT bzw. Ersatz, 'ext' = Fremddaten bis 2021)."""
     out = []; stats = []
+    guard = rule.get("guard", guard)                                   # Regel kann den Waechter aendern
     for s_, nm in enumerate(names):
         per = {}
         for ds in ("ext", "gft"):

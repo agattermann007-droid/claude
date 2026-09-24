@@ -1,26 +1,5 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND LIVE 4  -  Build 6.20 GRID, 24.09.2026                 |
-//|  BUILD 6.20: PROBABILITY GRID ALS FADE-FILTER                    |
-//|  Handelslogik = 6.10, dazu (Konzept: LuxAlgo "Probability Grid", |
-//|  CC BY-NC-SA 4.0, eigene Umsetzung):                             |
-//|  1) Schwung-Statistik je Symbol auf M5 (GridTF): Laufrichtung    |
-//|     wie LuxAlgo aus Kerzenkoerpern (Swing Length 15), jeder      |
-//|     Schenkel Pivot -> Pivot mit Groesse und Dauer, je Richtung   |
-//|     die letzten 1000 Schenkel.                                   |
-//|  2) Fade GEGEN den laufenden Schwung: Grid-Chance, dass der Lauf |
-//|     bis zum Stop weiterlaeuft = Anteil der Schenkel ueber der    |
-//|     Groesse bis zum Stop / Anteil ueber der bisherigen Groesse.  |
-//|     Ab 70 % (GridMaxStopChance) kein Signal - auch nicht         |
-//|     virtuell, der Regime-Waechter sieht den gefilterten Strom.   |
-//|     Wirkt vor allem bei engen Stops (N1800, X0300S, X0400,       |
-//|     N1030); Fades in Laufrichtung bleiben wie 6.10.              |
-//|  3) RSI21 und Noise unveraendert (Grid dort ohne stabilen Effekt)|
-//|  Replikat: Kurse 2022-2025 aus Fremddaten (GFT-Exporte fehlten), |
-//|  Vorstudie aller Fade-Signale 2006-2025, Konto mit allen GFT-    |
-//|  Regeln; Zahlen im Bericht DEADBAND_LIVE4_620_Bericht.md.        |
-//|  Zurueck auf 6.10: rollback_6.10/ oder GridAktiv=false.          |
-//|                                                                  |
-//|  Build 6.10 FADE, 24.09.2026                                     |
+//|  DEADBAND LIVE 4  -  Build 6.10 FADE, 24.09.2026                 |
 //|  BUILD 6.10: ECHTBETRIEB - ERNTE ALLER MODULE, KONTOERKENNUNG    |
 //|  Handelslogik = 6.00, dazu:                                      |
 //|  1) Abschluss-Ernte fuer ALLE Module (AbschlussModule 15):       |
@@ -429,7 +408,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "6.20"
+#property version   "6.10"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -654,15 +633,6 @@ input int    FadeHistTage     = 600;    // Historie fuer den Waechter beim Start
 input int    FadeZielAbSek    = 130;    // Ziel erst nach X s Haltedauer setzen (mind. 120; GFT: Gewinne aus Trades < 120 s werden gestrichen)
 input double FadeMinStopSpreads = 6.0;  // Einstieg nur, wenn der Stop mind. X aktuelle Spreads entfernt ist (Reserve der -1-%-Regel bei Kursspruengen; 0 = aus)
 input long   FadeMagicOffset  = 50;     // Fade-Magic = MagicBase + Offset + Modul (0..9), mindestens NzMagicOffset + 8
-input group             "=== 6.20: Probability Grid (Schwung-Statistik als Fade-Filter, Konzept LuxAlgo) ==="
-input bool   GridAktiv        = true;       // Fade-Signale GEGEN den laufenden Schwung nur, wenn die Schwung-Statistik es erlaubt (false = Fades wie 6.10)
-input ENUM_TIMEFRAMES GridTF  = PERIOD_M5;  // Zeitebene der Schwuenge, aus M5 gebildet: M5, M10, M15, M20, M30 oder H1 (Replikat: M5 am besten)
-input int    GridLaenge       = 15;         // Swing Length: neue Laufrichtung, wenn der Kerzenkoerper das Hoch/Tief der letzten X Kerzen bildet (LuxAlgo 20; 6.20: 15)
-input int    GridMaxSchenkel  = 1000;       // Maximum Reversals: je Richtung zaehlen die letzten X Schenkel (LuxAlgo 1000)
-input int    GridMinSchenkel  = 30;         // weniger Schenkel je Richtung: Grid filtert nicht (wie 6.10)
-input double GridMaxStopChance= 0.70;       // Regel S: kein Fade gegen den Lauf, wenn die Grid-Chance, dass der Lauf bis zum Stop weiterlaeuft, >= X ist (0 = aus)
-input double GridMinReife     = 0.0;        // Regel A: kein Fade gegen einen Lauf, der kleiner ist als das X-Perzentil der Schenkel (0 = aus; getestet 0,33)
-input int    GridVorlaufTage  = 240;        // M5-Historie vor der Fade-Historie fuer die Schenkel-Statistik (Kalendertage; Max. Balken im Chart = Unbegrenzt)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -3413,7 +3383,6 @@ void ZyklusPanel()
    txt += "\n  RSI21-Modul       " + R21StatusText();
    txt += "\n  NAS-Noise-Modul   " + NzStatusText();                     // 5.00
    txt += "\n  Fade-Module       " + FadeStatusText();                   // 6.00
-   txt += "\n  Probability Grid  " + GridStatusText();                   // 6.20
    txt += "\n  DEADBAND          " + (DbAktiv ? "Einstiege an" : "Einstiege AUS (DbAktiv=false, offene werden verwaltet)");
    txt += "\n  GFT-Schutz        " + SchutzStatusText();                    // 4.90
    txt += StringFormat("\n  5.10              Verlierer %.2f (Bremse %s) | Idee max %s | Swap-Vorsorge %s | %s | Abschluss-Ernte %s",
@@ -4930,30 +4899,6 @@ string NzStatusText()
 //|  Replikat: jedes Modul auf 2022-2026 in beiden Haelften          |
 //|  profitabel, vor 2022 (Fremddaten 2006-2021) NICHT -> Waechter.  |
 //+------------------------------------------------------------------+
-// 6.20 Probability Grid: Zustand je Symbol (Funktionen am Ende der Datei)
-struct GridSer
-  {
-   bool     an;                // Symbol wird gefuehrt (mind. ein Fade-Modul)
-   int      tfSek;             // Sekunden der Zeitebene
-   bool     fertig;            // Historie geladen
-   int      histFehl;
-   datetime histVersuch, histAb, lastM5, b0Seen;
-   bool     aggOn;             // laufende (noch offene) Zeitebenen-Kerze aus M5
-   datetime aggT;
-   double   aggO, aggC;
-   int      n;                 // abgeschlossene Zeitebenen-Kerzen
-   datetime t[];
-   double   bo[], bc[];        // Open/Close (Kerzenkoerper)
-   int      bias[], pivBar[], curBar[];
-   double   pivPx[], curPx[];  // Zustand NACH der Kerze: letzter Pivot, laufender Extrempunkt
-   int      nLeg;
-   int      legConf[], legDir[], legBars[];
-   double   legSz[];
-   int      b, cbar, pbar, lbar;   // fetchPivot/fetchData: Richtung, Kerzen von Extrem/Pivot/letztem Pivot
-   double   cpx, ppx, lpx;         // Preise dazu
-  };
-GridSer GR[MAXSYM];
-bool    gridOk = false;
 // Standard-Liste Build 6.00 (im Code, weil MT5 lange Text-Eingaben kuerzen kann): Symbol,r0,L,tlen,xoff,buf,tgt,dir,mx,Name
 const string FADE_STANDARD = "NAS,630,120,60,120,0.3,0,1,0.6,N1030;NAS,810,60,120,120,1.0,0,1,0.6,N1330;XAU,390,120,180,240,1.0,1,-1,0.6,X0630;XAU,240,180,60,240,0.3,0,1,0.6,X0400;NAS,-360,180,60,120,0.3,0,1,0.6,N1800;NAS,570,180,60,120,0.3,0,1,99,N0930;NAS,660,90,60,240,0.6,1,1,0.6,N1100;NAS,780,90,60,120,0.6,0,1,0.6,N1300;XAU,180,90,60,120,0.3,0,-1,0.6,X0300S;XAU,600,180,60,240,0.3,0,-1,0.6,X1000S";
 struct FadeDef
@@ -4983,7 +4928,6 @@ struct FadeDef
    double   liveGoal;        // Ziel des Live-Trades (Preis)
    datetime logZeit;         // letzte Fehlermeldung (gedrosselt)
    datetime tpVersuch, schlussVersuch;
-   int      nGrid;           // 6.20: vom Probability Grid ausgelassene Signale (Historie + live)
   };
 FadeDef  F[MAXFADE];
 int      nFade = 0;
@@ -5072,7 +5016,7 @@ bool FadeListeLesen()
       for(int q=0;q<FADEHIST;q++) F[m].hist[q] = 0.0;
       F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = false; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;
       F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
-      F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
+      F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0;
       nFade++;
      }
    return true;
@@ -5218,20 +5162,6 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    double goal = (F[m].tgt == 0) ? 0.5*(F[m].hh + F[m].ll) : (d > 0 ? F[m].hh : F[m].ll);
    double r = (ent - st)*d, g = (goal - ent)*d;
    if(r <= 0.0 || g <= 0.0) return;
-   if(GridAktiv)                                                                // 6.20: Probability Grid - das Signal entfaellt ganz (auch virtuell, wie im Replikat)
-     {
-      string gg = "";
-      if(!GridFadeOk(F[m].k, nx.time, d, st, gg))
-        {
-         F[m].nGrid++;
-         if(live)
-           {
-            fadeLetzte = StringFormat("%s %s %s ausgelassen: Grid - %s", FadeName(m), FadeUhr(FadeNyMin(TimeCurrent())), (d > 0 ? "LONG" : "SHORT"), gg);
-            PrintFormat("DEADBAND4 %s FADE %s: %s-Signal ausgelassen (auch virtuell) - Probability Grid: %s", S[F[m].k].sym, FadeName(m), (d > 0 ? "LONG" : "SHORT"), gg);
-           }
-         return;
-        }
-     }
    F[m].vOn = true; F[m].vDir = d; F[m].vEnt = ent; F[m].vSl = st; F[m].vTp = goal; F[m].vRd = r; F[m].vBar = nx.time; F[m].vX = xm;
    F[m].nSig++;
    if(live)
@@ -5471,7 +5401,6 @@ void FadeWaisen()
 bool FadeHistorie(const int m)
   {
    string s = S[F[m].k].sym;
-   if(!GridBereit(F[m].k) && F[m].histFehl < 20) { F[m].histFehl++; return false; }   // 6.20: erst die Schenkel-Statistik des Grids
    datetime bis = iTime(s, PERIOD_M5, 0);
    if(bis <= 0) return false;
    datetime von = bis - (datetime)FadeHistTage*86400;
@@ -5492,7 +5421,7 @@ bool FadeHistorie(const int m)
      }
    if(!genug && F[m].histFehl < 20) { F[m].histFehl++; return false; }        // Kurse werden noch geladen: spaeter erneut (bis 20 Versuche)
    // Zustand zuruecksetzen und nachrechnen
-   F[m].day = -1; F[m].vOn = false; F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].nGrid = 0;
+   F[m].day = -1; F[m].vOn = false; F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0;
    if(n >= 3)
      {
       for(int i=0;i<n-1;i++) FadeKerze(m, r[i], r[i+1], false);
@@ -5515,7 +5444,6 @@ void FadeDurchlauf(const bool dayLocked)
   {
    FadeWaisen();
    if(!fadeOk) return;
-   GridDurchlauf();                                                            // 6.20: Schenkel-Statistik vor den Fade-Kerzen aktualisieren
    fadeSperreTag = dayLocked;
    datetime now = TimeCurrent();
    for(int m=0;m<nFade;m++)
@@ -5533,7 +5461,7 @@ void FadeDurchlauf(const bool dayLocked)
          MqlRates r[];
          ArraySetAsSeries(r, false);
          int n = CopyRates(s, PERIOD_M5, F[m].lastBar, b0, r);
-         if(n >= 2 && r[n-1].time == b0 && GridAktuell(F[m].k, r[n-2].time))   // 6.20: das Grid muss die Kerze vor b0 kennen
+         if(n >= 2 && r[n-1].time == b0)
            {
             bool frisch = (TimeCurrent() - b0 < 60) && (b0 - r[n-2].time == PeriodSeconds(PERIOD_M5));   // nur die unmittelbar vorige Kerze, sofort nach Beginn der neuen (nach Datenluecken nie live)
             for(int i=0;i<n-1;i++)
@@ -5583,7 +5511,6 @@ bool FadeAnlegen()
       int k = F[m].k;
       if(fadeAtr[k] == INVALID_HANDLE) fadeAtr[k] = iATR(S[k].sym, PERIOD_D1, 14);   // laedt die D1-Historie vor (Rechnung in FadeAtr)
      }
-   if(!GridAnlegen()) { Print("DEADBAND4: Probability Grid ungueltig - Fade-Module AUS (GridAktiv=false schaltet nur das Grid ab)"); nFade = 0; return false; }   // 6.20
    fadeOk = true;
    return true;
   }
@@ -5603,9 +5530,6 @@ void FadeInitMeldung()
    PrintFormat("DEADBAND4: 6.00 Fade-Module %s | %d Modul(e): %s | Risiko %.2f %% je Trade x Pufferkurve | Waechter PF > %.2f aus den letzten %d virtuellen Signalen (mind. %d) | Historie %d Tage (Max. Balken im Chart %d) | Ziel ab %d s | Stop mind. %.1f Spreads | Zeiten NY = Server - %d h (fest) | Magic %I64d-%I64d | DEADBAND-Einstiege %s",
                (fadeOk ? (FadeAktiv ? "AN" : "aus (nur Verwaltung, virtuell)") : "AUS"), nFade, (StringLen(FadeListe) > 0 ? "eigene Liste: " : "Standard: ") + t, FadeRiskPct, FadeWaechterPF, FadeWaechterN, FadeWaechterMin,
                FadeHistTage, TerminalInfoInteger(TERMINAL_MAXBARS), FadeZielAbSek, FadeMinStopSpreads, NYOffsetHours, FadeMagic(0), FadeMagic(MAXFADE - 1), (DbAktiv ? "AN" : "AUS (DbAktiv=false)"));
-   PrintFormat("DEADBAND4: 6.20 Probability Grid %s | Zeitebene M%d aus M5, Swing Length %d, je Richtung die letzten %d Schenkel (mind. %d) | Regel S: kein Fade gegen den Lauf ab %.0f %% Stop-Chance%s | Regel A: %s | Vorlauf %d Tage vor der Fade-Historie",
-               (GridAktiv ? (gridOk ? "AN" : "AUS (Eingaben ungueltig)") : "aus (Fades wie 6.10)"), PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, GridMinSchenkel,
-               GridMaxStopChance*100.0, (GridMaxStopChance > 0.0 ? "" : " (aus)"), (GridMinReife > 0.0 ? StringFormat("Lauf mind. %.0f. Perzentil", GridMinReife*100.0) : "aus"), GridVorlaufTage);
    if(fadeOk && nyOff != NYOffsetHours)
       PrintFormat("DEADBAND4: ACHTUNG - gemessener NY-Versatz %d h, die Fade-Module rechnen fest mit NYOffsetHours=%d h (GFT: Server = NY + 7 h). Broker-Serverzeit und PC-Uhr pruefen.", nyOff, NYOffsetHours);
   }
@@ -5622,285 +5546,5 @@ string FadeStatusText()
       if(FadePosition(m) != 0) t += "*";
      }
    if(fadeLetzte != "") t += " | " + fadeLetzte;
-   return t;
-  }
-
-//+------------------------------------------------------------------+
-//| 6.20 Probability Grid (Konzept: LuxAlgo "Probability Grid",      |
-//|  CC BY-NC-SA 4.0) - Schwung-Statistik je Symbol als Fade-Filter. |
-//|  Zeitebene GridTF, gebildet aus den M5-Kerzen (wie im Replikat): |
-//|  - Laufrichtung: Kerzenkoerper-Hoch (max Open/Close) ist das     |
-//|    hoechste der letzten GridLaenge Kerzen -> aufwaerts, Koerper- |
-//|    Tief das tiefste -> abwaerts (aufwaerts hat Vorrang). Wechselt|
-//|    die Richtung, ist der bis dahin gelaufene Extrempunkt ein     |
-//|    bestaetigter Pivot.                                           |
-//|  - Schenkel Pivot -> Pivot: Groesse |Differenz|/Preis des vorigen |
-//|    Pivots und Dauer in Kerzen, getrennt nach steigend/fallend;   |
-//|    gezaehlt werden die letzten GridMaxSchenkel je Richtung.      |
-//|  - Am Fade-Einstieg (Fade GEGEN den laufenden Schwung):          |
-//|    p = Anteil der Schenkel, die kleiner sind als der Lauf bisher;|
-//|    Chance(Stop) = Anteil der Schenkel ueber der Groesse bis zum  |
-//|    Stop / Anteil ueber der bisherigen Groesse = Grid-Chance, dass|
-//|    der Lauf bis zum Stop weiterlaeuft. Regel S: kein Fade ab     |
-//|    GridMaxStopChance; Regel A: kein Fade, solange p < GridMinReife|
-//|  - Fades IN Laufrichtung und Signale ohne genug Schenkel         |
-//|    (GridMinSchenkel) bleiben wie in 6.10.                        |
-//|  - Das Grid filtert das Signal selbst: auch der virtuelle Trade  |
-//|    (Regime-Waechter) entfaellt - wie im getesteten Replikat.     |
-//|  Abgleich mit dem Replikat: Replikat_v6/t_port_grid.py.          |
-//+------------------------------------------------------------------+
-
-void GridReset(const int k)
-  {
-   GR[k].an = false; GR[k].tfSek = PeriodSeconds(GridTF); GR[k].fertig = false; GR[k].histFehl = 0;
-   GR[k].histVersuch = 0; GR[k].histAb = 0; GR[k].lastM5 = 0; GR[k].b0Seen = 0;
-   GR[k].aggOn = false; GR[k].aggT = 0; GR[k].aggO = 0.0; GR[k].aggC = 0.0;
-   GR[k].n = 0; GR[k].nLeg = 0; GR[k].b = 0; GR[k].cbar = -1; GR[k].pbar = -1; GR[k].lbar = -1;
-   GR[k].cpx = 0.0; GR[k].ppx = 0.0; GR[k].lpx = 0.0;
-   ArrayResize(GR[k].t, 0); ArrayResize(GR[k].bo, 0); ArrayResize(GR[k].bc, 0); ArrayResize(GR[k].bias, 0);
-   ArrayResize(GR[k].pivBar, 0); ArrayResize(GR[k].curBar, 0); ArrayResize(GR[k].pivPx, 0); ArrayResize(GR[k].curPx, 0);
-   ArrayResize(GR[k].legConf, 0); ArrayResize(GR[k].legDir, 0); ArrayResize(GR[k].legBars, 0); ArrayResize(GR[k].legSz, 0);
-  }
-
-// eine abgeschlossene Zeitebenen-Kerze (Beginn t, Open o, Close c): fetchPivot + fetchData (LuxAlgo)
-void GridKerze(const int k, const datetime t, const double o, const double c)
-  {
-   int i = GR[k].n;
-   if(i >= ArraySize(GR[k].t))
-     {
-      int nn = i + 8192;
-      ArrayResize(GR[k].t, nn); ArrayResize(GR[k].bo, nn); ArrayResize(GR[k].bc, nn); ArrayResize(GR[k].bias, nn);
-      ArrayResize(GR[k].pivBar, nn); ArrayResize(GR[k].curBar, nn); ArrayResize(GR[k].pivPx, nn); ArrayResize(GR[k].curPx, nn);
-     }
-   GR[k].t[i] = t; GR[k].bo[i] = o; GR[k].bc[i] = c; GR[k].n = i + 1;
-   if(i == 0) { GR[k].cpx = c; GR[k].cbar = 0; GR[k].lpx = c; GR[k].lbar = 0; }
-   if(i >= GridLaenge - 1)
-     {
-      double up = -DBL_MAX, lo = DBL_MAX;
-      for(int j=i-GridLaenge+1;j<=i;j++)
-        {
-         double a = MathMax(GR[k].bo[j], GR[k].bc[j]), z = MathMin(GR[k].bo[j], GR[k].bc[j]);
-         if(a > up) up = a;
-         if(z < lo) lo = z;
-        }
-      double mx = MathMax(o, c), mn = MathMin(o, c);
-      int b = GR[k].b, nb = b;
-      if(mx == up) nb = 1;
-      else if(mn == lo) nb = -1;
-      bool neu = false;
-      if(nb != b && nb != 0)
-        {
-         if(b != 0) { neu = true; GR[k].ppx = GR[k].cpx; GR[k].pbar = GR[k].cbar; }
-         GR[k].cpx = (nb == 1 ? up : lo); GR[k].cbar = i; GR[k].b = nb;
-        }
-      else if(b != 0)
-        {
-         double alt = GR[k].cpx;
-         GR[k].cpx = (b == 1 ? MathMax(up, GR[k].cpx) : MathMin(lo, GR[k].cpx));
-         if(GR[k].cpx != alt) GR[k].cbar = i;
-        }
-      if(neu && GR[k].lpx > 0.0)
-        {
-         int bd = GR[k].pbar - GR[k].lbar;
-         if(bd != 0)
-           {
-            int q = GR[k].nLeg;
-            if(q >= ArraySize(GR[k].legSz))
-              { int nn = q + 2048; ArrayResize(GR[k].legConf, nn); ArrayResize(GR[k].legDir, nn); ArrayResize(GR[k].legBars, nn); ArrayResize(GR[k].legSz, nn); }
-            GR[k].legConf[q] = i; GR[k].legDir[q] = (GR[k].ppx > GR[k].lpx ? 1 : -1);
-            GR[k].legSz[q] = MathAbs(GR[k].ppx - GR[k].lpx)/GR[k].lpx; GR[k].legBars[q] = bd; GR[k].nLeg = q + 1;
-            GR[k].lpx = GR[k].ppx; GR[k].lbar = GR[k].pbar;
-           }
-        }
-     }
-   GR[k].bias[i] = GR[k].b; GR[k].pivPx[i] = GR[k].ppx; GR[k].pivBar[i] = GR[k].pbar; GR[k].curPx[i] = GR[k].cpx; GR[k].curBar[i] = GR[k].cbar;
-  }
-
-// abgeschlossene M5-Kerze b (die naechste Kerze beginnt bei tn) in die Zeitebene einrechnen. Beginnt tn eine neue
-// Zeitebenen-Kerze, ist die bisherige abgeschlossen (Replikat: pgrid.tf_bars).
-void GridM5(const int k, const MqlRates &b, const datetime tn)
-  {
-   long ts = GR[k].tfSek;
-   datetime kb = (datetime)((long)b.time - (long)b.time % ts);
-   if(!GR[k].aggOn || kb != GR[k].aggT) { GR[k].aggOn = true; GR[k].aggT = kb; GR[k].aggO = b.open; }
-   GR[k].aggC = b.close;
-   datetime kn = (datetime)((long)tn - (long)tn % ts);
-   if(kn != kb) { GridKerze(k, GR[k].aggT, GR[k].aggO, GR[k].aggC); GR[k].aggOn = false; }
-   GR[k].lastM5 = b.time;
-  }
-
-// Index der letzten abgeschlossenen Zeitebenen-Kerze VOR der Zeitebenen-Kerze, in der tEntry liegt (-1 = keine)
-int GridIndex(const int k, const datetime tEntry)
-  {
-   long ts = GR[k].tfSek;
-   datetime kb = (datetime)((long)tEntry - (long)tEntry % ts);
-   int lo = 0, hi = GR[k].n - 1, r = -1;
-   while(lo <= hi)
-     {
-      int mid = (lo + hi)/2;
-      if(GR[k].t[mid] < kb) { r = mid; lo = mid + 1; } else hi = mid - 1;
-     }
-   return r;
-  }
-
-// Anteil der Schenkel mit Groesse <= x unter den letzten GridMaxSchenkel Schenkeln der Richtung d, die bis zur
-// Kerze i bestaetigt waren (n = Anzahl dieser Schenkel)
-double GridRang(const int k, const int i, const int d, const double x, int &n)
-  {
-   n = 0;
-   int lo = 0, hi = GR[k].nLeg - 1, q0 = -1;                                 // letzter Schenkel mit Bestaetigung <= i
-   while(lo <= hi) { int mid = (lo + hi)/2; if(GR[k].legConf[mid] <= i) { q0 = mid; lo = mid + 1; } else hi = mid - 1; }
-   int cnt = 0;
-   for(int q=q0;q>=0 && n<GridMaxSchenkel;q--)
-     {
-      if(GR[k].legDir[q] != d) continue;
-      n++;
-      if(GR[k].legSz[q] <= x) cnt++;
-     }
-   return (n > 0 ? (double)cnt/n : 0.0);
-  }
-
-// Grid-Regel fuer ein Fade-Signal in Richtung d mit Stop st und Einstieg zu Beginn der Kerze tEntry.
-// true = handeln (auch: Grid aus, keine Daten, Fade in Laufrichtung); grund = Text bei false
-bool GridFadeOk(const int k, const datetime tEntry, const int d, const double st, string &grund)
-  {
-   grund = "";
-   if(!GridAktiv || !gridOk || k < 0 || k >= MAXSYM || !GR[k].an || !GR[k].fertig) return true;
-   int i = GridIndex(k, tEntry);
-   if(i < 0 || GR[k].bias[i] == 0 || GR[k].pivBar[i] < 0 || GR[k].pivPx[i] <= 0.0) return true;
-   int b = GR[k].bias[i];
-   if(d == b) return true;                                                    // Fade in Laufrichtung: wie 6.10
-   int n = 0, n2 = 0;
-   double ext = MathAbs(GR[k].curPx[i] - GR[k].pivPx[i])/GR[k].pivPx[i];
-   double pe = GridRang(k, i, b, ext, n);
-   if(n < GridMinSchenkel) return true;                                       // zu wenige Schenkel: wie 6.10
-   if(GridMinReife > 0.0 && pe < GridMinReife)
-     {
-      grund = StringFormat("Lauf %s erst beim %.0f. Perzentil der letzten %d Schenkel (Regel A: mind. %.0f.)", (b > 0 ? "aufwaerts" : "abwaerts"), pe*100.0, n, GridMinReife*100.0);
-      return false;
-     }
-   if(GridMaxStopChance > 0.0)
-     {
-      double xs = MathAbs(st - GR[k].pivPx[i])/GR[k].pivPx[i];
-      double sJetzt = 1.0 - pe, sStop = 1.0 - GridRang(k, i, b, xs, n2);
-      double ch = (sJetzt > 0.0 ? sStop/sJetzt : 0.0);
-      if(ch >= GridMaxStopChance)
-        {
-         grund = StringFormat("Lauf %s (%.0f. Perzentil), Chance %.0f %%, dass er bis zum Stop weiterlaeuft (Regel S: ab %.0f %% kein Fade)", (b > 0 ? "aufwaerts" : "abwaerts"), pe*100.0, ch*100.0, GridMaxStopChance*100.0);
-         return false;
-        }
-     }
-   return true;
-  }
-
-// Grid bereit (oder nicht in Gebrauch)
-bool GridBereit(const int k)
-  {
-   if(!GridAktiv || !gridOk || k < 0 || k >= MAXSYM || !GR[k].an) return true;
-   return GR[k].fertig;
-  }
-
-// Grid kennt die M5-Kerze t (oder ist nicht in Gebrauch/noch nicht geladen)
-bool GridAktuell(const int k, const datetime t)
-  {
-   if(!GridAktiv || !gridOk || k < 0 || k >= MAXSYM || !GR[k].an || !GR[k].fertig) return true;
-   return (GR[k].lastM5 >= t);
-  }
-
-// Historie: M5-Kurse der letzten FadeHistTage + GridVorlaufTage Tage; false = Kurse noch nicht (vollstaendig) da
-bool GridHistorie(const int k)
-  {
-   string s = S[k].sym;
-   datetime bis = iTime(s, PERIOD_M5, 0);
-   if(bis <= 0) return false;
-   datetime von = bis - (datetime)((long)(FadeHistTage + GridVorlaufTage)*86400);
-   MqlRates r[];
-   ArraySetAsSeries(r, false);
-   int n = CopyRates(s, PERIOD_M5, von, bis, r);
-   if((n < 3 || r[n-1].time != bis) && GR[k].histFehl < 20) { GR[k].histFehl++; return false; }
-   bool an = GR[k].an;
-   GridReset(k);
-   GR[k].an = an;
-   if(n >= 3)
-     {
-      for(int i=0;i<n-1;i++) GridM5(k, r[i], r[i+1].time);
-      GR[k].histAb = r[0].time; GR[k].b0Seen = r[n-1].time;
-     }
-   GR[k].fertig = true;
-   int nAuf = 0, nAb = 0;
-   for(int q=0;q<GR[k].nLeg;q++) { if(GR[k].legDir[q] > 0) nAuf++; else nAb++; }
-   PrintFormat("DEADBAND4 GRID %s: Historie ab %s (%d M5, %d Kerzen M%d), %d steigende / %d fallende Schenkel (gezaehlt je Richtung hoechstens %d)%s",
-               s, (n >= 3 ? TimeToString(r[0].time, TIME_DATE) : "-"), (n > 0 ? n : 0), GR[k].n, GR[k].tfSek/60, nAuf, nAb, GridMaxSchenkel,
-               (MathMin(nAuf, nAb) < GridMinSchenkel ? " - noch zu wenige Schenkel, Grid filtert erst ab " + IntegerToString(GridMinSchenkel) : ""));
-   return true;
-  }
-
-// laufend: neue abgeschlossene M5-Kerzen je Symbol einrechnen (vor den Fade-Kerzen desselben Durchlaufs)
-void GridDurchlauf()
-  {
-   if(!GridAktiv || !gridOk) return;
-   datetime now = TimeCurrent();
-   for(int k=0;k<nSym;k++)
-     {
-      if(!GR[k].an) continue;
-      if(!GR[k].fertig)
-        {
-         if(now - GR[k].histVersuch >= 15) { GR[k].histVersuch = now; GridHistorie(k); }
-         continue;
-        }
-      string s = S[k].sym;
-      datetime b0 = iTime(s, PERIOD_M5, 0);
-      if(b0 <= 0 || b0 == GR[k].b0Seen) continue;
-      if(GR[k].lastM5 <= 0) { GR[k].lastM5 = iTime(s, PERIOD_M5, 1); GR[k].b0Seen = b0; continue; }   // ohne Historie: ab jetzt fortschreiben
-      MqlRates r[];
-      ArraySetAsSeries(r, false);
-      int n = CopyRates(s, PERIOD_M5, GR[k].lastM5, b0, r);
-      if(n < 2 || r[n-1].time != b0) continue;
-      for(int i=0;i<n-1;i++)
-         if(r[i].time > GR[k].lastM5) GridM5(k, r[i], r[i+1].time);
-      GR[k].b0Seen = b0;
-     }
-  }
-
-// Anlegen (aus FadeAnlegen): Eingaben pruefen, Symbole der Fade-Module fuehren
-bool GridAnlegen()
-  {
-   gridOk = false;
-   for(int k=0;k<MAXSYM;k++) GridReset(k);
-   if(!GridAktiv) return true;
-   int tfs = PeriodSeconds(GridTF);
-   if(tfs < 300 || tfs > 3600 || tfs % 300 != 0 || 3600 % tfs != 0)
-     { Print("DEADBAND4: GridTF muss M5, M10, M15, M20, M30 oder H1 sein (wird aus M5 gebildet) - Probability Grid AUS"); return false; }
-   if(GridLaenge < 2 || GridLaenge > 500 || GridMaxSchenkel < 10 || GridMaxSchenkel > 5000 || GridMinSchenkel < 1 || GridMinSchenkel > GridMaxSchenkel
-      || GridMaxStopChance < 0.0 || GridMaxStopChance >= 1.0 || GridMinReife < 0.0 || GridMinReife >= 1.0 || GridVorlaufTage < 0 || GridVorlaufTage > 2000)
-     { Print("DEADBAND4: Grid-Eingaben ungueltig (GridLaenge 2-500, GridMaxSchenkel 10-5000, 1 <= GridMinSchenkel <= GridMaxSchenkel, 0 <= GridMaxStopChance/GridMinReife < 1, GridVorlaufTage 0-2000) - Probability Grid AUS"); return false; }
-   for(int m=0;m<nFade;m++) GR[F[m].k].an = true;
-   gridOk = true;
-   return true;
-  }
-
-// Anzeige: je Symbol Laufrichtung und Rang des Laufs, Zahl der vom Grid ausgelassenen Signale
-string GridStatusText()
-  {
-   if(!GridAktiv) return "aus (Fades wie 6.10)";
-   if(!gridOk) return "AUS (Eingaben ungueltig)";
-   string regel = "";
-   if(GridMaxStopChance > 0.0) regel += StringFormat(" S: Stop-Chance < %.0f %%", GridMaxStopChance*100.0);
-   if(GridMinReife > 0.0) regel += StringFormat(" A: Reife >= %.0f.", GridMinReife*100.0);
-   if(regel == "") regel = " keine Regel aktiv";
-   string t = StringFormat("M%d L%d, %d Schenkel |%s |", PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, regel);
-   for(int k=0;k<nSym;k++)
-     {
-      if(!GR[k].an) continue;
-      if(!GR[k].fertig) { t += " " + S[k].sym + " ?"; continue; }
-      int i = GR[k].n - 1;
-      if(i < 0 || GR[k].bias[i] == 0 || GR[k].pivPx[i] <= 0.0) { t += " " + S[k].sym + " -"; continue; }
-      int n = 0;
-      double pe = GridRang(k, i, GR[k].bias[i], MathAbs(GR[k].curPx[i] - GR[k].pivPx[i])/GR[k].pivPx[i], n);
-      t += StringFormat(" %s %s %.0f.P (%d)", S[k].sym, (GR[k].bias[i] > 0 ? "auf" : "ab"), pe*100.0, n);
-     }
-   int ns = 0;
-   for(int m=0;m<nFade;m++) ns += F[m].nGrid;
-   t += StringFormat(" | ausgelassen %d (Historie + live)", ns);
    return t;
   }

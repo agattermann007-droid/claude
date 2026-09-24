@@ -53,20 +53,21 @@ if __name__ == "__main__":
     target = sys.argv[1]
     which = sys.argv[2] if len(sys.argv) > 2 else "all"
     seeds = int(sys.argv[3]) if len(sys.argv) > 3 else 8
+    step = int(sys.argv[4]) if len(sys.argv) > 4 else None
     cfgs = RU.variants()
     if which != "all":
         keep = which.split("|")
         cfgs = [c for c in cfgs if c[0] in keep or any(c[0].startswith(k.rstrip("*")) for k in keep if k.endswith("*"))]
-    fn = f"x40_{target}.json"
+    fn = os.path.join("ergebnisse", f"x40_{target}.json")
     res = json.load(open(fn)) if os.path.exists(fn) else {}
     for lbl, base, gpx, fr, rr, zr in cfgs:
-        key = f"{lbl} [{seeds}]"
+        key = f"{lbl} [{seeds}{'' if step is None else f' s{step}'}]"
         if key in res:
             print(V.line(f"{target} {lbl}", res[key]), "(Cache)", flush=True)
             continue
         t = time.time()
         kw = ERT if base == "ERT" else SIC
-        m = evaluate(target, kw, gpx, fr, rr, zr, seeds=seeds)
+        m = evaluate(target, kw, gpx, fr, rr, zr, seeds=seeds, step=step)
         res[key] = m
         json.dump(res, open(fn, "w"), indent=1, default=float)
         print(V.line(f"{target} {lbl}", m), f"| Fades live {m['fade_live']} | gueltig/J {m['valid']:.1f} [{time.time() - t:.0f}s]", flush=True)
