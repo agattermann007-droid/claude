@@ -41,7 +41,7 @@ def evaluate(target, kw, gpx, fade_rule, r21_rule=None, nz_rule=None, seeds=8, g
     V.set_generic(blks, GP)
     Pv = E.params(**dict(r6.SAFE, **kw))
     if target == "ext":
-        r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=step or 9, seeds=tuple(range(min(seeds, 4))), warm="2006-09-01", end="2021-12-31")
+        r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=step or 9, seeds=tuple(range(seeds)), warm="2006-09-01", end="2021-12-31")
     else:
         r = V.evaluate(Pv, GP=GP, horizons=(250, 500, 750), step=step or 3, seeds=tuple(range(seeds)), skip=0.08)
     r["mean"]["fade_live"] = sum(x[2] for x in info)

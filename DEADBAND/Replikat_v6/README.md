@@ -40,6 +40,18 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `x38.py`, `x39.py` | 6.10 mit gültigem Tag erst ab 52 $ bzw. **50,50 $** (Reserve `ValidDayReserveUSD` wie im EA; x39 = Endzahlen) |
 | `t_diag3.py` | Engpass-Diagnose 6.00: was hält die Auszahlung auf (gültige Tage oder Mindestgewinn)? |
 | `t_port.py` | **Abgleich EA ↔ Replikat**: wörtliche Übertragung von `FadeKerze` (MQL5) gegen `scan6.gen_fade` + `gsig.simulate` |
+| **Build 6.20 (Probability Grid)** | |
+| `pgrid.py` | Nachbau des LuxAlgo-Probability-Grid: Schwung-Pivots aus Kerzenkörpern (`lux_pivots`), Zeitebenen aus M5 (`tf_bars`), Rang/Perzentil der Schenkel, Merkmale je Signal (`features`: Laufrichtung, Reife `p_ext`/`p_bar`, `beyond`, Zielweg, Stop-Chance) |
+| `t_pgrid.py` | Prüfung `lux_pivots` gegen eine wörtliche Übertragung von `fetchPivot`/`fetchData` (Pine v6) |
+| `pg_data.py` | durchgehender Datensatz 2006–2025 aus den Fremddaten (Grid-Historie und Vorstudie) |
+| `pg_fade.py` | Fade-Signale mit Signal-Kerze, Extrem, Stop, Ziel (`gen_fade_info` = `scan6.gen_fade` plus Angaben) und Grid-Merkmale |
+| `pg_study.py`, `pg_scan.py`, `pg_spread.py` | Vorstudie auf Signal-Ebene: Merkmale gegen Ergebnis je Periode (2006–13, 2014–21, 2022–23, 2024–25), Parameter-Raster der Regeln A/S/B, Grid-Ziel (`pg_study.py ziel`), Abhängigkeit vom Spread |
+| `pg_study_old.py` | dasselbe für RSI21-Folgesignale und NAS-Noise (kein stabiler Effekt) |
+| `pg_blocks.py`, `pg_old.py`, `pg_rules.py` | Fade-Blöcke für eng6 mit Grid-Regel (Filter, Ziel, Gewicht; Wächter auf gefiltertem oder ganzem Strom), Auslass-Masken für RSI21/Noise, Varianten |
+| `x40.py` | **Konto-Screening 6.20**: `python x40.py gft\|ext "Variante\|..." Störungen Schritt` → `ergebnisse/x40_*.json` |
+| `mk_proxy.py` | Ersatz der GFT-Exporte aus den Fremddaten 03.01.2022–31.12.2025 (Spread wie `gext`), wenn `../data/*.csv` fehlen |
+| `t_port_grid.py` | **Abgleich EA ↔ Replikat** für das Grid: wörtliche Übertragung von `GridM5`/`GridKerze`/`GridRang`/`GridFadeOk` gegen `pgrid` für alle Fade-Signale 2006–2025 |
+| `t_mq5.py` | statische Prüfung des EA (Klammern, Format-Argumente, Makros/Globale vor Verwendung, unbekannte Funktionen) |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
@@ -50,6 +62,12 @@ python prep5.py && python sig5.py          # GFT-Daten -> cache/
 python sig_ext.py                          # Fremddaten -> cache/ (braucht ../extdata/*.csv)
 python x39.py gft                          # Endbewertung 6.10 (wie der EA) GFT 2022-26 (4 Prozesse, ~10 min)
 python x39.py ext                          # Fremddaten 2006-21
+# Build 6.20 (Probability Grid); ohne GFT-Exporte vorher: python mk_proxy.py (Ersatz 2022-2025)
+python pg_scan.py                          # Vorstudie: Parameter-Raster der Grid-Regeln (Signal-Ebene)
+python x40.py gft "6.10 Ertrag|E S M5 L15 s70" 16 1   # Konto, 16 Stoerungen, jeden Handelstag ein Konto
+python x40.py ext "6.10 Ertrag|E S M5 L15 s70" 4      # Fremddaten 2006-21
+python t_port_grid.py 5 15 1000 0.70 0     # Abgleich EA <-> Replikat (Grid)
+python t_mq5.py                            # statische Pruefung des EA
 ```
 
 ## Konventionen
