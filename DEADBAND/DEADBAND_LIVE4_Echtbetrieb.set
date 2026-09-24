@@ -1,7 +1,8 @@
 ; DEADBAND LIVE 6.10 FADE - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
 ; Alle Werte = Voreinstellung des EA: 10 Fehlausbruch-Fades (0,75 %, Regime-Waechter PF der letzten 30 > 1,2, Stop >= 6 Spreads,
 ;   keine Fades an US-Feiertagen) + RSI21 0,50 % + NAS-Noise 0,35 %, DEADBAND-Einstiege aus, Serien-Stopp nach 3 Verlusten,
-;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte aller Module (3 gueltige Tage fehlen, Vorlauf >= 0,3 R).
+;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte aller Module (3 gueltige Tage fehlen, Vorlauf >= 0,3 R),
+;   Kontoerkennung 6.10 (Historie muss den Saldo erklaeren, Auszahlung per Saldo-Test, NY-Versatz fest 7 h).
 ; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
 ;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
 ;   6.10 Ertrag (Echtbetrieb): 7,56 / 0,00 / 2142 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
@@ -10,11 +11,12 @@
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.
+; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen.
 ; Zurueck auf 6.00: rollback_6.00/. Bericht: DEADBAND_LIVE4_610_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
-AutoNYOffset=true
+AutoNYOffset=false
 NYOffsetHours=7
 UseTrend=true
 EmaLen=50
@@ -85,6 +87,12 @@ PeakSafetyPct=0.10
 CycleStartOverride=
 CountForeignPositions=true
 HistoryDaysMax=400
+FloorOverrideZeit=
+AuszahlungKennung=
+KeineAuszahlung=
+AuszahlungAngefordertAm=
+ValidDayReserveUSD=0.5
+GueltigHeuteZaehlt=true
 DDFullPct=4.0
 DDMinPct=1.5
 DDMinFactor=0.6

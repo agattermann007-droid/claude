@@ -9,11 +9,12 @@
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.
+; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen.
 ; Zurueck auf 6.00: rollback_6.00/. Bericht: DEADBAND_LIVE4_610_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
-AutoNYOffset=true
+AutoNYOffset=false
 NYOffsetHours=7
 UseTrend=true
 EmaLen=50
@@ -84,6 +85,12 @@ PeakSafetyPct=0.10
 CycleStartOverride=
 CountForeignPositions=true
 HistoryDaysMax=400
+FloorOverrideZeit=
+AuszahlungKennung=
+KeineAuszahlung=
+AuszahlungAngefordertAm=
+ValidDayReserveUSD=0.5
+GueltigHeuteZaehlt=true
 DDFullPct=4.0
 DDMinPct=1.5
 DDMinFactor=0.6

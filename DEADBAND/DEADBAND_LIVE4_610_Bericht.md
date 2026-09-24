@@ -92,12 +92,90 @@ Preset **Sicher** (`DEADBAND_LIVE4_610_Sicher.set`): wie 6.00 Sicher, Abschluss-
 
 ## 4. Kontoerkennung beim Laden
 
-(wird nach dem Audit ergänzt)
+Ziel: Sobald der EA geladen ist, kennt er genau den Kontozustand, mit dem GFT rechnet. Das gilt auch nach einem
+Neustart mitten im Zyklus, mitten am Tag, mit offenen Positionen oder nach einer Auszahlung. Ein Sub-Agent hat die
+Kontoerkennung Zeile für Zeile geprüft. Umgesetzt wurde:
 
-## 5. Echtbetrieb
+| Bereich | bis 6.00 | 6.10 |
+|---|---|---|
+| **Vollständigkeit der Historie** | nur „nicht leer“ geprüft | Start erst, wenn die Summe aller Buchungen den Saldo ergibt (höchstens 5 min warten, sonst Warnung und gesicherte Spitze). Liegt die Einzahlung außerhalb des 400-Tage-Fensters, wird einmal die ganze Historie geladen. |
+| **Auszahlung erkennen** | jede Saldo-Abbuchung ab 50 $ | nur, wenn der Saldo danach auf den Startsaldo fällt (bzw. Startsaldo + Rest über dem 6-%-Deckel) oder der Buchungskommentar zu `AuszahlungKennung` passt. Korrekturen, gestrichene Gewinne und Gebühren setzen Zyklus und Boden **nicht** zurück (sonst läge der Boden des EA unter dem von GFT). Unklare Abbuchungen meldet der EA per Push. Ausnahmen: `KeineAuszahlung`. |
+| Buchungen vor dem ersten Trade | Plus summiert, Minus als Auszahlung | netto = Startsaldo |
+| **Gültige Tage** | Positionsergebnis am Ausstiegstag | zwei Lesarten (Ausstiegstag / jeder Deal an seinem Tag inkl. Kommissions-Buchungen); gültig nur, wenn **beide** ≥ 0,5 % + 0,50 $ Rundungsreserve (`ValidDayReserveUSD`). Gebühren (DEAL_FEE) zählen mit. |
+| 10-Tage-Frist | 10 Prop-Tage (ab 9 Tagen + 1 min möglich) | zusätzlich volle 10 × 24 h seit dem ersten Trade des Zyklus |
+| **Tagesreferenz 17:00 NY** | Equity beim ersten Tick nach dem Tageswechsel (bei Gold/NAS erst 18:00 NY, nach der Eröffnungslücke) oder nach Neustart nur der Saldo | obere Schranke des Buchgewinns um 17:00 NY aus den Kursen der letzten 2 Minuten (M1) und der Deal-Historie; auch nach einem Neustart. Fehlen Kurse: heute keine neuen Einstiege. Abzüge während des Tages zählen wie bei GFT als Tagesverlust. |
+| **Equity-Spitze (Boden)** | aus der Historie beim Start, dann nur live abgetastet | beim Start enger (nur Kerzen, in denen die Position offen war, mit offenem Volumen; weiterhin nie zu tief); **jede Minute aus den M5-Hochs nachgeholt**, nach Verbindungsabbrüchen über die ganze Lücke; neu gerechnet, sobald die Historie wächst. Gesichert wird nur mit geprüfter Historie, täglich aufgefrischt. |
+| Unvollständige Kurse für die Spitze | nur „keine Kerzen“ erkannt | auch Lücken am Anfang/Ende erkannt → Größe × 0,6, bis nachgeholt |
+| **Boden-Sperre** | nur kleinere Größe nahe am Boden | vor jedem Einstieg (alle Module, auch Wiederaufnahme): offenes Stop-Risiko + neues Risiko muss 0,2 % über dem Boden bleiben |
+| **Kontowechsel** im selben Terminal | alter Zustand blieb im Speicher | Zustand wird beim Laden und bei Login-Wechsel vollständig zurückgesetzt |
+| Tagesbremse vor dem Laden der Kontodaten | nur Floating-Bremse | auch 2,4-%-Tagesbremse aus der gesicherten Tagesreferenz |
+| Auszahlung beantragt, noch nicht gebucht | EA handelte wieder, wenn die Reife verloren ging | `AuszahlungAngefordertAm` hält das Konto flach, bis die Auszahlung gebucht ist |
+| Tag der Auszahlung | sofort wieder Einstiege | keine neuen Einstiege bis 17:00 NY |
+| Vormerkungen (Wochenende) aus dem alten Zyklus | konnten nach einer Auszahlung wieder öffnen | werden verworfen |
+| `CycleStartOverride` / `FloorOverride` | galten auch nach späteren Auszahlungen | gelten nur im laufenden Zyklus; `FloorOverrideZeit` = Zeitpunkt der Dashboard-Ablesung |
+| NY-Versatz | automatisch aus der PC-Uhr | fest 7 h (`AutoNYOffset=false`); Abweichung der PC-Uhr nur als Hinweis |
+| Ernte-Schätzung | überschrieb den realisierten Tagesgewinn (konnte eine falsche Reife auslösen) | getrennt geführt, Reife nur aus bestätigten Deals |
+| Vorlauf offener RSI21-Positionen nach Neustart | 0 | aus den M5-Kerzen seit dem Einstieg |
+| Inaktivität (30 Tage) | nach Kurszeit (am Wochenende eingefroren) | nach Serverzeit |
+| Kredit (`ACCOUNT_CREDIT`) | als Saldo gezählt | ausgeschlossen, Warnung |
 
-- `DEADBAND_LIVE4.mq5`: Voreinstellungen = Echtbetrieb („Ertrag“). Ohne Preset geladen läuft genau die
-  getestete Version.
-- `DEADBAND_LIVE4_Echtbetrieb.set`: dieselben Werte als Datei.
-- `DEADBAND_LIVE4_610_Sicher.set`: Ausprägung „Sicher“.
-- Rückweg: `rollback_6.00/`.
+**Kontobericht:** Beim Laden (und nach Verbindungsaufbau oder Auszahlung) schreibt der EA den vollständigen Zustand
+ins Journal und nach `MQL5\Files\DEADBAND4_Konto_<Login>.txt`:
+- Startsaldo mit Herkunft, Auszahlungen und Deckel,
+- Gewinn und Mindestgewinn, Zyklusbeginn und Zyklustag,
+- **jeder Tag des Zyklus mit Betrag und Gültigkeit**,
+- Equity-Spitze, Boden und Puffer, Tagesstart und Referenz,
+- Buchverlust, offenes Risiko und alle offenen Positionen mit Modul,
+- Serien-Stand und Modus.
+
+Diese Werte bitte beim ersten Start mit dem GFT-Dashboard vergleichen.
+
+Was MT5 allein nicht wissen kann, lässt sich per Eingabe festlegen:
+- `StartBalanceOverride`,
+- `FloorOverride` + `FloorOverrideZeit`,
+- `CycleStartOverride`,
+- `AuszahlungKennung` / `KeineAuszahlung`,
+- `AuszahlungAngefordertAm`.
+
+## 5. Echtbetrieb: Dateien
+
+- `DEADBAND_LIVE4.mq5`: Die Voreinstellungen **sind** das Echtbetrieb-Set („Ertrag“). Ohne Preset geladen läuft
+  genau die getestete Version.
+- `DEADBAND_LIVE4_Echtbetrieb.set`: dieselben Werte als Datei (zum Zurücksetzen nach Experimenten).
+- `DEADBAND_LIVE4_610_Sicher.set`: Ausprägung „Sicher“ (nur Fades).
+- Rückweg: `rollback_6.00/` (mq5 + set), ältere Stände in `rollback_5.10/`, `rollback_5.00/`.
+
+## 6. Inbetriebnahme
+
+1. `DEADBAND_LIVE4.mq5` nach `MQL5\Experts\` kopieren und in MetaEditor kompilieren. Erwartet: 0 Fehler.
+2. Extras → Optionen → Charts → **Max. Balken im Chart = Unbegrenzt**, Terminal neu starten (Regime-Wächter braucht
+   ~600 Tage M5).
+3. Strategietester: „Jeder Tick anhand realer Ticks“, XAUUSD.x M15, 2024–2026. Im Journal prüfen:
+   - je Fade-Modul die Zeile `FADE ... Historie ab ...` mit ≈ 25–55 Signalen je Jahr,
+   - Fade-Einstiege, danach `Ziel ... gesetzt` erst in der Kerze nach der Einstiegskerze,
+   - `ABSCHLUSS-ERNTE ... (Fade/Noise/RSI21, Vorlauf ... R)`, `SERIEN-STOPP`, Schließen bei Auszahlungsreife,
+   - keine DEADBAND-Einstiege.
+4. Eine Woche auf einem Demokonto mit gleicher Serverzeit.
+5. Live **nur auf dem eigenen PC** (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15). In `NurAufPcPfad` einen
+   Teil des Terminal-Datenpfads eintragen (steht beim Start im Journal).
+6. Beim ersten Start die Zeilen `KONTO ERKANNT` bzw. die Datei `MQL5\Files\DEADBAND4_Konto_<Login>.txt` mit dem
+   GFT-Dashboard vergleichen: Startsaldo, gültige Tage, Boden (Max-Loss-Level), Tagesgrenze. Weicht der Boden ab:
+   `FloorOverride` = Dashboard-Wert und `FloorOverrideZeit` = Zeitpunkt der Ablesung.
+7. Nach dem Beantragen einer Auszahlung: `AuszahlungAngefordertAm` = Zeitpunkt (Serverzeit). Der EA bleibt dann flach,
+   bis die Auszahlung gebucht ist.
+8. Kommt die Push-Meldung „Abbuchung ... ist KEINE Auszahlung“, obwohl es eine war: den Buchungskommentar (steht in
+   der Meldung) als `AuszahlungKennung` eintragen.
+
+## 7. Grenzen und Hinweise
+
+1. **Regime-Abhängigkeit** der Fades (Bericht 6.00, Abschnitt 6.3): Auf 2006–2021 verdienen sie nicht; der Wächter
+   begrenzt die Verluste erst nach einigen Signalen.
+2. **Nicht kompiliert, nicht im Tester.** Die Änderungen wurden statisch geprüft (Klammern, alle Format-Aufrufe,
+   Deklarationsreihenfolge) und von zwei Sub-Agenten gegengelesen; Kompilieren und Tester bleiben Pflicht.
+3. **Replikat statt Tick-Test:** M5-Kerzen, News-Sperre nicht abgebildet. Die Kontoerkennung (Abschnitt 4) ist im
+   Replikat nicht nachgebildet; sie ändert das Handeln nur in Ausnahmefällen (Neustart, Lücken, Abzüge, nahe am
+   Boden).
+4. **GFT-Lesarten:** Der EA nimmt überall die strengere Lesart (Boden vom Equity-Hoch inkl. Buchgewinn, Tagesreferenz
+   max(Saldo, Equity), gültiger Tag in beiden Kommissions-Lesarten, 10 × 24 h). Ist GFT milder, kostet das nur wenig.
+5. **Hedging über eigene Konten** und **mehrere Konten mit demselben EA**: siehe Bericht 6.00, Abschnitt 8.
+6. **Öffentliches Repository:** Empfehlung „Private“.
