@@ -24,17 +24,18 @@ def old_filter(tf, L, mp, cond, minlegs=30):
 
 # Bedingungen (True = handeln)
 def c_counter_mature(th):
-    """gegen den Lauf nur, wenn der Lauf reif ist (p_ext >= th); in Laufrichtung immer."""
+    """Regel A: gegen den Lauf nur, wenn der Lauf reif ist (p_ext >= th); in Laufrichtung immer."""
     return lambda X: (X[:, 1] > 0) | (X[:, 2] >= th)
 
 
+def c_stop_survival(th):
+    """Regel S: gegen den Lauf nur, wenn die Grid-Chance, dass der Lauf bis zum Stop weiterlaeuft, unter th liegt."""
+    return lambda X: (X[:, 1] > 0) | ~(X[:, 6] >= th)
+
+
 def c_beyond_max(th):
-    """gegen den Lauf nur, wenn beyond <= th."""
+    """Regel B: gegen den Lauf nur, wenn beyond <= th."""
     return lambda X: (X[:, 1] > 0) | (X[:, 4] <= th)
-
-
-def c_tgt_max(th):
-    return lambda X: ~(X[:, 5] > th)
 
 
 def c_young(th):
@@ -42,10 +43,31 @@ def c_young(th):
     return lambda X: (X[:, 1] < 0) | (X[:, 2] <= th)
 
 
+def c_not_young_counter(th):
+    """Trendfolge: nicht gegen einen jungen Lauf einsteigen (gegen den Lauf nur, wenn p_ext >= th)."""
+    return lambda X: (X[:, 1] > 0) | (X[:, 2] >= th)
+
+
 def variants():
-    """(Name, Basis ERT/SIC, GP-Zusatz, Fade-Regel, RSI21-Regel, Noise-Regel) - wird nach der Vorstudie gefuellt."""
+    """(Name, Basis ERT/SIC, GP-Zusatz, Fade-Regel, RSI21-Regel, Noise-Regel)."""
     H = dict(harv=1)
-    return [
+    A = lambda th, L=20, mp=1000, ga=False: fade_filter(5, L, mp, c_counter_mature(th), guard_all=ga)
+    S = lambda th, L=15, mp=1000, ga=False: fade_filter(5, L, mp, c_stop_survival(th), guard_all=ga)
+    v = [
         ("6.10 Ertrag", "ERT", H, NONE, None, None),
         ("6.10 Sicher", "SIC", {}, NONE, None, None),
+        ("E A M5 L20 p33", "ERT", H, A(0.33), None, None),
+        ("E A M5 L20 p25", "ERT", H, A(0.25), None, None),
+        ("E A M5 L20 p40", "ERT", H, A(0.40), None, None),
+        ("E A M5 L20 p33 Waechter alle", "ERT", H, A(0.33, ga=True), None, None),
+        ("E A M5 L30 p33", "ERT", H, A(0.33, L=30), None, None),
+        ("E A M5 L20 p33 max500", "ERT", H, A(0.33, mp=500), None, None),
+        ("E S M5 L15 s70", "ERT", H, S(0.70), None, None),
+        ("E S M5 L15 s75", "ERT", H, S(0.75), None, None),
+        ("E S M5 L20 s70", "ERT", H, S(0.70, L=20), None, None),
+        ("E S M5 L20 s75", "ERT", H, S(0.75, L=20), None, None),
+        ("E S M5 L15 s70 Waechter alle", "ERT", H, S(0.70, ga=True), None, None),
+        ("S A M5 L20 p33", "SIC", {}, A(0.33), None, None),
+        ("S S M5 L15 s70", "SIC", {}, S(0.70), None, None),
     ]
+    return v
