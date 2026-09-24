@@ -1,16 +1,16 @@
-; DEADBAND LIVE 6.00 FADE - Echtbetrieb = Auspraegung ERTRAG, GFT Instant Premium 10k (Konto ab 02.09.2026). Alle Werte = Voreinstellung des EA.
-; 6.00: 10 Fehlausbruch-Fades (0,75 % je Trade, Regime-Waechter PF der letzten 30 Signale > 1,2) + RSI21 0,50 % + NAS-Noise 0,35 %,
-;   DEADBAND-Einstiege aus (DbAktiv=false), Serien-Stopp nach 3 Verlusten, Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 % (MinProfitPct=3).
-; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
-;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   5.10 (Ausz >= 3 %): 5,51 / 0,17 / 1517 $ / 6,15 / 9,4/13
-;   6.00 Sicher:        6,08 / 0,00 / 1653 $ / 0,04 / 4,8/7
-;   6.00 Ertrag:        7,46 / 0,02 / 2243 $ / 0,62 / 6,0/11
-; Fremddaten 2006-21 (anderes Marktregime, Fades ohne Vorteil): Sicher 0,55/0,31/104 $, Ertrag 1,89/0,39/502 $.
-; Das Ziel 10 Auszahlungen/J + 0 Busts + nie > 5 Verluste in Folge erreicht keine gepruefte Variante robust.
-; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
-; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart, kein zweites Konto mit Gegenposition (Hedging-Verbot).
-; Zurueck auf 5.10: rollback_5.10/ (mq5 + set). Bericht: DEADBAND_LIVE4_600_Bericht.md.
+; DEADBAND LIVE 5.10 KOMBI - Echtbetrieb GFT Instant Premium 10k (Konto ab 02.09.2026). Alle Werte = Voreinstellung des EA.
+; 5.10: Signale aller drei Module = 5.00. Ziel: mehr und regelmaessigere kleine Auszahlungen, weit weniger Busts, kuerzere Verlustserien.
+;   GFT-Regelschutz (strenge Lesart): FloatNurVerlierer=true (Floating-Bremse/Notbremse auf die Summe der Verlustpositionen),
+;   SwapVorsorgePct=0.80 / SwapVorsorgeMin=10 (vor dem Rollover), IdeeMaxRisikoPct=1.25 (Risiko je Symbol+Richtung, alle Module;
+;   verlangt GFT 1 % je Idee -> 1.0), Tagesregel-Notbremse auf min(Startsaldo, Tagesreferenz), Teilverkauf erst nach 130 s,
+;   NurAufPcPfad (leer = aus; z. B. Windows-Benutzername des Heim-PCs eintragen -> Start auf fremdem Rechner/VPS verweigert).
+;   Auszahlungstakt: Tp1R=1.5 / Tp1F=0.50 / BeAfterT1R=0.05 (DEADBAND 50 % bei 1,5 R, Stop +0,05 R), AbschlussLetzte=2 /
+;   AbschlussMinR=0.5 (fehlen <= 2 gueltige Tage: DEADBAND-Gewinn jederzeit bis zum gueltigen Tag realisieren), GeRueckgangR=0.0,
+;   SerienStopp=4 (nach 4 Verlusttrades in Folge keine neuen Einstiege bis 17:00 NY), R21RiskPct=0.63, NzRiskPct=0.45.
+; Replikat (GFT-Daten 2022-26, 16 Stoerungen, rollierend 1/2/3 J): Ausz/Busts/Netto je Jahr 5.00 7,06/1,05/1911 -> 5.10 7,96/0,05/1571.
+; Zurueck auf 5.00: rollback_5.00/DEADBAND_LIVE4.mq5 mit rollback_5.00/DEADBAND_LIVE4_Echtbetrieb.set. Bericht: DEADBAND_LIVE4_510_Bericht.md.
+; Nur 5.10-Regelschutz ohne Handelsaenderung (= 5.00 regelsicher): Tp1R=2.0, Tp1F=0.00, BeAfterT1R=0.30, GeRueckgangR=1.25,
+;   R21RiskPct=0.70, NzRiskPct=0.30, AbschlussLetzte=0, SerienStopp=0, IdeeMaxRisikoPct=0 (Replikat: 7,05/0,91/1843).
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -73,7 +73,7 @@ NeedValidDays=5
 CycleDays=10
 ProfitSplit=0.80
 MinPayoutUSD=105.0
-MinProfitPct=3.0
+MinProfitPct=0.0
 PayoutCapPct=6.0
 PayoutCapCount=2
 StopMode=0
@@ -118,7 +118,7 @@ WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
 R21Aktiv=true
-R21RiskPct=0.50
+R21RiskPct=0.63
 R21GoldMult=0.70
 R21Gewichte=1.25,1.0,0.75
 R21GoldSymbol=XAUUSD.x
@@ -143,7 +143,7 @@ R21GoldRR=2.64
 R21ExitBarsM5=1152
 R21ExitTage=8
 R21BudgetPct=1.20
-GesamtBudgetPct=0.90
+GesamtBudgetPct=2.00
 R21MaxLossDay=2
 R21ReifeSchliessen=true
 R21MagicOffset=10
@@ -163,7 +163,7 @@ PayoutErkennMinUSD=50.0
 R21ReifeModus=2
 NzAktiv=true
 NzSymbol=NAS100.x
-NzRiskPct=0.35
+NzRiskPct=0.45
 NzStops=0.35,0.5,0.75
 NzBudgetPct=0.0
 NzTage=14
@@ -183,25 +183,14 @@ NzFreieTage=
 FloatNurVerlierer=true
 SwapVorsorgePct=0.80
 SwapVorsorgeMin=10
-IdeeMaxRisikoPct=0.90
+IdeeMaxRisikoPct=1.25
 NurAufPcPfad=
 AbschlussLetzte=2
 AbschlussMinR=0.5
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
-SerienStopp=3
+SerienStopp=4
 SerienPauseTage=0
-DbAktiv=false
-FadeAktiv=true
-FadeListe=
-FadeAus=
-FadeRiskPct=0.75
-FadeWaechterN=30
-FadeWaechterPF=1.20
-FadeWaechterMin=30
-FadeHistTage=600
-FadeZielAbSek=130
-FadeMagicOffset=50
 ShowPanel=true
 ShowLeiter=true
 Barreserve=0.0

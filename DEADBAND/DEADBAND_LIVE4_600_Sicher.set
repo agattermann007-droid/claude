@@ -1,6 +1,6 @@
-; DEADBAND LIVE 6.00 FADE - Echtbetrieb = Auspraegung ERTRAG, GFT Instant Premium 10k (Konto ab 02.09.2026). Alle Werte = Voreinstellung des EA.
-; 6.00: 10 Fehlausbruch-Fades (0,75 % je Trade, Regime-Waechter PF der letzten 30 Signale > 1,2) + RSI21 0,50 % + NAS-Noise 0,35 %,
-;   DEADBAND-Einstiege aus (DbAktiv=false), Serien-Stopp nach 3 Verlusten, Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 % (MinProfitPct=3).
+; DEADBAND LIVE 6.00 FADE - Auspraegung SICHER, GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Nur die 10 Fehlausbruch-Fades (R21Aktiv=false, NzAktiv=false, DbAktiv=false), Serien-Stopp nach 4 Verlusten,
+;   Gesamtbudget und Risiko je Idee 0,9 %, Auszahlung ab 3 %. Weniger Ertrag, keine Busts im Replikat, kuerzeste Serien.
 ; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
 ;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
 ;   5.10 (Ausz >= 3 %): 5,51 / 0,17 / 1517 $ / 6,15 / 9,4/13
@@ -117,7 +117,7 @@ WeAufnahmeReif=true
 WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
-R21Aktiv=true
+R21Aktiv=false
 R21RiskPct=0.50
 R21GoldMult=0.70
 R21Gewichte=1.25,1.0,0.75
@@ -161,7 +161,7 @@ InaktivWarnTage=20
 TagesRefEquity=true
 PayoutErkennMinUSD=50.0
 R21ReifeModus=2
-NzAktiv=true
+NzAktiv=false
 NzSymbol=NAS100.x
 NzRiskPct=0.35
 NzStops=0.35,0.5,0.75
@@ -189,7 +189,7 @@ AbschlussLetzte=2
 AbschlussMinR=0.5
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
-SerienStopp=3
+SerienStopp=4
 SerienPauseTage=0
 DbAktiv=false
 FadeAktiv=true

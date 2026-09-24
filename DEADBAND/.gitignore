@@ -1,2 +1,7 @@
 data/
 *.csv
+
+# Fremddaten (nur Skripte und Bericht im Repo)
+extdata/raw/
+extdata/work/
+extdata/fx1m/
