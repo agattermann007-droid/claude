@@ -750,6 +750,8 @@ datetime kPayoutVerarbeitet = 0;     // 6.10: letzte Auszahlung, fuer die Zyklus
 bool     kPeakVorlaeufig = false;    // 6.10: Spitze aus einer Historie, die den Saldo nicht erklaerte (wird ersetzt, sobald sie stimmt)
 int      refFehl = 0;                // 6.10: Fehlversuche der Tagesreferenz seit 17:00 NY
 datetime refVersuch = 0;
+double   kEqMaxZyklus = 0.0;         // 6.10: hoechste selbst gesehene Equity seit Start bzw. seit der letzten verarbeiteten Auszahlung
+double   kBalRecalc = 0.0, kPosSigRecalc = -1.0;   // 6.10: Saldo und Positionen beim letzten Neuberechnen
 int      nDgut = 0;                  // Deal-Zahl des letzten guten Ladens
 datetime histKleinSeit = 0;          // seit wann liefert die Historie weniger Deals als zuvor
 bool     kBuchWarn = false, kGebWarn = false;
@@ -1443,6 +1445,7 @@ void TagesRefSetzen(const long tag, const double plus, const bool unsicher)
    kDayRefPlus = MathMax(0.0, plus);
    if(MQLInfoInteger(MQL_TESTER)) return;
    GlobalVariableSet(KontoGv("DAYIDX"), (double)tag); GlobalVariableSet(KontoGv("DAYPLUS"), unsicher ? -1.0 : kDayRefPlus);   // -1 = unbekannt (Sperre ueberlebt einen Neustart)
+   GlobalVariableSet(KontoGv("DAYPLUSV"), kDayRefPlus);                    // auch vorlaeufig (Tagesbremse vor dem Laden)
    GlobalVariableSet(KontoGv("DAYBAL"), kDayStartBal); GlobalVariableSet(KontoGv("START"), kStart);   // 6.10: Tagesbremse auch vor dem Laden der Kontodaten
    GlobalVariablesFlush();
    if(kDayRefPlus > 0.0) PrintFormat("DEADBAND4: Tagesreferenz 17:00 NY = Saldo + Buchgewinn %.2f (vorsichtige Lesart der Tagesverlust-Regel)", kDayRefPlus);
@@ -1451,14 +1454,19 @@ void TagesRefLaden()
   {
    kDayRefPlus = 0.0; kRefTag = kDayIdx; tagesRefUnsicher = false;
    if(MQLInfoInteger(MQL_TESTER)) return;
-   double gv = -1.0;                                                       // -1 = kein gesicherter Wert fuer heute (oder als unbekannt gesichert)
-   if(GlobalVariableCheck(KontoGv("DAYIDX")) && (long)GlobalVariableGet(KontoGv("DAYIDX")) == kDayIdx) gv = GlobalVariableGet(KontoGv("DAYPLUS"));
+   double gv = -1.0, gvV = 0.0;                                            // -1 = kein gesicherter Wert fuer heute (oder als unbekannt gesichert)
+   if(GlobalVariableCheck(KontoGv("DAYIDX")) && (long)GlobalVariableGet(KontoGv("DAYIDX")) == kDayIdx)
+     {
+      gv = GlobalVariableGet(KontoGv("DAYPLUS"));
+      if(GlobalVariableCheck(KontoGv("DAYPLUSV"))) gvV = MathMax(0.0, GlobalVariableGet(KontoGv("DAYPLUSV")));   // vorlaeufiger Wert
+     }
    // 6.10: obere Schranke des Buchgewinns um 17:00 NY aus Deals und Kursen (falls der EA zum Tageswechsel nicht lief oder zu spaet)
    double f = 0.0;
    bool ok = BuchObergrenzeZu(PropDayStart(kDayIdx), f);
    tagesRefUnsicher = (gv < 0.0 && !ok);
-   // unsicher: vorlaeufig der Wert aus den vorhandenen Kursen (die Bremsen messen nicht vom blossen Saldo), Einstiege gesperrt
-   TagesRefSetzen(kDayIdx, MathMax(gv, f), tagesRefUnsicher);
+   // bekannter Wert: nur mit sicheren Kursen erhoehen; unsicher: vorlaeufig der Wert aus den vorhandenen Kursen (die Bremsen
+   // messen nicht vom blossen Saldo), Einstiege gesperrt
+   TagesRefSetzen(kDayIdx, (gv >= 0.0 ? MathMax(gv, ok ? f : 0.0) : MathMax(gvV, f)), tagesRefUnsicher);
    refFehl = 0; refVersuch = TimeCurrent();
    if(tagesRefUnsicher) PrintFormat("DEADBAND4: Tagesreferenz 17:00 NY noch nicht sicher bestimmbar (Kurse werden geladen) - vorlaeufig Buchgewinn %.2f, keine neuen Einstiege, neuer Versuch jede Minute", kDayRefPlus);
   }
@@ -1491,15 +1499,16 @@ bool BuchObergrenzeZu(const datetime tb, double &f)
       if(vol[q] <= 1e-9) continue;
       MqlRates r[];
       int n = CopyRates(sy[q], PERIOD_M1, tb - 120, tb - 1, r);
+      bool imFenster = (n > 0);                                            // Kerzen der 2 min vor tb (nie veraltet)
       if(n <= 0)
         {
          int sh = iBarShift(sy[q], PERIOD_M5, tb - 1, false);
          n = (sh >= 0 ? CopyRates(sy[q], PERIOD_M5, sh, 1, r) : 0);
         }
-      // 6.10: nicht synchrone Historie kann eine Luecke vor tb haben (iBarShift liefert dann eine alte Kerze) -> Ergebnis nur
-      //       vorlaeufig (zaehlt trotzdem), spaeter erneut
+      // 6.10: nicht synchrone Historie kann eine Luecke vor tb haben (iBarShift liefert dann eine Stunden alte Kerze) ->
+      //       Ergebnis nur vorlaeufig, spaeter erneut; vorlaeufig zaehlen nur Kerzen aus dem Fenster
       if(!MQLInfoInteger(MQL_TESTER) && (!SeriesInfoInteger(sy[q], PERIOD_M1, SERIES_SYNCHRONIZED) || !SeriesInfoInteger(sy[q], PERIOD_M5, SERIES_SYNCHRONIZED)))
-         alle = false;
+        { alle = false; if(!imFenster) continue; }
       if(n <= 0) { alle = false; continue; }
       double best = -DBL_MAX;
       for(int k=0;k<n;k++) best = MathMax(best, dir[q] > 0 ? r[k].high - px[q] : px[q] - r[k].low);
@@ -2118,7 +2127,7 @@ void ResetKontoZustand()
    kDayIdx = -1; kRefTag = -1; kDayRefPlus = 0.0; kDayStartBal = 0.0; kMode = 0; reifGemeldet = false; kLastReminder = 0; kLastRecalc = 0; kFlatSince = 0;
    peakGespeichert = 0.0; peakPayGesp = -1; peakSpeicherZeit = 0; peakOk = true; peakFehl = 0; peakVersuch = 0;
    serNDeals = -1; serN = 0; serStoppZeit = 0; kBereitAb = 0; kStartWarnung = false; kBuchWarn = false; kGebWarn = false; kLogin = 0;
-   kAuszahlungHeute = false; tagesRefUnsicher = false; kFloorOvWarn = false; kCreditWarn = false; kKeinePayGemeldet = 0; kPayoutVerarbeitet = 0; kPeakVorlaeufig = false; refFehl = 0; refVersuch = 0;
+   kAuszahlungHeute = false; tagesRefUnsicher = false; kFloorOvWarn = false; kCreditWarn = false; kKeinePayGemeldet = 0; kPayoutVerarbeitet = 0; kPeakVorlaeufig = false; refFehl = 0; refVersuch = 0; kEqMaxZyklus = 0.0; kBalRecalc = 0.0; kPosSigRecalc = -1.0;
   }
 
 //+------------------------------------------------------------------+
@@ -2308,7 +2317,24 @@ void RekonstruiereKonto(bool mitBoden)
         }
      }
    kLastRecalc = now;
+   kBalRecalc = AccountInfoDouble(ACCOUNT_BALANCE); kPosSigRecalc = PosSignatur();   // 6.10: Saldo-Spruenge ohne Handel erkennen
    SerienStand();                                                            // 5.10
+  }
+// 6.10: Kennung der offenen Positionen (Tickets + Volumen, ganzzahlig) - aendert sich bei jedem Oeffnen, Schliessen, Teilschliessen
+double PosSignatur()
+  {
+   double sig = 0.0;
+   for(int i=PositionsTotal()-1;i>=0;i--)
+     {
+      ulong tk = PositionGetTicket(i); if(tk == 0) continue;
+      sig += (double)tk + MathRound(PositionGetDouble(POSITION_VOLUME)*1000.0);
+     }
+   return sig;
+  }
+// 6.10: Saldo seit dem letzten Neuberechnen ohne Positionsaenderung veraendert (Auszahlung, Abbuchung, Gutschrift)?
+bool SaldoSprung()
+  {
+   return (kLastRecalc > 0 && MathAbs(AccountInfoDouble(ACCOUNT_BALANCE) - kBalRecalc) > 0.005 && MathAbs(PosSignatur() - kPosSigRecalc) < 0.5);
   }
 
 // 6.10: Equity-Spitze aus der Historie; mit FloorOverride (Ablesung nach der letzten Auszahlung) ab dem Ablesezeitpunkt
@@ -2680,7 +2706,9 @@ void Durchlauf()
             && GlobalVariableCheck(KontoGv("DAYIDX")) && GlobalVariableCheck(KontoGv("DAYBAL"))
             && GlobalVariableCheck(KontoGv("START")) && (long)GlobalVariableGet(KontoGv("DAYIDX")) == PropDayIndex(now))
            {
-            double ref0 = GlobalVariableGet(KontoGv("DAYBAL")) + MathMax(0.0, GlobalVariableGet(KontoGv("DAYPLUS")));
+            double plus0 = GlobalVariableGet(KontoGv("DAYPLUS"));
+            if(plus0 < 0.0 && GlobalVariableCheck(KontoGv("DAYPLUSV"))) plus0 = GlobalVariableGet(KontoGv("DAYPLUSV"));   // unsicher: vorlaeufiger Wert
+            double ref0 = GlobalVariableGet(KontoGv("DAYBAL")) + MathMax(0.0, plus0);
             double st0  = GlobalVariableGet(KontoGv("START"));
             if(ref0 > 0.0 && st0 > 0.0 && AccountInfoDouble(ACCOUNT_EQUITY) - ref0 <= -st0*DayStopPct/100.0 && FloatingPnl(CountForeignPositions) < 0.0 && BremseDarf())
                BremseErgebnis(CloseAll("Tagesverlust am Limit (Kontodaten noch nicht geladen)"), "Tagesstopp ohne Kontodaten");
@@ -2705,6 +2733,7 @@ void Durchlauf()
    NewsLaden();
    double eqNow = AccountInfoDouble(ACCOUNT_EQUITY);
    if(eqNow > kPeakEq) kPeakEq = eqNow;
+   if(eqNow > kEqMaxZyklus) kEqMaxZyklus = eqNow;                          // 6.10: gesehene Hochs (Ersatz einer vorlaeufigen Spitze)
    long today = PropDayIndex(now);
    bool neuGerechnet = false;
    if(today != kDayIdx)
@@ -2720,6 +2749,9 @@ void Durchlauf()
       kDayIdx = today;
       if(LadeDeals(0)) { RekonstruiereKonto(false); neuGerechnet = true; }   // schliesst den Tag ab, setzt Tagesstartsaldo
      }
+   // 6.10: Saldo ohne Handel veraendert (Auszahlung, Abbuchung): sofort neu laden - sonst misst die Tagesgrenze bis zum
+   //       naechsten Laden von der alten Tagesreferenz (falscher Notbremse-Alarm nach jeder Auszahlung)
+   if(SaldoSprung()) kLastRecalc = 0;
    // Historie alle 5 s: Auszahlung erkannt? Tagesstand?
    if(now - kLastRecalc >= 5)
      {
@@ -2731,6 +2763,12 @@ void Durchlauf()
       static int nDPeak = -1;
       bool vorher = histOk;
       histOk = HistorieKonsistent();
+      if(histOk && kLastPayout < kPayoutVerarbeitet)                       // 6.10: im Rueckfall verarbeitete Auszahlung ist mit stimmiger
+        {                                                                  //       Historie keine mehr -> Zyklus und Spitze neu
+         PrintFormat("DEADBAND4: Auszahlung %s ist nach vollstaendiger Historie keine - Zyklus ab %s, Equity-Spitze wird neu bestimmt",
+                     TimeToString(kPayoutVerarbeitet, TIME_DATE|TIME_MINUTES), (kLastPayout > 0 ? TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : "Einzahlung"));
+         kPayoutVerarbeitet = kLastPayout; kPeakVorlaeufig = true; nDPeak = -1;
+        }
       if(histOk && (nD != nDPeak || !vorher))                              // nur mit einer Historie, die den Saldo erklaert (sonst doppelt gezaehlte Deals)
         {
          nDPeak = nD;
@@ -2741,6 +2779,7 @@ void Durchlauf()
             double alt = kPeakEq;
             kPeakVorlaeufig = false; peakOk = true;
             RekonstruiereKonto(true);
+            kPeakEq = MathMax(kPeakEq, kEqMaxZyklus);                         // nie unter eine selbst gesehene Equity
             PrintFormat("DEADBAND4: Historie erklaert den Saldo jetzt - Equity-Spitze neu bestimmt %.2f -> %.2f (Boden %.2f)", alt, kPeakEq, kPeakEq - kStart*MaxLossPct/100.0);
            }
          else
@@ -2772,6 +2811,7 @@ void Durchlauf()
       // 6.10: die Auszahlung war schon bekannt (Historie war beim Start unvollstaendig) - nur den Boden des Zyklus neu bestimmen
       kPayoutVerarbeitet = kLastPayout; kPeakVorlaeufig = payOhneHist;
       if(payOhneHist) peakOk = false;
+      kEqMaxZyklus = AccountInfoDouble(ACCOUNT_EQUITY);
       kPeakEq = MathMax(PeakRekonstruktion(true), MathMax(AccountInfoDouble(ACCOUNT_BALANCE), AccountInfoDouble(ACCOUNT_EQUITY)));
       if(GlobalVariableCheck(KontoGv("PEAK"))) kPeakEq = MathMax(kPeakEq, GlobalVariableGet(KontoGv("PEAK")));
       PrintFormat("DEADBAND4: Historie vervollstaendigt - letzte Auszahlung %s, Equity-Spitze %.2f", TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES), kPeakEq);
@@ -2784,6 +2824,7 @@ void Durchlauf()
               TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES), kStart, AccountInfoDouble(ACCOUNT_BALANCE)));
       RekonstruiereKonto(true);            // Boden neu (Equity-Hoch = jetzt)
       kPeakVorlaeufig = payOhneHist; if(payOhneHist) peakOk = false;
+      kEqMaxZyklus = AccountInfoDouble(ACCOUNT_EQUITY);
       eqNow = AccountInfoDouble(ACCOUNT_EQUITY);
       kMode = 0; reifGemeldet = false; kLastReminder = 0;
       for(int k=0;k<nSlot;k++) WeLoeschen(k, "neuer Zyklus nach Auszahlung");
@@ -2865,7 +2906,12 @@ void Durchlauf()
    double dayRef = kDayStartBal + (TagesRefEquity ? kDayRefPlus : 0.0);   // 4.90: max(Saldo, Equity) um 17:00 NY
    double dayEq = eqNow - dayRef;
    double dayBasis = (kStart > 0.0 ? MathMin(dayRef, kStart) : dayRef);    // 5.10: 3 % auf die kleinere Basis (Startsaldo oder Tagesreferenz)
-   if(RuleDayLossPct>0.0 && dayRef>0.0 && dayEq <= -dayBasis*RuleDayLossPct/100.0)
+   // 6.10: Tagesreferenz veraltet (Saldo-Sprung ohne Handel, Neuladen fehlgeschlagen): Tagesgrenzen hoechstens 10 s aufschieben
+   static uint refAltMs = 0;
+   bool refAlt = SaldoSprung();
+   if(!refAlt) refAltMs = 0; else if(refAltMs == 0) { refAltMs = GetTickCount(); if(refAltMs == 0) refAltMs = 1; }
+   bool tagAufschub = refAlt && GetTickCount() - refAltMs < 10000;
+   if(!tagAufschub && RuleDayLossPct>0.0 && dayRef>0.0 && dayEq <= -dayBasis*RuleDayLossPct/100.0)
      { Notbremse(StringFormat("Tagesverlust %.2f bei Firmengrenze %.2f", dayEq, -dayBasis*RuleDayLossPct/100.0)); return; }
    // --- innere Bremsen (4.90: gedrosselt, Push bei wiederholtem Scheitern) ---
    if(FloatStopPct>0.0 && fltRegel <= -fBasis*FloatStopPct/100.0)
@@ -2874,9 +2920,9 @@ void Durchlauf()
       return;
      }
    bool dayLocked = (dayEq <= -kStart*DayStopPct/100.0);
-   if(dayLocked && fltAll < 0.0) { if(BremseDarf()) BremseErgebnis(CloseAll("Tagesverlust am Limit"), "Tagesstopp"); return; }
+   if(dayLocked && fltAll < 0.0 && !tagAufschub) { if(BremseDarf()) BremseErgebnis(CloseAll("Tagesverlust am Limit"), "Tagesstopp"); return; }
    bool payOffen = (kLastPayout > kPayoutVerarbeitet);                     // 6.10: Auszahlung gebucht, Boden noch nicht neu gesetzt
-   bool keineEinstiege = dayLocked || tagesRefUnsicher || kAuszahlungHeute || payOffen;   // 6.10: keine Einstiege bis 17:00 NY bzw. bis verarbeitet
+   bool keineEinstiege = dayLocked || tagesRefUnsicher || kAuszahlungHeute || payOffen || refAlt;   // 6.10: keine Einstiege bis 17:00 NY bzw. bis verarbeitet
    // 5.10: Swap-Vorsorge vor dem Rollover (der Swap wird gebucht, wenn keine Bremse mehr dazwischen greifen kann)
    if(SwapVorsorgePct > 0.0 && SwapVorsorgeMin > 0 && SwapFenster(now) && BremseDarf())
      {
