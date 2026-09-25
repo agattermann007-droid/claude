@@ -1,0 +1,8 @@
+XAU: Regime bekannt EA 0.9909 / Replikat 0.9909; Entscheidungen gleich in 100.000 % von 837098 Kandidaten; Schlusskurs gleich 100.000 %
+   Kreuz XAU<-NAS m15: gleich 97.940 % von 482448; Abweichungen ohne Kerze des anderen Symbols bei T: 9940, mit Kerze: 0
+   Kreuz XAU<-NAS m30: gleich 98.925 % von 241474; Abweichungen ohne Kerze des anderen Symbols bei T: 2596, mit Kerze: 0
+   Kreuz XAU<-NAS h1: gleich 99.213 % von 120854; Abweichungen ohne Kerze des anderen Symbols bei T: 951, mit Kerze: 0
+NAS: Regime bekannt EA 0.9913 / Replikat 0.9913; Entscheidungen gleich in 100.000 % von 872293 Kandidaten; Schlusskurs gleich 100.000 %
+   Kreuz NAS<-XAU m15: gleich 99.646 % von 473096; Abweichungen ohne Kerze des anderen Symbols bei T: 1676, mit Kerze: 0
+   Kreuz NAS<-XAU m30: gleich 99.683 % von 239326; Abweichungen ohne Kerze des anderen Symbols bei T: 758, mit Kerze: 0
+   Kreuz NAS<-XAU h1: gleich 99.707 % von 120191; Abweichungen ohne Kerze des anderen Symbols bei T: 352, mit Kerze: 0

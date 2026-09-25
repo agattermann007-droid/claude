@@ -1,0 +1,5 @@
+Daten: Gold 1443612 M5, NAS 1446287 M5 (Naht NAS 2026-01-01)
+1. Signale: sig5 4744 (Folge 3782), ek_sig 4744 (Folge 3782) -> IDENTISCH  [27s]
+2. eng10 (RSI21 allein, GFT-Regeln aus): 1047 Trades, Summe 15,120.89 $ | ek_sim: 1047 Trades, Summe 15,120.89 $
+   Trade fuer Trade (Einstieg, Platz, Richtung, Ergebnis): IDENTISCH
+fertig [135s]

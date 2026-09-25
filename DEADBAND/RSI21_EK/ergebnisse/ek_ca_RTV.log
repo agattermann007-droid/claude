@@ -1,0 +1,92 @@
+  4 Varianten in 4s
+  4 Varianten in 3s
+Basis: Ziel R:TV = 28.76 | r* 2.06 % | T   10.7% SR0.45 DD 37% n  48 R+0.13 | V   60.6% SR1.72 DD 16% n  51 R+0.52 | Z   60.1% SR1.62 DD 18% n  55 R+0.45 | G   31.6% SR1.08 DD 37% n  50 R+0.30
+  24 Varianten in 4s
+  24 Varianten in 3s
+R1 be_at=2.5                ->   35.18 | r* 1.73 % | T   17.0% SR0.67 DD 35% n  47 R+0.23 | V   72.7% SR1.98 DD 13% n  51 R+0.67 | Z   66.4% SR1.84 DD 21% n  56 R+0.59 | G   39.2% SR1.29 DD 35% n  50 R+0.43  [14s]
+  12 Varianten in 3s
+  12 Varianten in 3s
+  28 Varianten in 3s
+  28 Varianten in 3s
+R1 rr_nas=3.0               ->   37.48 | r* 1.61 % | T   17.8% SR0.70 DD 39% n  46 R+0.25 | V   79.7% SR2.07 DD 15% n  50 R+0.77 | Z   60.4% SR1.69 DD 19% n  55 R+0.59 | G   39.8% SR1.31 DD 39% n  49 R+0.47  [26s]
+  24 Varianten in 3s
+  24 Varianten in 3s
+  20 Varianten in 3s
+  20 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  20 Varianten in 3s
+  20 Varianten in 3s
+R1 nslots=3                 ->   38.84 | r* 1.23 % | T   17.9% SR0.70 DD 38% n  63 R+0.26 | V   84.5% SR2.11 DD 17% n  68 R+0.81 | Z   63.4% SR1.76 DD 20% n  73 R+0.60 | G   41.4% SR1.33 DD 38% n  66 R+0.48  [49s]
+  16 Varianten in 3s
+  16 Varianten in 3s
+R1 maxloss=1                ->   39.31 | r* 1.24 % | T   18.4% SR0.72 DD 36% n  62 R+0.27 | V   85.3% SR2.15 DD 17% n  65 R+0.83 | Z   66.0% SR1.80 DD 20% n  72 R+0.62 | G   42.4% SR1.36 DD 36% n  65 R+0.49  [55s]
+  12 Varianten in 3s
+  12 Varianten in 3s
+  16 Varianten in 3s
+  16 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  16 Varianten in 3s
+  16 Varianten in 3s
+  12 Varianten in 3s
+  12 Varianten in 3s
+R1 wts=(1.5, 1.0, 0.5)      ->   39.70 | r* 1.09 % | T   18.7% SR0.72 DD 36% n  62 R+0.27 | V   86.3% SR2.17 DD 17% n  65 R+0.83 | Z   67.1% SR1.81 DD 22% n  72 R+0.62 | G   43.0% SR1.37 DD 36% n  65 R+0.49  [83s]
+  20 Varianten in 3s
+  20 Varianten in 3s
+  16 Varianten in 4s
+  16 Varianten in 4s
+R1 cross=None               ->   41.91 | r* 0.78 % | T   19.9% SR0.72 DD 35% n 109 R+0.20 | V   92.9% SR2.34 DD 17% n 112 R+0.67 | Z   53.1% SR1.65 DD 24% n 105 R+0.52 | G   42.1% SR1.35 DD 35% n 109 R+0.39  [98s]
+  20 Varianten in 10s
+  20 Varianten in 3s
+R1 folge_min=60             ->   42.74 | r* 0.79 % | T   21.3% SR0.76 DD 34% n 106 R+0.22 | V   93.9% SR2.37 DD 17% n 111 R+0.67 | Z   54.2% SR1.67 DD 25% n 104 R+0.53 | G   43.4% SR1.38 DD 34% n 107 R+0.40  [111s]
+  20 Varianten in 3s
+  20 Varianten in 3s
+  32 Varianten in 3s
+  32 Varianten in 3s
+  16 Varianten in 3s
+  16 Varianten in 3s
+R1 gold_bis=13.0            ->   43.33 | r* 0.81 % | T   24.2% SR0.86 DD 34% n  94 R+0.27 | V   91.6% SR2.32 DD 17% n 100 R+0.70 | Z   44.7% SR1.44 DD 25% n  96 R+0.46 | G   42.7% SR1.36 DD 34% n  96 R+0.42  [131s]
+  12 Varianten in 3s
+  12 Varianten in 3s
+R1 tf_gold=(0,)             ->   44.68 | r* 0.82 % | T   24.5% SR0.87 DD 32% n  85 R+0.29 | V   96.2% SR2.38 DD 16% n  92 R+0.76 | Z   42.0% SR1.38 DD 24% n  89 R+0.46 | G   43.1% SR1.38 DD 32% n  88 R+0.45  [137s]
+  16 Varianten in 3s
+  16 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+R1 nas_long_regime=False    ->   45.92 | r* 0.78 % | T   27.1% SR0.94 DD 34% n  94 R+0.30 | V   97.1% SR2.47 DD 15% n  96 R+0.77 | Z   36.6% SR1.19 DD 23% n  97 R+0.40 | G   43.6% SR1.38 DD 34% n  95 R+0.44  [160s]
+  8 Varianten in 3s
+  8 Varianten in 3s
+  20 Varianten in 3s
+  20 Varianten in 3s
+R1 stop_atr=1.75            ->   46.48 | r* 0.77 % | T   30.0% SR1.01 DD 33% n  95 R+0.31 | V   94.8% SR2.45 DD 17% n  97 R+0.76 | Z   39.2% SR1.28 DD 24% n  96 R+0.42 | G   45.6% SR1.43 DD 33% n  96 R+0.45  [172s]
+  20 Varianten in 3s
+  20 Varianten in 3s
+R2 be_at=0.0                ->   47.37 | r* 0.76 % | T   31.3% SR1.04 DD 36% n  95 R+0.33 | V   96.4% SR2.50 DD 17% n  97 R+0.78 | Z   47.6% SR1.51 DD 23% n  96 R+0.49 | G   48.5% SR1.50 DD 36% n  96 R+0.48  [178s]
+  12 Varianten in 3s
+  12 Varianten in 3s
+  24 Varianten in 3s
+  24 Varianten in 3s
+  24 Varianten in 3s
+  24 Varianten in 3s
+R2 rr_gold=3.5              ->   49.35 | r* 0.73 % | T   31.2% SR1.03 DD 37% n  94 R+0.35 | V  104.6% SR2.65 DD 17% n  97 R+0.87 | Z   48.1% SR1.50 DD 23% n  96 R+0.52 | G   50.0% SR1.54 DD 37% n  95 R+0.52  [197s]
+  20 Varianten in 3s
+  20 Varianten in 3s
+  8 Varianten in 3s
+  8 Varianten in 3s
+  16 Varianten in 3s
+  16 Varianten in 3s
+  12 Varianten in 3s
+  12 Varianten in 3s
+  12 Varianten in 3s
+  12 Varianten in 3s
+  16 Varianten in 5s
+  16 Varianten in 11s
+  8 Varianten in 14s
+  8 Varianten in 3s
+  16 Varianten in 3s
+  16 Varianten in 3s
