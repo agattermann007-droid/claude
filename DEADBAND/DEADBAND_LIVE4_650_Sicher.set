@@ -1,17 +1,17 @@
-; DEADBAND LIVE 6.40 TAKT - Auspraegung SICHER (nur die 10 Fehlausbruch-Fades), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Wie das Echtbetrieb-Set (6.40 Ertrag), aber R21Aktiv=false, NzAktiv=false, SerienStopp=4 (wie 6.00-6.30 Sicher).
-;   6.40-Regeln: Auszahlung ab dem GFT-Minimum, Abschluss-Ernte immer, Schutz gueltiger Tage, Portfolio-Waechter
-;   (PF der letzten 200 Fade-Signale > 1,15), Pufferkurve 5 / 2,5 / x0,2, Fades ohne Teilgewinn.
+; DEADBAND LIVE 6.50 NETTO - Auspraegung SICHER (nur die 10 Fehlausbruch-Fades), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Wie das Echtbetrieb-Set (6.50 Ertrag), aber R21Aktiv=false, NzAktiv=false, SerienStopp=4 (wie 6.00-6.40 Sicher) und
+;   GueltigSchutzFrei leer: alle Fades an gueltigen Tagen geschuetzt wie 6.40. Gegenueber 6.40 Sicher nur Fade-Risiko 0,70 %.
+;   (N1330/N1300 frei brachte auch hier Netto, mit breiten Spreads aber laengere Verlustserien - Bericht 6.50, Abschnitt 3.7.)
 ; Replikat GFT-Ersatz 2022-25 (16 Stoerungen): Tage je Auszahlung (Ausz/J) / Busts/J / Netto/J / Serien >= 6 je J / Treffer
-;   GFT-nahe Spreads: 6.30 Sicher 65,7 T (5,57) / 0 / 1526 $ / 0,00 / 71,7 %  -  6.40 Sicher 46,2 T (7,91) / 0 / 1487 $ / 0,00 / 69,7 %
-;   breite Spreads:   6.30 Sicher 88,4 T (4,13) / 0 / 1123 $ / 0,05 / 70,4 %  -  6.40 Sicher 51,4 T (7,11) / 0 / 1225 $ / 0,02 / 69,3 %
-; Fremddaten 2006-21: 6.30 Sicher 0,48 Ausz / 0,228 Busts / 97 $, 6.40 Sicher 0,25 / 0,000 / 49 $ je Jahr.
+;   GFT-nahe Spreads: 6.40 Sicher 46,2 T (7,91) / 0 / 1487 $ / 0,00 / 69,7 %  -  6.50 Sicher 45,7 T (8,00) / 0 / 1516 $ / 0,00 / 69,8 %
+;   breite Spreads:   6.40 Sicher 51,4 T (7,11) / 0 / 1225 $ / 0,02 / 69,3 %  -  6.50 Sicher 51,4 T (7,11) / 0 / 1234 $ / 0,02 / 69,2 %
+; Fremddaten 2006-21: 6.40 Sicher 0,25 Ausz / 0,000 Busts / 49 $, 6.50 Sicher 0,25 / 0,000 / 48 $ je Jahr.
 ; Eine Auszahlung alle 30 Tage erreicht nur 'Ertrag' (Echtbetrieb-Set). 'Sicher' hat die kuerzesten Verlustserien.
 ; ACHTUNG Inaktivitaet: schaltet der Portfolio-Waechter die Fades ab (anderes Marktregime), handelt 'Sicher' womoeglich
 ;   wochenlang nicht. GFT: 30 Tage ohne Trade = Konto weg. Kommt der Push nach 20 Tagen ohne Einstieg, von Hand einen
 ;   kleinen Trade setzen (0,01 Lot, > 2 min halten).
 ; Sonst wie DEADBAND_LIVE4_Echtbetrieb.set (Max. Balken = Unbegrenzt, nur eigener PC, ein Chart, Kontoerkennung pruefen).
-; Zurueck auf 6.30 Sicher: rollback_6.30/DEADBAND_LIVE4_630_Sicher.set mit rollback_6.30/DEADBAND_LIVE4.mq5.
+; Zurueck auf 6.40 Sicher: rollback_6.40/DEADBAND_LIVE4_640_Sicher.set mit rollback_6.40/DEADBAND_LIVE4.mq5.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0

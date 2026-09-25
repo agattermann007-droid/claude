@@ -1,33 +1,32 @@
-; DEADBAND LIVE 6.40 TAKT - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: Handelslogik 6.30 (10 Fehlausbruch-Fades 0,75 % mit Probability Grid, RSI21 0,50 %,
-;   NAS-Noise, Einstand RSI21/Noise ab 1 R, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %), dazu 6.40 Auszahlungstakt:
-;   Auszahlung ab dem GFT-Minimum (MinProfitPct 0 = 131,25 $ Gewinn), Abschluss-Ernte immer (AbschlussLetzte 5), Schutz
-;   gueltiger Tage (GueltigSchutz), Regime-Waechter ueber das Fade-Portfolio (PF der letzten 200 Signale > 1,15),
-;   Pufferkurve: volle Groesse bis 1 % Rueckgang, x0,2 ab 3,5 % (DDFullPct 5 / DDMinPct 2,5 / DDMinFactor 0,2),
-;   Fades ohne Teilgewinn (FadeT1R 0), Noise 0,45 %.
-; Replikat GFT-Ersatz 2022-25 (Fremddaten; 16 Stoerungen, rollierend 1/2/3 J, jeder Handelstag ein neues Konto, Waechter
-;   wie im EA): Tage je Auszahlung (Ausz/J), Busts/J, kleinster Abstand zum Boden im Mittel, Netto/J, Trefferquote
-;   GFT-nahe Spreads:  6.30 Ertrag 44,1 T (8,29) / 0 / 248 $ / 2516 $ / 66,3 %
-;                      6.40 Ertrag 30,3 T (12,06) / 0 / 248 $ / 2232 $ / 66,1 %
-;   breite Spreads:    6.30 Ertrag 49,9 T (7,33) / 0 / 215 $ / 2171 $ / 65,0 %
-;                      6.40 Ertrag 32,5 T (11,25) / 0 / 255 $ / 2051 $ / 65,6 %
-;   Startjahr 2022 / 2023 / 2024 / 2025 (GFT-nah): alle 28,1 / 26,3 / 41,6 / 37,3 Tage (6.30: 39,1 / 38,3 / 64,7 / 68,6)
-; Fremddaten 2006-21 (anderes Marktregime), Ausz/J / Busts/J / Konten mit Bust im 1. Jahr:
-;   6.30 Ertrag 1,83 / 0,347 / 29,2 %  -  6.40 Ertrag 2,16 / 0,035 / 0,9 %
-; Auszahlungen sind kleiner (im Mittel 239 $ statt 391 $ Gewinn), dafuer haeufiger; Netto je Jahr 6-11 % weniger.
-; Die 30 Tage setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet, und GFT bucht
-;   binnen etwa eines Tages (jeder Tag spaeter kostet rund einen Tag je Auszahlung).
-; Pufferkurve NICHT lockern: mit der Kurve von 6.30 oder 4/1,5/0,3 kamen im Maerz 2025 6-12 % der Konten dem Boden
-;   auf < 100 $ nahe (Bericht 6.40, Abschnitt 3.4).
-; Mit den GFT-Exporten nachrechnen: Replikat_v6/x46.py gft (die GFT-Daten fehlten in dieser Sitzung).
+; DEADBAND LIVE 6.50 NETTO - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Alle Werte = Voreinstellung des EA: Handelslogik und Auszahlungstakt wie 6.40 (Auszahlung ab dem GFT-Minimum, Abschluss-Ernte
+;   immer, Schutz gueltiger Tage, Portfolio-Waechter PF200 > 1,15, Pufferkurve 5 / 2,5 / x0,2), dazu 6.50 Netto:
+;   Schutz gueltiger Tage je Modul - Noise und Fades wie 6.40, aber N1330/N1300 frei (GueltigSchutzFrei); RSI21 nur vor
+;   13:00 NY bzw. ohne Fade-Regime geschuetzt (GueltigSchutzR21BisNY 13, GueltigSchutzR21Regime); Fade-Risiko 0,70 %.
+; Replikat GFT-Ersatz 2022-25 (Fremddaten; 16 Stoerungen, rollierend 1/2/3 J, jeder Handelstag ein neues Konto):
+;   Netto/J, Auszahlungen/J (Tage je Auszahlung), Busts/J, kleinster Abstand zum Boden im Mittel, Trefferquote
+;   GFT-nahe Spreads:  6.40 Ertrag 2232 $ / 12,06 (30,3 T) / 0 / 248 $ / 66,1 %
+;                      6.50 Ertrag 2510 $ / 12,12 (30,1 T) / 0 / 261 $ / 66,9 %
+;   breite Spreads:    6.40 Ertrag 2051 $ / 11,25 (32,5 T) / 0 / 255 $ / 65,6 %
+;                      6.50 Ertrag 2319 $ / 11,66 (31,3 T) / 0 / 262 $ / 66,6 %
+; Fremddaten 2006-21 (anderes Marktregime), Ausz/J / Busts/J / Konten mit Bust im 1. Jahr / Netto/J:
+;   6.40 Ertrag 2,16 / 0,035 / 0,9 % / 364 $  -  6.50 Ertrag 2,14 / 0,034 / 0,6 % / 361 $
+; Mehr Netto (+12,5 / +13,1 %), Auszahlungen nicht weniger (GFT-nah gleich, breit +0,4), Bust-Risiko wie 6.40.
+;   Nach Startjahr nicht in jedem Jahr vorn (Bericht 6.50, Abschnitt 3.6).
+; Option: GueltigSchutzR21BisNY=11 bringt mehr (2649 / 2531 $), aber im alten Regime mehr Busts (0,048 je Jahr) - nicht empfohlen.
+; Pufferkurve NICHT lockern (Bericht 6.40, Abschnitt 3.4).
+; Die 30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet,
+;   und GFT bucht binnen etwa eines Tages.
+; Mit den GFT-Exporten nachrechnen: Replikat_v6/x49.py gft (die GFT-Daten fehlten in dieser Sitzung).
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
-;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.40 Auszahlungstakt | ...'.
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und
+;   '6.40 Auszahlungstakt | ... Schutz gueltiger Tage AN (6.50: ...)'.
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.30: rollback_6.30/ (mq5 und beide Sets). Bericht: DEADBAND_LIVE4_640_Bericht.md.
+; Zurueck auf 6.40: rollback_6.40/ (mq5 und beide Sets). Bericht: DEADBAND_LIVE4_650_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
