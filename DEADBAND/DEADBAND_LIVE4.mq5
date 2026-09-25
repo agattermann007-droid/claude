@@ -3,8 +3,8 @@
 //|  BUILD 6.50: MEHR NETTO, NICHT WENIGER AUSZAHLUNGEN, NICHT MEHR  |
 //|  BUST-RISIKO. Handelslogik = 6.40, dazu (Replikat eng9, x48/x49):|
 //|  1) Schutz gueltiger Tage je Modul: Noise und Fades wie 6.40,    |
-//|     RSI21 nur fuer Einstiege vor 13:00 NY und solange der        |
-//|     Portfolio-Waechter die Fades NICHT live handeln laesst       |
+//|     RSI21 nur fuer Einstiege vor 13:00 NY sowie ganztags, solange|
+//|     der Portfolio-Waechter die Fades NICHT live handeln laesst   |
 //|     (GueltigSchutzR21BisNY, GueltigSchutzR21Regime). Spaetere    |
 //|     RSI21-Trades schliessen meist erst an einem Folgetag - sie   |
 //|     gefaehrden den gueltigen Tag kaum und tragen Gewinn in die   |
@@ -743,14 +743,14 @@ input double R21EinstandAbR   = 1.0;        // RSI21: Stop auf Einstand + Einsta
 input double NzEinstandAbR    = 1.0;        // Noise: je Teil Stop auf Einstand + EinstandPlusR ab X R (R = Stop-Abstand des Teils; 0 = aus)
 input double EinstandPlusR    = 0.05;       // neuer Stop = Einstieg + X R (deckt Spread/Kosten: der Trade endet als kleiner Treffer)
 input group             "=== 6.40: Auszahlungstakt (gueltige Tage schuetzen, Regime-Waechter ueber das Fade-Portfolio) ==="
-input bool   GueltigSchutz    = true;       // heute schon gueltig und dem Zyklus fehlen (ohne heute) noch gueltige Tage: keine neuen Einstiege bis 17:00 NY (Wochenend-Wiederaufnahmen ausgenommen; false = wie 6.30)
+input bool   GueltigSchutz    = true;       // heute schon gueltig und dem Zyklus fehlen (ohne heute) noch gueltige Tage: keine neuen Einstiege bis 17:00 NY (Wochenend-Wiederaufnahmen ausgenommen; 6.50: Umfang je Modul siehe GueltigSchutzR21BisNY/-Regime/-Frei; false = wie 6.30)
 input int    FadeWaechterModus= 1;          // Regime-Waechter der Fades: 1 = Portfolio (PF der letzten FadePortN virtuellen Signale ALLER Fade-Module), 0 = je Modul (FadeWaechterN/PF/Min wie 6.00-6.30)
 input int    FadePortN        = 200;        // Portfolio-Waechter: Zahl der letzten abgeschlossenen virtuellen Fade-Signale (alle Module, innerhalb FadeHistTage)
 input double FadePortPF       = 1.15;       // Portfolio-Waechter: Fades live nur, wenn deren Profitfaktor > X (0 = Waechter aus: Fades immer live, auch vor dem Laden der Historie)
 input group             "=== 6.50: Netto (Schutz gueltiger Tage je Modul) ==="
-input double GueltigSchutzR21BisNY = 13.0;  // RSI21: Schutz gueltiger Tage nur fuer Einstiege vor X NY, danach handelt RSI21 auch an einem schon gueltigen Tag (24 = immer geschuetzt wie 6.40; 0 = nie; 11 = mehr Netto, aber mehr Busts im alten Regime 2010)
+input double GueltigSchutzR21BisNY = 13.0;  // RSI21: Schutz gueltiger Tage fuer Einstiege vor X NY, danach handelt RSI21 auch an einem schon gueltigen Tag, solange das Fade-Regime live ist (24 = immer geschuetzt wie 6.40; 0 = nach Uhrzeit nie, nur noch ohne Fade-Regime; 11 = mehr Netto, aber mehr Busts im alten Regime 2010)
 input string GueltigSchutzFrei     = "N1330;N1300"; // Fade-Module ohne Schutz gueltiger Tage (handeln auch an einem schon gueltigen Tag), getrennt mit ; (leer = alle Fades geschuetzt wie 6.40)
-input bool   GueltigSchutzR21Regime = true;  // RSI21 ab GueltigSchutzR21BisNY nur frei, solange der Portfolio-Waechter die Fades live handeln laesst (PF der letzten FadePortN > FadePortPF, gerechnet zur laufenden M5-Kerze) - im alten Regime bleibt RSI21 geschuetzt wie 6.40 (false = immer frei)
+input bool   GueltigSchutzR21Regime = true;  // RSI21 ab GueltigSchutzR21BisNY nur frei, solange der Portfolio-Waechter die Fades live handeln laesst (PF der letzten FadePortN > FadePortPF, gerechnet zur Signalzeit = Open der Einstiegskerze) - im alten Regime bleibt RSI21 geschuetzt wie 6.40 (false = ab GueltigSchutzR21BisNY immer frei)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -827,7 +827,7 @@ int      kValidDays = 0, kTradeDays = 0;
 double   kCycleReal = 0.0;           // realisiert seit Zyklusbeginn (abgeschlossene Tage + heute)
 double   kTodayReal = 0.0;
 long     kTodayRealTag = -1;            // 6.40: Prop-Tag, fuer den kTodayReal zuletzt berechnet wurde
-bool     gGueltigSchutz = false;        // 6.40: Schutz gueltiger Tage aktiv (keine neuen Einstiege bis 17:00 NY)
+bool     gGueltigSchutz = false;        // 6.40: Schutz gueltiger Tage aktiv (keine neuen Einstiege bis 17:00 NY; 6.50: je Modul, GueltigSchutzUmfang)
 long     gGsTag = -1;                   // 6.40: Tag der letzten Journal-Meldung dazu
 long     kTagIdx[]; double kTagErg[]; int kTagN = 0;   // 6.10: realisiert je Prop-Tag im Zyklus (Kontobericht)
 double   kPeakEq = 0.0;              // Equity-Spitze seit letzter Auszahlung (mit Aufschlag)
@@ -1070,7 +1070,7 @@ int OnInit()
    if(!R21PlaetzeAnlegen() && R21Aktiv) return(INIT_FAILED);          // 4.90: Plaetze immer anlegen (Verwaltung), Schalter nur fuer Einstiege
    if(!NzAnlegen() && NzAktiv) return(INIT_FAILED);                   // 5.00: Noise-Modul (Symbol fehlt/kein Hedging-Konto -> Modul aus)
    if(!FadeAnlegen() && FadeAktiv) return(INIT_FAILED);               // 6.00: Fade-Module (Historie des Waechters wird im Durchlauf geladen)
-   GueltigSchutzFreiPruefen();                                          // 6.50
+   GueltigSchutzFreiPruefen();                                          // 6.50: Namen in GueltigSchutzFrei, Regime-Schalter
 
    ResetKontoZustand(); kEaStart = TimeCurrent();                      // 6.10: kein Zustand aus einem frueheren Konto/Lauf
    kBereit = KontoStart();                                              // 4.90: nur mit Verbindung und Historie
@@ -2665,8 +2665,9 @@ double RekonstruierePeak(datetime von, const bool pruefen)         // 6.10: prue
 int GueltigeTageMitHeute() { return kValidDays + ((GueltigHeuteZaehlt && kTodayReal >= GueltigSchwelle()) ? 1 : 0); }   // 6.10: Schwelle + Reserve
 
 // 6.40 Schutz gueltiger Tage: Ist heute schon gueltig (realisiert >= 0,5 % + Reserve, auch die eigene Ernte der letzten 30 s)
-// und fehlen dem Zyklus OHNE heute noch gueltige Tage, oeffnet der EA bis 17:00 NY keine neuen Positionen (RSI21, Noise, Fades,
-// DEADBAND). Ein Verlust kippte den gueltigen Tag sonst wieder - im Replikat waren das 8 von 50 gueltigen Tagen je Jahr.
+// und fehlen dem Zyklus OHNE heute noch gueltige Tage, oeffnet der EA bis 17:00 NY keine neuen Positionen (6.40: RSI21, Noise,
+// Fades, DEADBAND; 6.50: Noise, DEADBAND, Fades ausser GueltigSchutzFrei, RSI21 vor GueltigSchutzR21BisNY oder ohne
+// Fade-Regime). Ein Verlust kippte den gueltigen Tag sonst wieder - im Replikat waren das 8 von 50 gueltigen Tagen je Jahr.
 // Wochenend-Wiederaufnahmen, Verwaltung, Ernten und Ausstiege laufen weiter. Fehlen keine gueltigen Tage mehr (nur noch
 // Mindestgewinn oder 10-Tage-Frist), wird normal gehandelt.
 // 6.40: Gewinn, ab dem die Mindestauszahlung (Anteil MinPayoutUSD) moeglich ist. Gilt auch ohne KontoAb20260730, sobald
@@ -2701,13 +2702,22 @@ string GueltigSchutzText()
   {
    return StringFormat("Tag schon gueltig (%.2f), noch %d gueltige Tage bis zur Auszahlung - Schutz gueltiger Tage bis 17:00 NY", GueltigHeuteReal(), MathMax(NeedValidDays - kValidDays - 1, 0));
   }
-// 6.50: RSI21 ist nur fuer Einstiege vor GueltigSchutzR21BisNY geschuetzt (spaetere RSI21-Trades schliessen meist erst an
-//       einem Folgetag und gefaehrden den gueltigen Tag kaum). Noise, DEADBAND und die Fades ausser GueltigSchutzFrei wie 6.40.
-bool R21GueltigSchutzJetzt()
+// 6.50: RSI21 ist an einem gueltigen Tag nur fuer Einstiege vor GueltigSchutzR21BisNY geschuetzt sowie ganztags, solange der
+//       Portfolio-Waechter die Fades nicht live handeln laesst (spaetere RSI21-Trades schliessen meist erst an einem Folgetag
+//       und gefaehrden den gueltigen Tag kaum). t = Zeit des Signals = Open der Einstiegskerze (wie das Replikat); Aufruf in
+//       HandleR21 mit sigZeit. Noise, DEADBAND und die Fades ausser GueltigSchutzFrei wie 6.40.
+bool R21GueltigSchutzJetzt(const datetime t)
   {
-   datetime t5 = TimeCurrent() - TimeCurrent() % 300;                     // Open der laufenden M5-Kerze (wie das Replikat)
+   datetime t5 = (datetime)((long)t - (long)t % 300);                     // Open der M5-Kerze des Einstiegs
    if(NYHour(t5) < GueltigSchutzR21BisNY) return true;
    return (GueltigSchutzR21Regime && !FadeRegimeLive(t5));
+  }
+string R21SchutzGrund(const datetime t)
+  {
+   datetime t5 = (datetime)((long)t - (long)t % 300);
+   if(NYHour(t5) < GueltigSchutzR21BisNY)
+      return StringFormat("Tag schon gueltig (%.2f), RSI21 vor %s NY geschuetzt", GueltigHeuteReal(), NYStundeText(GueltigSchutzR21BisNY));
+   return StringFormat("Tag schon gueltig (%.2f), Fade-Regime nicht live (%s) - RSI21 geschuetzt bis 17:00 NY", GueltigHeuteReal(), FadeRegimeText(t5));
   }
 
 // Tage und Frist erfuellt?
@@ -3182,7 +3192,7 @@ void Durchlauf()
    GueltigSchutzPruefen(today);
    for(int k=0;k<nSym;k++) HandleSymbol(k, today, keineEinstiege || gGueltigSchutz);   // 6.40: Schutz gueltiger Tage (Verwaltung laeuft weiter)
    GueltigSchutzPruefen(today);
-   for(int k=nSym;k<nSlot;k++) HandleR21(k, today, keineEinstiege || (gGueltigSchutz && R21GueltigSchutzJetzt()));   // 4.40; Folgesignale werden weiter gemerkt (6.50: Schutz nur vor GueltigSchutzR21BisNY)
+   for(int k=nSym;k<nSlot;k++) HandleR21(k, today, keineEinstiege);   // 4.40; Folgesignale werden weiter gemerkt (6.50: Schutz gueltiger Tage in HandleR21 zur Signalzeit)
    GueltigSchutzPruefen(today);
    NzDurchlauf(keineEinstiege);                                        // 5.00: NAS-Noise-Modul (6.40: Schutz ueber gGueltigSchutz in NzBar)
    GueltigSchutzPruefen(today);
@@ -3560,7 +3570,7 @@ void ZyklusPanel()
    if(kMode==2)
       txt += StringFormat("=== AUSZAHLUNG BEANTRAGEN: Konto flach, Gewinn %.2f, auszahlbar %.2f, Anteil %.2f ===\n", bal-kStart, AuszahlbarJetzt(), AuszahlbarJetzt()*ProfitSplit);
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
-   if(gGueltigSchutz) status += " | TAG GUELTIG - Schutz bis 17:00 NY: " + GueltigSchutzUmfang();   // 6.40 (6.50: je Modul)
+   if(gGueltigSchutz) status += " | TAG GUELTIG - Schutz bis 17:00 NY (Umfang: Auszahlungstakt)";   // 6.40 (6.50: je Modul)
    txt += StringFormat(
       "DEADBAND LIVE 6.50 NETTO   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
@@ -4439,6 +4449,13 @@ void HandleR21(int k, long today, bool dayLocked)
 
    // --- Kontozustand ---
    if(dayLocked || kMode != 0) return;
+   if(gGueltigSchutz && R21GueltigSchutzJetzt(sigZeit))           // 6.50: Schutz gueltiger Tage - vor GueltigSchutzR21BisNY oder ohne Fade-Regime
+     {
+      bool einst = false;
+      for(int t=0;t<3;t++) if(sigDir[t] != 0 && folge[sigDir[t] > 0 ? 0 : 1]) einst = true;
+      if(einst) PrintFormat("DEADBAND4 %s RSI21: Folgesignal ausgelassen - %s", s, R21SchutzGrund(sigZeit));
+      return;
+     }
    if(SerienPause()) return;                                      // 5.10: Serien-Stopp
    if(WeAktiv && KurzVorSchluss(now)) return;                    // 4.90: auch Sondertage und SchlussVorlaufMin
    if(NewsFenster(now)) return;                                   // 4.90: GFT-News-Regel
@@ -5396,6 +5413,15 @@ bool FadeRegimeLive(const datetime t)
    int n = 0; bool alle = true; double pf = FadePortfolioPF(t, n, alle);
    fadeRegZeit = t; fadeRegLive = (alle && n >= FadePortN && pf > FadePortPF);
    return fadeRegLive;
+  }
+
+string FadeRegimeText(const datetime t)
+  {
+   if(FadePortPF <= 0.0) return "Waechter aus";
+   if(!fadeOk || nFade == 0) return "Fade-Module nicht angelegt";
+   int n = 0; bool alle = true; double pf = FadePortfolioPF(t, n, alle);
+   if(!alle) return "Fade-Historie noch nicht fuer alle Module geladen";
+   return StringFormat("PF %.2f aus %d Signalen, live ab > %.2f aus %d", pf, n, FadePortPF, FadePortN);
   }
 
 // Regime-Waechter: darf Modul m ein Signal mit Einstieg zur Zeit tSig live handeln?
@@ -6390,9 +6416,18 @@ bool FadeTeilgewinn(const int m, const ulong tk)
    return false;
   }
 
-// 6.50: Namen in GueltigSchutzFrei, die kein Fade-Modul sind (Tippfehler), melden - sie haetten keine Wirkung
+// 6.50: Start-Pruefung - Namen in GueltigSchutzFrei, die kein Fade-Modul sind (Tippfehler), und ein Regime-Schalter ohne
+//       Grundlage (Waechter aus bzw. Fade-Module nicht angelegt) melden
 void GueltigSchutzFreiPruefen()
   {
+   if(GueltigSchutz && R21Aktiv && GueltigSchutzR21Regime && GueltigSchutzR21BisNY < 24.0)   // Regime-Schalter ohne Grundlage
+     {
+      if(FadePortPF <= 0.0)
+         Print("DEADBAND4: WARNUNG GueltigSchutzR21Regime ohne Wirkung - FadePortPF <= 0 (Portfolio-Waechter aus): RSI21 gilt immer als im Fade-Regime");
+      else if(!fadeOk || nFade == 0)
+         Print("DEADBAND4: WARNUNG Fade-Module nicht angelegt - das Fade-Regime ist unbekannt: RSI21 bleibt an gueltigen Tagen ganztags geschuetzt (wie 6.40)");
+     }
+   if(!fadeOk || nFade == 0) return;                                            // ohne Fade-Module keine Namen zu pruefen
    string t[]; int n = StringSplit(GueltigSchutzFrei, StringGetCharacter(";",0), t);
    for(int i=0;i<n;i++)
      {
@@ -6407,26 +6442,37 @@ void GueltigSchutzFreiPruefen()
 // 6.50: Kurzbeschreibung, welche Module der Schutz sperrt (Journal, Panel)
 string GueltigSchutzUmfang()
   {
-   string frei = "";
-   for(int m=0;m<nFade;m++) if(F[m].schutzFrei) frei += (StringLen(frei) > 0 ? "," : "") + F[m].name;
-   string r21 = "";
-   if(GueltigSchutzR21BisNY >= 24.0) r21 = "RSI21";
-   else
+   string teile = "";
+   if(NzAktiv && nzOk) teile += "Noise";
+   if(FadeAktiv && fadeOk && nFade > 0)
      {
-      string teil = (GueltigSchutzR21BisNY > 0.0 ? "vor " + NYStundeText(GueltigSchutzR21BisNY) + " NY" : "");
-      if(GueltigSchutzR21Regime) teil += (StringLen(teil) > 0 ? " oder " : "") + "ohne Fade-Regime";
-      if(StringLen(teil) > 0) r21 = "RSI21 " + teil;
+      string frei = "";
+      for(int m=0;m<nFade;m++) if(F[m].schutzFrei) frei += (StringLen(frei) > 0 ? "," : "") + F[m].name;
+      teile += (StringLen(teile) > 0 ? ", " : "") + "Fades" + (StringLen(frei) > 0 ? " ausser " + frei : "");
      }
-   return "Noise, Fades" + (StringLen(frei) > 0 ? " ausser " + frei : "") + (StringLen(r21) > 0 ? ", " + r21 : "") + (DbAktiv ? ", DEADBAND" : "");
+   if(R21Aktiv && nSlot > nSym)
+     {
+      string r21 = "";
+      if(GueltigSchutzR21BisNY >= 24.0) r21 = "RSI21";
+      else
+        {
+         string teil = (GueltigSchutzR21BisNY > 0.0 ? "vor " + NYStundeText(GueltigSchutzR21BisNY) + " NY" : "");
+         if(GueltigSchutzR21Regime && FadePortPF > 0.0) teil += (StringLen(teil) > 0 ? " oder " : "") + "ohne Fade-Regime";
+         if(StringLen(teil) > 0) r21 = "RSI21 " + teil;
+        }
+      if(StringLen(r21) > 0) teile += (StringLen(teile) > 0 ? ", " : "") + r21;
+     }
+   if(DbAktiv) teile += (StringLen(teile) > 0 ? ", " : "") + "DEADBAND";
+   return (StringLen(teile) > 0 ? teile : "keine aktiven Module");
   }
 
 // 6.40: Auszahlungstakt (Panel)
 string TaktStatusText()
   {
-   return StringFormat("Mindestgewinn %.2f $ | Abschluss-Ernte %s | Schutz gueltiger Tage %s | Fade-Waechter %s | Pufferkurve voll ab %.1f %%, x%.2f bei <= %.1f %% | Fade-Risiko %.2f %%",
+   return StringFormat("Mindestgewinn %.2f $ | Abschluss-Ernte %s | Schutz gueltiger Tage %s | Fade-Waechter %s | Pufferkurve voll ab %.1f %%, x%.2f bei <= %.1f %%",
                        kMinProfit, (AbschlussLetzte >= NeedValidDays ? "immer" : (AbschlussLetzte > 0 ? StringFormat("ab %d fehlenden", AbschlussLetzte) : "aus")),
                        (!GueltigSchutz ? "aus" : (gGueltigSchutz ? "AKTIV (heute gueltig): " : "bereit: ") + GueltigSchutzUmfang()),
-                       (FadeWaechterModus == 1 ? "Portfolio" : "je Modul"), DDFullPct, DDMinFactor, DDMinPct, FadeRiskPct);
+                       (FadeWaechterModus == 1 ? "Portfolio" : "je Modul"), DDFullPct, DDMinFactor, DDMinPct);
   }
 
 string TrefferStatusText()

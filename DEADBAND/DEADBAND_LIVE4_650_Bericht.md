@@ -329,15 +329,21 @@ Verhalten:
   - Noise, DEADBAND und alle Fades außer `GueltigSchutzFrei`: keine neuen Einstiege (wie 6.40).
   - RSI21: keine neuen Einstiege vor 13:00 NY. Ab 13:00 NY neue Einstiege, wenn der Portfolio-Wächter live ist.
   - N1330 und N1300: handeln wie an jedem anderen Tag (Wächter, Serien-Stopp, News-Fenster usw. gelten weiter).
-- **Uhrzeit und Regime** werden zum Open der laufenden M5-Kerze bestimmt, wie im Replikat. Der Portfolio-Wächter wird genau
-  wie für die Fades gerechnet (PF der letzten 200 virtuellen Fade-Signale, die vor diesem Zeitpunkt feststanden, > 1,15;
-  unabhängig von `FadeWaechterModus`), einmal je M5-Kerze. Sind die Fades nicht geladen oder ist die Historie eines Moduls
-  noch unvollständig, gilt das Regime als nicht live: RSI21 bleibt dann geschützt.
-- **Journal:** `SCHUTZ GUELTIGER TAG - … keine neuen Einstiege (Noise, Fades ausser N1330,N1300, RSI21 vor 13:00 NY oder ohne
-  Fade-Regime) bis 17:00 NY`. Beim Start: `6.40 Auszahlungstakt | … Schutz gueltiger Tage AN (6.50: …)`. Namen in
-  `GueltigSchutzFrei`, die kein Fade-Modul sind, meldet der EA als `WARNUNG GueltigSchutzFrei`.
-- **Panel:** Titel „DEADBAND LIVE 6.50 NETTO“, Zeile „Auszahlungstakt“ mit dem Umfang des Schutzes und dem Fade-Risiko,
-  Status „TAG GUELTIG - Schutz bis 17:00 NY: …“.
+- **Uhrzeit und Regime** gelten zur Zeit des RSI21-Signals (Open der Einstiegskerze), wie im Replikat. Der EA entscheidet
+  das in `HandleR21` erst bei einem Signal, nicht vorab je Durchlauf. Der Portfolio-Wächter wird genau wie für die Fades
+  gerechnet: PF der letzten 200 virtuellen Fade-Signale, die vor diesem Zeitpunkt feststanden, > 1,15; unabhängig von
+  `FadeWaechterModus`; einmal je M5-Kerze. Sind die Fades nicht geladen oder ist die Historie eines Moduls noch
+  unvollständig, gilt das Regime als nicht live: RSI21 bleibt dann geschützt.
+- **Journal:**
+  - `SCHUTZ GUELTIGER TAG - … keine neuen Einstiege (Noise, Fades ausser N1330,N1300, RSI21 vor 13:00 NY oder ohne
+    Fade-Regime) bis 17:00 NY`. Der Umfang nennt nur Module, die an sind („Sicher“: nur „Fades“).
+  - Ein vom Schutz ausgelassenes RSI21-Folgesignal: `RSI21: Folgesignal ausgelassen - Tag schon gueltig (…), RSI21 vor 13:00
+    NY geschuetzt` bzw. `… Fade-Regime nicht live (PF … aus … Signalen …) - RSI21 geschuetzt bis 17:00 NY`.
+  - Beim Start: `6.40 Auszahlungstakt | … Schutz gueltiger Tage AN (6.50: …)`. Warnungen: Namen in `GueltigSchutzFrei`,
+    die kein Fade-Modul sind; Regime-Schalter ohne Wirkung (`FadePortPF` ≤ 0); Fade-Module nicht angelegt (RSI21 dann
+    ganztags geschützt).
+- **Panel:** Titel „DEADBAND LIVE 6.50 NETTO“, Zeile „Auszahlungstakt“ mit dem Umfang des Schutzes, Status „TAG GUELTIG -
+  Schutz bis 17:00 NY“.
 - **Rückweg zu 6.40** im selben EA: `FadeRiskPct=0.75`, `GueltigSchutzR21BisNY=24`, `GueltigSchutzFrei=` (leer). Oder
   `rollback_6.40/` (mq5 und beide Sets). Ein 6.40-Set in den 6.50-EA geladen lässt die drei neuen Eingaben auf den
   6.50-Werten.
@@ -357,8 +363,9 @@ Verhalten:
   1. Voreinstellungen des EA = Replikat-Variante „6.50 Ertrag“ (Fade-Risiko, Uhrzeit, Regime-Schalter, freie Module,
      Modul-Reihenfolge, Wächter).
   2. Die entscheidenden Quelltext-Stellen in EA und Replikat sind vorhanden.
-  3. Entscheidung „Schutz sperrt einen neuen Einstieg“ je Modul auf 18 816 Zuständen (gültige Tage, Tagesergebnis, Zyklus,
-     NY-Stunde inkl. 12:55/13:00/13:05, Regime, Modul): **identisch**.
+  3. Entscheidung „Schutz sperrt einen neuen Einstieg“ je Modul auf 164 640 Zuständen: Voreinstellung und RSI21-Uhrzeit
+     0 / 11 / 13 / 24 mit Regime an und aus, gültige Tage, Tagesergebnis, Zyklus, NY-Stunde (inkl. 12:55/13:00/13:05),
+     Regime, Modul. Ergebnis: **identisch**.
   4. Regime für RSI21: `FadeRegimeLive` (Ringpuffer und `FadePortfolioPF` wörtlich wie in `t_port_640.py`) gegen
      `x48.r21_regime` für alle RSI21-Signale: GFT-Ersatz 1036 Signale, davon 1002 live; Fremddaten 3550, davon 182 live –
      **identisch**.
@@ -366,6 +373,22 @@ Verhalten:
 - **Presets** (`t_set.py`): `DEADBAND_LIVE4_Echtbetrieb.set` enthält alle 227 Eingaben mit genau den Voreinstellungen des EA.
   Das Sicher-Set weicht nur in `R21Aktiv`, `NzAktiv`, `SerienStopp` und `GueltigSchutzFrei` ab.
 - **Statische Prüfung** (`t_mq5.py`): Klammern, Format-Argumente, Deklarationen vor der Verwendung – bestanden.
+- **Gegenlesen** der EA-Änderungen durch einen Sub-Agenten: keine Kompilierfehler, keine Logikfehler gegenüber dem
+  beabsichtigten Verhalten und dem Replikat. Geprüft wurden u. a.:
+  - RSI21-Verwaltung und Signal-Gedächtnis laufen weiter, gesperrt werden nur neue Einstiege.
+  - Die Fade-Freigabe wirkt nur auf den Schutz; Wächter, Serien-Stopp und News-Fenster bleiben.
+  - Grenzfall 13:00 NY und „nur vorher feststehende Ergebnisse“ gleich wie im Replikat.
+  - Der Zwischenspeicher des Regimes kann kein veraltetes „live“ liefern.
+
+  Umgesetzte Hinweise:
+  1. *Klein:* Die RSI21-Entscheidung fiel vorab je Durchlauf mit zweimal gelesenem `TimeCurrent()`. Ein Tick genau um 13:00
+     zwischen Entscheidung und Kerzenwechsel hätte ein 13:00-Signal noch geschützt (sichere Richtung). → Entscheidung in
+     `HandleR21` zur Signalzeit (`sigZeit` = Open der Einstiegskerze, wie das Replikat).
+  2. Warnungen beim Start: Regime-Schalter ohne Wirkung (`FadePortPF` ≤ 0) oder ohne Fade-Module; `GueltigSchutzFrei` nicht
+     prüfen, wenn keine Fade-Module angelegt sind.
+  3. Journalzeile, wenn der Schutz ein RSI21-Folgesignal auslässt (Grund, PF des Portfolio-Wächters).
+  4. Texte: Kopf („sowie ganztags, solange …“), Eingabe-Kommentare, Umfang nur aus aktiven Modulen; Umfang nicht doppelt im
+     Panel.
 - **Nicht** geprüft: Kompilieren in MetaEditor, Strategietester, Demo.
 
 ## 6. Echtbetrieb
@@ -387,7 +410,7 @@ Inbetriebnahme:
    - beim Start `6.40 Auszahlungstakt | … Schutz gueltiger Tage AN (6.50: Noise, Fades ausser N1330,N1300, RSI21 vor 13:00 NY
      oder ohne Fade-Regime)` und in der Fade-Zeile `Risiko 0.70 %`,
    - nach einem gültigen Tag `SCHUTZ GUELTIGER TAG …`, danach keine Noise-Einstiege und keine Fades außer N1330/N1300 bis
-     17:00 NY; RSI21-Einstiege nur ab 13:00 NY,
+     17:00 NY; RSI21-Einstiege nur ab 13:00 NY, vorher `RSI21: Folgesignal ausgelassen - Tag schon gueltig …`,
    - ein N1330/N1300-Signal an einem gültigen Tag wird live gehandelt (`FADE N1330 … LONG`), andere Fades melden
      `Tag schon gueltig …`,
    - Rest wie 6.40 (Auszahlungsreife, Pufferkurve, Portfolio-Wächter).
@@ -415,10 +438,16 @@ Inbetriebnahme:
    Störungen in beiden Spread-Lagen und auf den Fremddaten geprüft.
 6. **Mehr Verlustserien mit breiten Spreads:** Serien ≥ 6 je Jahr 0,92 statt 0,83 (GFT-nah weniger: 0,67 statt 0,77);
    längste Serie max. 11 statt 10.
-7. **Tick gegen Kerze:** Das Replikat entscheidet je M5-Kerze. Der EA rechnet Uhrzeit und Regime ebenfalls zum Open der
-   laufenden M5-Kerze, den Schutz selbst laufend (wie 6.40).
-8. **Nicht kompiliert, nicht im Tester** (Abschnitt 5).
-9. **Lizenz** des Grid-Konzepts unverändert (Bericht 6.20, Abschnitt 10).
+7. **Tick gegen Kerze:** Das Replikat entscheidet je M5-Kerze. Der EA rechnet Uhrzeit und Regime zur Signalzeit (Open der
+   Einstiegskerze), den Schutz selbst laufend (wie 6.40).
+8. **Kleine Unterschiede EA ↔ Replikat, die mit den Voreinstellungen nicht wirken:**
+   - Der EA sperrt DEADBAND an gültigen Tagen wie 6.40. Im Replikat ist DEADBAND aus.
+   - Die Kommissions-Regel des EA (`EinstiegKostetTag`: ein Einstieg darf einen eben gültigen Tag nicht über die
+     Einstiegskommission ungültig machen) kann nach 13:00 NY ein Gold-RSI21-Signal auslassen, wenn der Tag nur um Cent über
+     der Schwelle liegt. Das Replikat bucht die Kommission beim Schließen. Die Wirkung ist vernachlässigbar (Gold 5 $ je Lot,
+     bei einem RSI21-Trade meist unter 0,50 $; NAS ohne Kommission).
+9. **Nicht kompiliert, nicht im Tester** (Abschnitt 5).
+10. **Lizenz** des Grid-Konzepts unverändert (Bericht 6.20, Abschnitt 10).
 
 ## Anhang: Replikat
 

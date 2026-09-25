@@ -56,11 +56,12 @@ def check_defaults():
 
 # ------------------------------------------------------------------ 2. Quelltext-Stellen
 EA_STELLEN = [
-    "HandleR21(k, today, keineEinstiege || (gGueltigSchutz && R21GueltigSchutzJetzt()));",
-    "datetime t5 = TimeCurrent() - TimeCurrent() % 300;",
+    "HandleR21(k, today, keineEinstiege);",
+    "if(gGueltigSchutz && R21GueltigSchutzJetzt(sigZeit))",
+    "datetime t5 = (datetime)((long)t - (long)t % 300);                     // Open der M5-Kerze des Einstiegs",
     "if(NYHour(t5) < GueltigSchutzR21BisNY) return true;",
     "return (GueltigSchutzR21Regime && !FadeRegimeLive(t5));",
-    "int n = 0; bool alle = true; double pf = FadePortfolioPF(t, n, alle);",
+    "if(t == fadeRegZeit) return fadeRegLive;",
     "fadeRegZeit = t; fadeRegLive = (alle && n >= FadePortN && pf > FadePortPF);",
     "else if(gGueltigSchutz && !F[m].schutzFrei) grund = GueltigSchutzText();",
     "F[m].schutzFrei = FadeNameInListe(F[m].name, GueltigSchutzFrei);",
@@ -122,26 +123,29 @@ def rep_sperrt(modul, vp_act, nyh, kw, per, r_reg_a):
 
 
 def check_decisions():
-    kw, gpx, frisk, rule, per = x48.VAR["6.50 Ertrag"]
+    kw0, gpx, frisk, rule, per = x48.VAR["6.50 Ertrag"]
     frei = [n.strip().upper() for n in inp("GueltigSchutzFrei").split(";") if n.strip()]
-    r21_bis = float(inp("GueltigSchutzR21BisNY"))
     schwelle = 10000 * 0.005 + 0.5
     ok = True; n = 0; diff = []
-    for valid in range(0, 7):
-        for real in (-80.0, 0.0, 30.0, 50.49, 50.5, 75.0, 200.0):
-            for cyc in (0, 1):
-                ea_schutz = bool(cyc > 0 and valid < 5 and real >= schwelle)
-                rep_schutz = bool(cyc > 0 and real != 0.0 and real >= 50.5 and valid < 5)
-                for nyh in (3.0, 9.5, 10.0, 12.95, 13.0, 13.05, 15.5, 16.9):
-                    for live in (False, True):
-                        for modul in ["nz", "r21"] + x48.F10N:
-                            a = ea_sperrt(modul, ea_schutz, nyh, frei, r21_bis, live, inp("GueltigSchutzR21Regime") == "true")
-                            b = rep_sperrt(modul, rep_schutz, nyh, kw, per, 1 if live else 0)
-                            n += 1
-                            if a != b:
-                                ok = False; diff.append((valid, real, cyc, nyh, live, modul, a, b))
-    say(f"  Entscheidung je Modul: {n} Zustaende (gueltige Tage, Tagesergebnis, Zyklus, NY-Stunde, Fade-Regime, Modul), EA = Replikat: "
-        f"{'IDENTISCH' if ok else 'ABWEICHUNG'}")
+    # Voreinstellung (13 NY, Regime an) und die Eckwerte der Eingaben: Uhrzeit 0 / 11 / 24, Regime an / aus
+    for r21_bis, regime in ((float(inp("GueltigSchutzR21BisNY")), inp("GueltigSchutzR21Regime") == "true"),
+                            (0.0, True), (0.0, False), (11.0, True), (13.0, False), (24.0, True), (24.0, False)):
+        kw = dict(kw0, vp_r21_to=r21_bis, vp_r21_reg=1 if regime else 0)
+        for valid in range(0, 7):
+            for real in (-80.0, 0.0, 30.0, 50.49, 50.5, 75.0, 200.0):
+                for cyc in (0, 1):
+                    ea_schutz = bool(cyc > 0 and valid < 5 and real >= schwelle)
+                    rep_schutz = bool(cyc > 0 and real != 0.0 and real >= 50.5 and valid < 5)
+                    for nyh in (3.0, 9.5, 10.0, 10.95, 11.0, 12.95, 13.0, 13.05, 15.5, 16.9):
+                        for live in (False, True):
+                            for modul in ["nz", "r21"] + x48.F10N:
+                                a = ea_sperrt(modul, ea_schutz, nyh, frei, r21_bis, live, regime)
+                                b = rep_sperrt(modul, rep_schutz, nyh, kw, per, 1 if live else 0)
+                                n += 1
+                                if a != b:
+                                    ok = False; diff.append((r21_bis, regime, valid, real, cyc, nyh, live, modul, a, b))
+    say(f"  Entscheidung je Modul: {n} Zustaende (RSI21-Uhrzeit 0/11/13/24 und Regime an/aus, gueltige Tage, Tagesergebnis, "
+        f"Zyklus, NY-Stunde, Fade-Regime, Modul), EA = Replikat: {'IDENTISCH' if ok else 'ABWEICHUNG'}")
     for d in diff[:5]:
         say(f"    {d}")
     return ok
