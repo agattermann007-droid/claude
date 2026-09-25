@@ -1,0 +1,16 @@
+Fade N1030                           125 Signale, ausgeloest    62 | max. Abweichung R 2.2e-16 | Treffer EA 68.0 % / Replikat 68.0 % | GLEICH
+Fade N1330                           224 Signale, ausgeloest     0 | max. Abweichung R 2.2e-16 | Treffer EA 79.5 % / Replikat 79.5 % | GLEICH
+Fade X0630                           218 Signale, ausgeloest    63 | max. Abweichung R 2.2e-16 | Treffer EA 67.0 % / Replikat 67.0 % | GLEICH
+Fade X0400                           161 Signale, ausgeloest    60 | max. Abweichung R 2.2e-16 | Treffer EA 62.7 % / Replikat 62.7 % | GLEICH
+Fade N1800                           108 Signale, ausgeloest    33 | max. Abweichung R 3.3e-16 | Treffer EA 65.7 % / Replikat 65.7 % | GLEICH
+Fade N0930                           106 Signale, ausgeloest    58 | max. Abweichung R 2.2e-16 | Treffer EA 64.2 % / Replikat 64.2 % | GLEICH
+Fade N1100                           158 Signale, ausgeloest    88 | max. Abweichung R 2.2e-16 | Treffer EA 62.0 % / Replikat 62.0 % | GLEICH
+Fade N1300                           182 Signale, ausgeloest    10 | max. Abweichung R 1.1e-16 | Treffer EA 74.7 % / Replikat 74.7 % | GLEICH
+Fade X0300S                          197 Signale, ausgeloest    83 | max. Abweichung R 3.3e-16 | Treffer EA 55.8 % / Replikat 55.8 % | GLEICH
+Fade X1000S                          101 Signale, ausgeloest    51 | max. Abweichung R 3.3e-16 | Treffer EA 62.4 % / Replikat 62.4 % | GLEICH
+RSI21 XAU                            534 Signale, ausgeloest   329 | max. Abweichung R 8.9e-16 | Treffer EA 62.7 % / Replikat 62.7 % | GLEICH
+RSI21 NAS                            301 Signale, ausgeloest   220 | max. Abweichung R 4.4e-16 | Treffer EA 73.4 % / Replikat 73.4 % | GLEICH
+Noise Teil 0.35                      349 Signale, ausgeloest   164 | max. Abweichung R 8.9e-16 | Treffer EA 53.0 % / Replikat 53.0 % | GLEICH
+Noise Teil 0.5                       335 Signale, ausgeloest   127 | max. Abweichung R 4.4e-16 | Treffer EA 52.8 % / Replikat 52.8 % | GLEICH
+Noise Teil 0.75                      323 Signale, ausgeloest    78 | max. Abweichung R 4.4e-16 | Treffer EA 52.3 % / Replikat 52.3 % | GLEICH
+GESAMT IDENTISCH

@@ -1,26 +1,28 @@
-; DEADBAND LIVE 6.30 TREFFER - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: wie 6.20 Ertrag (10 Fehlausbruch-Fades 0,75 % mit Probability Grid, Regime-Waechter,
-;   RSI21 0,50 %, NAS-Noise 0,35 %, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte),
-;   dazu 6.30: Fades schliessen ab 0,6 R die Haelfte (Stop und Ziel bleiben), RSI21 und jeder Noise-Teil ziehen den Stop
-;   ab 1 R auf Einstand + 0,05 R. Erst ab der M5-Kerze nach der Einstiegskerze und nach 130 s.
+; DEADBAND LIVE 6.20 GRID - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Alle Werte = Voreinstellung des EA: wie 6.10 Ertrag (10 Fehlausbruch-Fades 0,75 %, Regime-Waechter PF der letzten 30 > 1,2,
+;   RSI21 0,50 %, NAS-Noise 0,35 %, DEADBAND-Einstiege aus, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %, Auszahlung ab 3 %,
+;   Abschluss-Ernte aller Module, Kontoerkennung 6.10), dazu 6.20 Probability Grid (Konzept LuxAlgo, eigene Umsetzung):
+;   kein Fade GEGEN den laufenden M5-Schwung, wenn die Grid-Chance, dass er bis zum Stop weiterlaeuft, >= 70 % ist
+;   (Swing Length 15, je Richtung 1000 Schenkel); das Signal entfaellt auch virtuell (Waechter). N1800 ohne Grid (GridOhne).
+;   Weniger Verlustserien, etwas weniger Ertrag: GridNurLive=true.
 ; Replikat GFT-Ersatz 2022-25 (Fremddaten, breitere Spreads als GFT; 16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 %,
-;   Waechter wie im EA): Trefferquote, Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   6.20 Ertrag:              63,1 % / 7,34 / 0,032 / 2152 $ / 1,45 / 7,6/13
-;   6.30 Ertrag (Echtbetrieb): 65,0 % / 7,33 / 0,000 / 2171 $ / 0,96 / 7,0/11
-;   6.20 Sicher:              68,5 % / 4,12 / 0,000 / 1162 $ / 0,24 / 5,5/10
-;   6.30 Sicher:              70,4 % / 4,13 / 0,000 / 1123 $ / 0,05 / 4,8/9
-; Fremddaten 2006-21 (anderes Marktregime), Treffer/Ausz/Busts: Ertrag 6.20 48,9 %/1,97/0,395, 6.30 51,1 %/1,83/0,347;
-;   Sicher 6.20 57,2 %/0,43/0,246, 6.30 59,2 %/0,48/0,228.
-; Trefferquote = Trades mit Gewinn (Noise-Teile eines Signals = 1 Trade, Teilschliessungen gehoeren zur Position).
-; Mit den GFT-Exporten nachrechnen: Replikat_v6/x43.py gft (die GFT-Daten fehlten in dieser Sitzung).
+;   Waechter wie im EA ueber 600 Tage): Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
+;   6.10 Ertrag:              6,42 / 0,195 / 1877 $ / 0,75 / 7,2/10
+;   6.20 Ertrag (Echtbetrieb): 7,34 / 0,032 / 2152 $ / 1,45 / 7,6/13
+;   6.20 Ertrag GridNurLive:  6,78 / 0,130 / 1979 $ / 0,86 / 7,3/10
+;   6.10 Sicher:              3,02 / 0,001 / 835 $ / 0,27 / 5,2/7
+;   6.20 Sicher:              4,12 / 0,000 / 1162 $ / 0,24 / 5,5/10
+; Fremddaten 2006-21 (anderes Marktregime): Ertrag 6.10 1,99/0,360/511 $, 6.20 1,97/0,395/497 $;
+;   Sicher 6.10 0,49/0,261/98 $, 6.20 0,43/0,246/82 $.
+; Mit den GFT-Exporten nachrechnen: Replikat_v6/x41.py gft (die GFT-Daten fehlten in dieser Sitzung).
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
-;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG) und '6.30 Trefferquote | ...'.
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG).
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.20: FadeT1R=0, R21EinstandAbR=0, NzEinstandAbR=0 oder rollback_6.20/. Bericht: DEADBAND_LIVE4_630_Bericht.md.
+; Zurueck auf 6.10: GridAktiv=false (Handelslogik wie 6.10) oder rollback_6.10/. Bericht: DEADBAND_LIVE4_620_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -231,11 +233,6 @@ GridMinReife=0.0
 GridVorlaufTage=300
 GridOhne=N1800
 GridNurLive=false
-FadeT1R=0.6
-FadeT1Anteil=0.5
-R21EinstandAbR=1.0
-NzEinstandAbR=1.0
-EinstandPlusR=0.05
 ShowPanel=true
 ShowLeiter=true
 Barreserve=0.0

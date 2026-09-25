@@ -55,6 +55,13 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `t_port_grid.py` | **Abgleich EA ↔ Replikat** für das Grid: wörtliche Übertragung von `GridM5`/`GridKerze`/`GridRang`/`GridFadeOk` gegen `pgrid` für alle Fade-Signale 2006–2025 |
 | `t_mq5.py` | statische Prüfung des EA (Klammern, Format-Argumente, Makros/Globale vor Verwendung, unbekannte Funktionen) |
 | `t_window.py` | Reicht die Wächter-Historie des EA (600 Tage) mit Grid für die Mindestzahl 30? (nur N1800 nicht → `GridOhne`) |
+| **Build 6.30 (Trefferquote)** | |
+| `eng7.py` | Kontomotor v7 = eng6 plus Teilgewinn/Einstand/Ziel je Noise-Teil (`nz_tp1r`, `nz_tp1f`, `nz_be`, `nz_tp`), T1 für RSI21 und Noise erst ab der Kerze nach dem Einstieg, Fade-T1 wahlweise als Anteil des Zielwegs (`tp1r` < 0); Noise-Teilernte zählt zum Trade (wie der Serien-Stopp im EA) |
+| `t_eng7.py` | Prüfung: eng7 mit Voreinstellungen = eng6 (bis auf die Noise-Teilernte) |
+| `pg_wr.py` | Signal-Ebene der Fades: Trefferquote und R je Signal mit Teilgewinn, Einstand, näherem Ziel (Perioden 2006–2025) |
+| `x42.py` | **Konto-Screening 6.30**: Einstand/Teilgewinn/Ziel für Fades, RSI21, Noise und Kombinationen → `ergebnisse/x42_gft.json` |
+| `x43.py` | **Endbewertung 6.30** gegen 6.20 (16 Störungen, Startjahre, Streuung inkl. Trefferquote) → `ergebnisse/x43_*.json` |
+| `t_port_630.py` | **Abgleich EA ↔ Replikat** für 6.30: wörtliche Übertragung von `FadeTeilgewinn`/`EinstandSetzen`/`NzEinstand` gegen die Replikat-Logik auf echten Signalen |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
@@ -72,6 +79,11 @@ python x40.py ext "6.10 Ertrag|E S M5 L15 s70" 4      # Fremddaten 2006-21
 python x41.py gft                          # Endbewertung 6.20 gegen 6.10 (GFT-Daten bzw. Ersatz)
 python x41.py ext                          # dasselbe auf den Fremddaten 2006-21
 python t_port_grid.py 5 15 1000 0.70 0     # Abgleich EA <-> Replikat (Grid)
+# Build 6.30 (Trefferquote)
+python pg_wr.py                            # Signal-Ebene der Fades (Teilgewinn, Einstand)
+python x42.py gft all 8 2                  # Konto-Screening (8 Stoerungen, jeder 2. Tag)
+python x43.py gft && python x43.py ext     # Endbewertung 6.30 gegen 6.20
+python t_eng7.py && python t_port_630.py   # Pruefungen
 python t_mq5.py                            # statische Pruefung des EA
 ```
 

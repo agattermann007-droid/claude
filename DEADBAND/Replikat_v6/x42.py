@@ -57,6 +57,13 @@ VAR = {
     "K2g K1 F T1 50%Z/50": (dict(ERT, nz_tp1r=1.0, nz_be=0.05, r21_tp1r=1.0, r21_be=0.05), dict(H, tp1r=-0.5, tp1f=0.5)),
     "K8 N BE1 R T1.5BE F T1": (dict(ERT, nz_tp1r=1.0, nz_be=0.05, r21_tp1r=1.5, r21_tp1f=0.5, r21_be=0.05), dict(H, tp1r=0.5, tp1f=0.5)),
     "K9 N TP1.5 R BE1 F T1": (dict(ERT, nz_tp=1.5, r21_tp1r=1.0, r21_be=0.05), dict(H, tp1r=0.5, tp1f=0.5)),
+    # Runde 3: mehr Treffer, nur mit den Regeln, die der EA 6.30 hat (Einstand fuer Noise/RSI21, Fade-Teilgewinn)
+    "T+ N BE.5 R BE.5 F T1 .4": (dict(ERT, nz_tp1r=0.5, nz_be=0.05, r21_tp1r=0.5, r21_be=0.05), dict(H, tp1r=0.4, tp1f=0.5)),
+    "T+ N BE.5 R BE.5 F T1 .3/70": (dict(ERT, nz_tp1r=0.5, nz_be=0.05, r21_tp1r=0.5, r21_be=0.05), dict(H, tp1r=0.3, tp1f=0.7)),
+    "T+ N BE.75 R BE.75 F T1 .4": (dict(ERT, nz_tp1r=0.75, nz_be=0.05, r21_tp1r=0.75, r21_be=0.05), dict(H, tp1r=0.4, tp1f=0.5)),
+    "T+ N BE1 R BE1 F T1 .3/70": (dict(ERT, nz_tp1r=1.0, nz_be=0.05, r21_tp1r=1.0, r21_be=0.05), dict(H, tp1r=0.3, tp1f=0.7)),
+    "S+ F T1 .4": (SIC, dict(tp1r=0.4, tp1f=0.5)),
+    "S+ F T1 .3/70": (SIC, dict(tp1r=0.3, tp1f=0.7)),
     # Sicher (nur Fades)
     "S F T1 0.5/50": (SIC, dict(tp1r=0.5, tp1f=0.5)),
     "S F T1 0.5/50 BE": (SIC, dict(tp1r=0.5, tp1f=0.5, be=0.05)),

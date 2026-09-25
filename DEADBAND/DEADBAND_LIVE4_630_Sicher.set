@@ -1,8 +1,7 @@
-; DEADBAND LIVE 6.30 TREFFER - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: wie 6.20 Ertrag (10 Fehlausbruch-Fades 0,75 % mit Probability Grid, Regime-Waechter,
-;   RSI21 0,50 %, NAS-Noise 0,35 %, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte),
-;   dazu 6.30: Fades schliessen ab 0,6 R die Haelfte (Stop und Ziel bleiben), RSI21 und jeder Noise-Teil ziehen den Stop
-;   ab 1 R auf Einstand + 0,05 R. Erst ab der M5-Kerze nach der Einstiegskerze und nach 130 s.
+; DEADBAND LIVE 6.30 TREFFER - Auspraegung SICHER, GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Nur die 10 Fehlausbruch-Fades mit Probability Grid (R21Aktiv=false, NzAktiv=false, DbAktiv=false), Serien-Stopp nach
+;   4 Verlusten, Abschluss-Ernte aus, Budget/Idee 0,9 %, Auszahlung ab 3 %, dazu 6.30: Fades schliessen ab 0,6 R die Haelfte
+;   (Stop und Ziel bleiben). Hoechste Trefferquote und kuerzeste Serien, weniger Ertrag als 'Ertrag'.
 ; Replikat GFT-Ersatz 2022-25 (Fremddaten, breitere Spreads als GFT; 16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 %,
 ;   Waechter wie im EA): Trefferquote, Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
 ;   6.20 Ertrag:              63,1 % / 7,34 / 0,032 / 2152 $ / 1,45 / 7,6/13
@@ -134,7 +133,7 @@ WeAufnahmeReif=true
 WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
-R21Aktiv=true
+R21Aktiv=false
 R21RiskPct=0.50
 R21GoldMult=0.70
 R21Gewichte=1.25,1.0,0.75
@@ -178,7 +177,7 @@ InaktivWarnTage=20
 TagesRefEquity=true
 PayoutErkennMinUSD=50.0
 R21ReifeModus=2
-NzAktiv=true
+NzAktiv=false
 NzSymbol=NAS100.x
 NzRiskPct=0.35
 NzStops=0.35,0.5,0.75
@@ -202,12 +201,12 @@ SwapVorsorgePct=0.80
 SwapVorsorgeMin=10
 IdeeMaxRisikoPct=0.90
 NurAufPcPfad=
-AbschlussLetzte=3
+AbschlussLetzte=0
 AbschlussMinR=0.3
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
 AbschlussModule=15
-SerienStopp=3
+SerienStopp=4
 SerienPauseTage=0
 DbAktiv=false
 FadeAktiv=true

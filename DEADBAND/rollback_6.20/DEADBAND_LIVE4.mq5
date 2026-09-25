@@ -1,22 +1,5 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND LIVE 4  -  Build 6.30 TREFFER, 25.09.2026              |
-//|  BUILD 6.30: HOEHERE TREFFERQUOTE (TEILGEWINN / EINSTAND)        |
-//|  Handelslogik = 6.20, dazu (Replikat eng7, x42/x43):             |
-//|  1) Fades: ab FadeT1R = 0,6 R wird FadeT1Anteil = 50 % der       |
-//|     Position geschlossen (Stop und Ziel bleiben).                |
-//|  2) RSI21 und jeder Noise-Teil: Stop auf Einstand + 0,05 R,      |
-//|     sobald der Kurs 1 R im Plus war (R21/NzEinstandAbR).         |
-//|     RSI21 nicht nach einer Wochenend-Wiederaufnahme.             |
-//|  3) Alles erst ab der M5-Kerze nach der Einstiegskerze und       |
-//|     nach MinHalteSek; Teilgewinn nach der Gewinn-/News-Regel.    |
-//|     Zustand aus Stop und Deal-Historie (auch nach Neustart).     |
-//|  Replikat GFT-Ersatz 2022-25: Trefferquote 65,0 statt 63,1 %,    |
-//|  Auszahlungen gleich, Busts 0, Serien >= 6 ein Drittel seltener; |
-//|  Zahlen im Bericht DEADBAND_LIVE4_630_Bericht.md.                |
-//|  Zurueck auf 6.20: FadeT1R=0, R21EinstandAbR=0, NzEinstandAbR=0  |
-//|  oder rollback_6.20/.                                            |
-//|                                                                  |
-//|  Build 6.20 GRID, 24.09.2026                                     |
+//|  DEADBAND LIVE 4  -  Build 6.20 GRID, 24.09.2026                 |
 //|  BUILD 6.20: PROBABILITY GRID ALS FADE-FILTER                    |
 //|  Handelslogik = 6.10, dazu (Konzept: LuxAlgo "Probability Grid", |
 //|  CC BY-NC-SA 4.0, eigene Umsetzung):                             |
@@ -448,7 +431,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "6.30"
+#property version   "6.20"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -684,12 +667,6 @@ input double GridMinReife     = 0.0;        // Regel A: kein Fade gegen einen La
 input int    GridVorlaufTage  = 300;        // M5-Historie vor der Fade-Historie fuer die Schenkel-Statistik (Kalendertage; Max. Balken im Chart = Unbegrenzt)
 input string GridOhne         = "N1800";    // Fade-Module ohne Grid, getrennt mit ; (N1800: mit Grid blieben < 30 Signale in FadeHistTage - der Waechter liesse es nie live)
 input bool   GridNurLive      = false;      // true = Grid sperrt nur den Live-Einstieg, der Regime-Waechter zaehlt alle Signale wie 6.10 (weniger Zusatz-Ertrag, Serien wie 6.10)
-input group             "=== 6.30: Trefferquote (Teilgewinn der Fades, Einstand fuer RSI21 und Noise) ==="
-input double FadeT1R          = 0.6;        // Fade: ab X R (R = Stop-Abstand beim Einstieg) FadeT1Anteil der Position schliessen; Stop und Ziel bleiben (0 = aus, wie 6.20)
-input double FadeT1Anteil     = 0.5;        // Anteil der Fade-Position, der bei FadeT1R geschlossen wird (0,1-0,9)
-input double R21EinstandAbR   = 1.0;        // RSI21: Stop auf Einstand + EinstandPlusR, sobald der Kurs X R im Plus war (0 = aus; nicht nach Wochenend-Wiederaufnahme)
-input double NzEinstandAbR    = 1.0;        // Noise: je Teil Stop auf Einstand + EinstandPlusR ab X R (R = Stop-Abstand des Teils; 0 = aus)
-input double EinstandPlusR    = 0.05;       // neuer Stop = Einstieg + X R (deckt Spread/Kosten: der Trade endet als kleiner Treffer)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -732,7 +709,6 @@ struct SymState
    bool     zweit;          // 4.50: zweiter RSI21-Platz des Symbols (Einstieg ueber den ersten Platz)
    int      partner;        // 4.50: erster Platz -> Index des zweiten (-1 = keiner), zweiter Platz -> Index des ersten
    ulong    posTk;          // 4.90: Ticket der Position, zu der der Platz-Zustand gehoert (0 = keiner)
-   bool     r21Be;          // 6.30: RSI21-Einstand erledigt oder nicht vorgesehen (Wiederaufnahme, ohne R)
   };
 SymState S[MAXSLOT];
 
@@ -949,9 +925,6 @@ int OnInit()
      }
    if(SwapVorsorgeMin < 0 || SwapVorsorgeMin > 120) { Print("DEADBAND4: SwapVorsorgeMin muss zwischen 0 und 120 liegen"); return(INIT_FAILED); }
    if(AbschlussLetzte < 0 || SerienStopp < 0 || SerienPauseTage < 0) { Print("DEADBAND4: AbschlussLetzte, SerienStopp und SerienPauseTage duerfen nicht negativ sein"); return(INIT_FAILED); }
-   if(FadeT1R < 0.0 || (FadeT1R > 0.0 && (FadeT1Anteil < 0.1 || FadeT1Anteil > 0.9)) || R21EinstandAbR < 0.0 || NzEinstandAbR < 0.0
-      || EinstandPlusR < 0.0 || ((R21EinstandAbR > 0.0 || NzEinstandAbR > 0.0) && EinstandPlusR >= MathMin(R21EinstandAbR > 0.0 ? R21EinstandAbR : 99.0, NzEinstandAbR > 0.0 ? NzEinstandAbR : 99.0)))   // 6.30
-     { Print("DEADBAND4: 6.30-Eingaben ungueltig (FadeT1R >= 0, FadeT1Anteil 0,1-0,9, R21EinstandAbR/NzEinstandAbR >= 0, 0 <= EinstandPlusR < EinstandAbR)"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && (StringLen(FloorOverrideZeit) < 10 || StringToTime(FloorOverrideZeit) < D'2020.01.01'))   // 6.10: ohne Ablesezeit ginge die Spitze bis zum Neustart verloren
      { Print("DEADBAND4: FloorOverride braucht FloorOverrideZeit = Serverzeit der Ablesung im GFT-Dashboard (\"JJJJ.MM.TT HH:MI\")"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && TimeCurrent() > D'2020.01.01' && StringToTime(FloorOverrideZeit) > TimeCurrent() + 3600)
@@ -992,7 +965,7 @@ int OnInit()
       S[k].lastBar=0; S[k].curDay=0; S[k].tradesToday=0; S[k].closeFails=0;
       S[k].lastCloseTry=0; S[k].t1Done=false; S[k].t2Done=false; S[k].beDone=false; S[k].lastBeTry=0; S[k].lastHarvTry=0;
       S[k].vol0=0; S[k].vol1=0; S[k].vol2=0; S[k].entryBarTime=0; S[k].mfeR=0.0;
-      S[k].posTk = 0; hedgeLog[k] = 0; S[k].r21Be = true;
+      S[k].posTk = 0; hedgeLog[k] = 0;
       TdLaden(k);                                                          // 4.90: Tageszaehler ueberlebt einen Neustart
       { datetime b0 = iTime(s, PERIOD_M15, 0); if(b0 > 0 && TimeCurrent() - b0 >= 20) S[k].lastBar = b0; }   // 4.90: kein verspaeteter Einstieg nach Neustart
       UebernehmePosition(k);
@@ -1046,10 +1019,6 @@ int OnInit()
                GeRueckgangR, (SerienStopp > 0 ? StringFormat("nach %d Verlusten in Folge bis 17:00 NY%s", SerienStopp, (SerienPauseTage > 0 ? StringFormat(" + %d Tag(e)", SerienPauseTage) : "")) : "aus"), NzRiskPct);
    NzInitMeldung();                                                     // 5.00
    FadeInitMeldung();                                                   // 6.00
-   PrintFormat("DEADBAND4: 6.30 Trefferquote | Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s (neuer Stop Einstieg + %.2f R) | erst ab der M5-Kerze nach der Einstiegskerze und nach %d s",
-               (FadeT1R > 0.0 ? StringFormat("%.0f %% ab %.2f R (Stop und Ziel bleiben)", FadeT1Anteil*100.0, FadeT1R) : "aus"),
-               (R21EinstandAbR > 0.0 ? StringFormat("ab %.2f R", R21EinstandAbR) : "aus"), (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R je Teil", NzEinstandAbR) : "aus"),
-               EinstandPlusR, MinHalteSek);
    PrintFormat("DEADBAND4: 4.70 Floating-Bremse %.2f %% auf %s (jetzt %.2f, Firmengrenze %.2f)",
                FloatStopPct, (FloatBasisMinSaldo ? "min(Startsaldo, Saldo)" : "Startsaldo"), -FloatBasis()*FloatStopPct/100.0, -FloatBasis()*kRuleFloatPct/100.0);
    if(R21Aktiv)
@@ -1094,17 +1063,9 @@ void UebernehmePosition(int k)
       S[k].entryTime = (datetime)PositionGetInteger(POSITION_TIME);
       S[k].entryBarTime = S[k].entryTime;
       S[k].refPx = S[k].entryPx; S[k].mfeR = 0.0; S[k].t1Done = true; S[k].beDone = true; S[k].vol1 = 0.0; S[k].vol2 = 0.0;
-      {                                                                      // 6.30: Stop schon auf Einstand -> R aus der Eroeffnungs-Order
-       int dd = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
-       bool imPlus = (S[k].slPx > 0.0 && (S[k].slPx - S[k].entryPx)*dd >= 0.0);
-       if(imPlus) { double ur = UrStopAbstand(tk); if(ur > 0.0) S[k].rDist = ur; }
-       S[k].r21Be = imPlus || (R21EinstandAbR <= 0.0);
-       PositionSelectByTicket(tk);
-      }
       string ga = WeGvName(k, "A_");
       if(GlobalVariableCheck(ga + "ticket") && (ulong)GlobalVariableGet(ga + "ticket") == tk)
         {
-         S[k].r21Be = true;                                                 // 6.30: wiederaufgenommene Position: kein Einstand
          S[k].refPx = GlobalVariableGet(ga + "ref");
          double rd1 = GlobalVariableGet(ga + "rd"); if(rd1 > 0.0) S[k].rDist = rd1;
          S[k].mfeR = GlobalVariableGet(ga + "mfe");
@@ -2672,7 +2633,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND LIVE 6.30 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND LIVE 6.20 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3298,7 +3259,6 @@ double PosMfe(const ulong tk)
    if(i < 0)
      {
       double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
-      if(sl > 0.0 && (sl - op)*d >= 0.0) { rd = UrStopAbstand(tk); if(!PositionSelectByTicket(tk)) return 0.0; }   // 6.30: Stop auf Einstand -> R der Eroeffnung
       if(rd <= 0.0) return 0.0;
       if(gMfeN >= MFEMAX) MfeAufraeumen();
       if(gMfeN >= MFEMAX) return 0.0;
@@ -3435,7 +3395,7 @@ void ZyklusPanel()
       txt += StringFormat("=== AUSZAHLUNG BEANTRAGEN: Konto flach, Gewinn %.2f, auszahlbar %.2f, Anteil %.2f ===\n", bal-kStart, AuszahlbarJetzt(), AuszahlbarJetzt()*ProfitSplit);
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    txt += StringFormat(
-      "DEADBAND LIVE 6.30 TREFFER   %s\n"
+      "DEADBAND LIVE 6.20 GRID   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -3458,7 +3418,6 @@ void ZyklusPanel()
    txt += "\n  NAS-Noise-Modul   " + NzStatusText();                     // 5.00
    txt += "\n  Fade-Module       " + FadeStatusText();                   // 6.00
    txt += "\n  Probability Grid  " + GridStatusText();                   // 6.20
-   txt += "\n  Trefferquote      " + TrefferStatusText();                // 6.30
    txt += "\n  DEADBAND          " + (DbAktiv ? "Einstiege an" : "Einstiege AUS (DbAktiv=false, offene werden verwaltet)");
    txt += "\n  GFT-Schutz        " + SchutzStatusText();                    // 4.90
    txt += StringFormat("\n  5.10              Verlierer %.2f (Bremse %s) | Idee max %s | Swap-Vorsorge %s | %s | Abschluss-Ernte %s",
@@ -3945,7 +3904,6 @@ void WochenendePruefen(bool dayLocked)
       S[k].t1Done = W[k].t1; S[k].t2Done = true; S[k].beDone = W[k].be; S[k].lastBeTry = 0;
       S[k].entryBarTime = W[k].entryBar; S[k].mfeR = W[k].mfe; S[k].closeFails = 0;
       if(S[k].r21) S[k].entryTime = W[k].entryBar;                           // 4.40: Zeit-Exit zaehlt ab der ersten Eroeffnung
-      S[k].r21Be = true;                                                     // 6.30: kein Einstand nach der Wiederaufnahme (wie das Replikat)
       ulong ntk = 0; if(HavePosition(k, ntk)) WeAktivSpeichern(k, ntk);
       Meldung(StringFormat("WIEDERAUFNAHME %s%s: %s %.2f Lot zu %.*f (Bezug %.*f, Stop %.*f, Ziel %.*f, %.1f R Vorlauf)",
               s, (S[k].r21 ? " RSI21" : ""), (d > 0 ? "LONG" : "SHORT"), nlots, dg, S[k].entryPx, dg, S[k].refPx, dg, nsl, dg, ntp, W[k].mfe));
@@ -4004,7 +3962,7 @@ bool R21PlaetzeAnlegen()
       S[j].lastBar=0; S[j].curDay=0; S[j].tradesToday=0; S[j].closeFails=0; S[j].lastCloseTry=0;
       S[j].t1Done=true; S[j].t2Done=true; S[j].beDone=true; S[j].lastBeTry=0; S[j].lastHarvTry=0;
       S[j].vol0=0.0; S[j].vol1=0.0; S[j].vol2=0.0; S[j].entryBarTime=0; S[j].entryTime=0; S[j].tfMin=0; S[j].mfeR=0.0;
-      S[j].refPx=0.0; S[j].entryPx=0.0; S[j].slPx=0.0; S[j].rDist=0.0; S[j].posTk=0; hedgeLog[j]=0; S[j].r21Be=true;
+      S[j].refPx=0.0; S[j].entryPx=0.0; S[j].slPx=0.0; S[j].rDist=0.0; S[j].posTk=0; hedgeLog[j]=0;
       r21DivBucket[j] = 0; r21DivDir[j] = 0;
       W[j].aktiv = false; W[j].lastTry = 0;
       r21LastSig[j][0] = 0; r21LastSig[j][1] = 0;
@@ -4029,7 +3987,7 @@ bool R21PlaetzeAnlegen()
          S[j].lastBar=0; S[j].curDay=0; S[j].tradesToday=0; S[j].closeFails=0; S[j].lastCloseTry=0;
          S[j].t1Done=true; S[j].t2Done=true; S[j].beDone=true; S[j].lastBeTry=0; S[j].lastHarvTry=0;
          S[j].vol0=0.0; S[j].vol1=0.0; S[j].vol2=0.0; S[j].entryBarTime=0; S[j].entryTime=0; S[j].tfMin=0; S[j].mfeR=0.0;
-         S[j].refPx=0.0; S[j].entryPx=0.0; S[j].slPx=0.0; S[j].rDist=0.0; S[j].posTk=0; hedgeLog[j]=0; S[j].r21Be=true;
+         S[j].refPx=0.0; S[j].entryPx=0.0; S[j].slPx=0.0; S[j].rDist=0.0; S[j].posTk=0; hedgeLog[j]=0;
          r21DivBucket[j] = 0; r21DivDir[j] = 0;
          r21LastSig[j][0] = 0; r21LastSig[j][1] = 0;
          W[j].aktiv = false; W[j].lastTry = 0;
@@ -4210,14 +4168,6 @@ void HandleR21(int k, long today, bool dayLocked)
          double ref = (S[k].refPx > 0.0 ? S[k].refPx : S[k].entryPx);
          double favR = (type==POSITION_TYPE_BUY) ? (bid - ref)/S[k].rDist : (ref - ask)/S[k].rDist;
          if(favR > S[k].mfeR) S[k].mfeR = favR;
-        }
-      if(!S[k].r21Be && R21EinstandAbR > 0.0 && now - S[k].lastBeTry >= 5)    // 6.30: Stop auf Einstand ab R21EinstandAbR
-        {
-         double ref = (S[k].refPx > 0.0 ? S[k].refPx : S[k].entryPx);
-         int e = EinstandSetzen(ticket, ref, S[k].rDist, R21EinstandAbR, "RSI21" + (S[k].zweit ? " (2)" : ""));
-         if(e != 0) S[k].lastBeTry = now;
-         if(e == 1) S[k].r21Be = true;
-         if(!PositionSelectByTicket(ticket)) return;
         }
       datetime t0 = (S[k].entryTime > 0 ? S[k].entryTime : (datetime)PositionGetInteger(POSITION_TIME));
       int shift = iBarShift(s, PERIOD_M5, t0, false);
@@ -4406,7 +4356,6 @@ void HandleR21(int k, long today, bool dayLocked)
          S[ke].refPx = S[ke].entryPx; S[ke].slPx = sl; S[ke].rDist = MathAbs(S[ke].entryPx - sl);
          S[ke].entryTime = now; S[ke].entryBarTime = now; S[ke].tfMin = R21TfMin(t);
          S[ke].mfeR = 0.0; S[ke].t1Done = true; S[ke].beDone = true; S[ke].vol0 = vol; S[ke].vol1 = 0.0; S[ke].vol2 = 0.0; S[ke].closeFails = 0;
-         S[ke].r21Be = (R21EinstandAbR <= 0.0); S[ke].lastBeTry = 0;                   // 6.30
          if(kCycleStart <= 0) kCycleStart = now;
          PrintFormat("DEADBAND4 %s RSI21: Einstieg %s M%d%s (RSI %.1f, Divergenz %d, Regime %d), %.2f Lot, Risiko %.2f (Puffer %.2f %%), Stop %.*f, Ziel %.*f (%.2f R)",
                      s, (dir > 0 ? "LONG" : "SHORT"), R21TfMin(t), (ke == k ? "" : " [2. Platz]"), sigRsi[t], div, reg, vol, vol*rd*mpp, buf, dg, sl, dg, tp, S[ke].rr);
@@ -4909,7 +4858,6 @@ void NzDurchlauf(const bool dayLocked)
    if(nzDayOk && nzHaveO && !nzStatsOk && m < NzSchlussMin && now >= nzStatsNext) { nzStatsNext = now + 300; NzStats(nzDay); }
    int offen = NzZahl();
    if(offen == 0) { nzExitPending = false; return; }
-   if(NzEinstandAbR > 0.0) NzEinstand();                                        // 6.30: je Teil Stop auf Einstand ab NzEinstandAbR
    if(now - nzSchliessVersuch < 5) return;                                     // hoechstens alle 5 s ein Schliessversuch
    // Tagesende (15:55 NY), ausserhalb der Sitzung, Freitag/Sondertag-Schluss, handelsfreier Tag oder Position aus einem Vortag: alles schliessen
    bool ende = (m >= NzSchlussMin || m < 570 || !nzDayOk || NzAltePosition(d) || (WeAktiv && WeSchlussJetzt(now)));
@@ -5041,10 +4989,6 @@ struct FadeDef
    datetime tpVersuch, schlussVersuch;
    int      nGrid;           // 6.20: vom Probability Grid ausgelassene Signale (Historie + live)
    bool     gridAus;         // 6.20: Modul steht in GridOhne (kein Grid-Filter)
-   ulong    t1Tk;            // 6.30: Position, deren Teilgewinn erledigt (oder nicht moeglich) ist
-   ulong    t1Chk;           // 6.30: Position, deren Deal-Historie schon geprueft wurde
-   datetime t1Versuch;       // 6.30: letzter Versuch des Teilgewinns
-   int      nT1;             // 6.30: Teilgewinne seit dem Start (Panel)
   };
 FadeDef  F[MAXFADE];
 int      nFade = 0;
@@ -5135,7 +5079,6 @@ bool FadeListeLesen()
       F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = false; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;
       F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
       F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
-      F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;                  // 6.30
       nFade++;
      }
    return true;
@@ -5478,8 +5421,6 @@ void FadeVerwalten(const int m)
       else if(now - F[m].logZeit >= 60) { F[m].logZeit = now; PrintFormat("DEADBAND4 %s FADE %s: Zeit-Ausstieg abgelehnt (%d %s) - neuer Versuch alle 5 s", s, FadeName(m), trade.ResultRetcode(), trade.ResultRetcodeDescription()); }
       return;
      }
-   if(FadeT1R > 0.0 && F[m].t1Tk != tk && FadeTeilgewinn(m, tk)) return;       // 6.30: Teilgewinn ab FadeT1R (Ziel im naechsten Durchlauf)
-   if(!PositionSelectByTicket(tk)) return;
    if(tpAlt > 0.0) return;
    double goal = 0.0;
    if(F[m].liveDay == Dt && F[m].liveGoal > 0.0) goal = F[m].liveGoal;
@@ -5992,173 +5933,4 @@ string GridStatusText()
    t += StringFormat(" | %s %d (Historie + live)", (GridNurLive ? "nur virtuell" : "ausgelassen"), ns);
    if(StringLen(GridOhne) > 0) t += " | ohne Grid: " + GridOhne;
    return t;
-  }
-
-//+------------------------------------------------------------------+
-//| 6.30 Trefferquote (Replikat eng7, x42/x43)                        |
-//|  Fades: ab FadeT1R (R = Stop-Abstand beim Einstieg) wird          |
-//|  FadeT1Anteil geschlossen, Stop und Ziel bleiben.                 |
-//|  RSI21 und jeder Noise-Teil: Stop auf Einstand + EinstandPlusR,   |
-//|  sobald der Kurs R21/NzEinstandAbR im Plus ist.                   |
-//|  Erst ab der M5-Kerze nach der Einstiegskerze (wie das Replikat)  |
-//|  und nach MinHalteSek; Teilgewinn nach der Gewinn-/News-Regel.    |
-//|  Der Zustand steckt im Stop (Einstand) bzw. in der Deal-Historie  |
-//|  (Teilschliessung) - er gilt auch nach einem Neustart.            |
-//+------------------------------------------------------------------+
-// true, wenn die M5-Kerze nach der Einstiegskerze begonnen hat
-bool NachEinstiegsKerze(const string s, const datetime tOpen)
-  {
-   int ps = PeriodSeconds(PERIOD_M5);
-   datetime b0 = iTime(s, PERIOD_M5, 0);
-   datetime naechste = (datetime)((long)tOpen - (long)tOpen % ps + ps);
-   return (b0 > 0 && b0 >= naechste);
-  }
-
-// urspruenglicher Stop-Abstand einer Position aus der Eroeffnungs-Order (der Stop kann auf Einstand stehen)
-double UrStopAbstand(const ulong tk)
-  {
-   if(!PositionSelectByTicket(tk)) return 0.0;
-   double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
-   long pid = PositionGetInteger(POSITION_IDENTIFIER);
-   double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
-   if(HistorySelectByPosition(pid))
-     {
-      for(int i=0;i<HistoryDealsTotal();i++)
-        {
-         ulong dt = HistoryDealGetTicket(i);
-         if(dt == 0 || HistoryDealGetInteger(dt, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
-         ulong ot = (ulong)HistoryDealGetInteger(dt, DEAL_ORDER);
-         double osl = (ot > 0 && HistoryOrderSelect(ot)) ? HistoryOrderGetDouble(ot, ORDER_SL) : 0.0;
-         double px = HistoryDealGetDouble(dt, DEAL_PRICE);
-         if(osl > 0.0 && px > 0.0) rd = MathAbs(px - osl);
-         break;
-        }
-     }
-   PositionSelectByTicket(tk);
-   return rd;
-  }
-
-// Stop auf ref + EinstandPlusR*rd, sobald der Kurs abR*rd im Plus ist.
-// 1 = gesetzt oder schon dort (bzw. ohne R nicht moeglich), 0 = noch nicht, -1 = abgelehnt (spaeter erneut)
-int EinstandSetzen(const ulong tk, const double ref, const double rd, const double abR, const string wer)
-  {
-   if(!PositionSelectByTicket(tk)) return -1;
-   if(rd <= 0.0 || ref <= 0.0) return 1;
-   string s = PositionGetString(POSITION_SYMBOL);
-   int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
-   double sl = PositionGetDouble(POSITION_SL), tp = PositionGetDouble(POSITION_TP);
-   int dg = (int)SymbolInfoInteger(s, SYMBOL_DIGITS);
-   double pt = SymbolInfoDouble(s, SYMBOL_POINT);
-   double nsl = NormalizeDouble(ref + d*EinstandPlusR*rd, dg);
-   if(sl > 0.0 && (sl - nsl)*d >= -0.5*pt) return 1;                         // Stop steht schon auf Einstand oder besser
-   datetime tOpen = (datetime)PositionGetInteger(POSITION_TIME);
-   if(!NachEinstiegsKerze(s, tOpen)) return 0;
-   if(MinHalteSek > 0 && TimeCurrent() - tOpen < MinHalteSek) return 0;      // kein Gewinnschluss am Einstand-Stop vor der Haltezeit
-   double bid = SymbolInfoDouble(s, SYMBOL_BID), ask = SymbolInfoDouble(s, SYMBOL_ASK);
-   if(bid <= 0.0 || ask <= 0.0) return 0;
-   double lvl = ref + d*abR*rd;
-   if(!((d > 0) ? (bid >= lvl) : (ask <= lvl))) return 0;
-   long stl = SymbolInfoInteger(s, SYMBOL_TRADE_STOPS_LEVEL);
-   double minD = (stl > 0 ? stl*pt : 0.0);
-   if((d > 0 && bid - nsl < minD) || (d < 0 && nsl - ask < minD)) return 0;
-   trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
-   if(trade.PositionModify(tk, nsl, tp))
-     {
-      PrintFormat("DEADBAND4 %s %s: Stop auf Einstand %.*f (Einstieg + %.2f R) - Kurs war %.2f R im Plus", s, wer, dg, nsl, EinstandPlusR, abR);
-      return 1;
-     }
-   PrintFormat("DEADBAND4 %s %s: Stop auf Einstand abgelehnt (%d %s) - neuer Versuch", s, wer, trade.ResultRetcode(), trade.ResultRetcodeDescription());
-   return -1;
-  }
-
-// Noise: je Teil Stop auf Einstand ab NzEinstandAbR (R = Abstand zum Stop der Eroeffnung; steht der Stop im Plus, ist es erledigt)
-void NzEinstand()
-  {
-   static datetime letzter = 0;
-   datetime now = TimeCurrent();
-   for(int i=PositionsTotal()-1;i>=0;i--)
-     {
-      ulong tk = PositionGetTicket(i); if(tk == 0) continue;
-      if(!IsNzMagic(PositionGetInteger(POSITION_MAGIC))) continue;
-      double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
-      int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
-      if(sl <= 0.0 || (sl - op)*d >= 0.0) continue;                           // ohne Stop oder schon auf Einstand
-      double rd = (op - sl)*d;
-      double lvl = op + d*NzEinstandAbR*rd;
-      string sy = PositionGetString(POSITION_SYMBOL);
-      double px = (d > 0) ? SymbolInfoDouble(sy, SYMBOL_BID) : SymbolInfoDouble(sy, SYMBOL_ASK);
-      if(px <= 0.0 || (px - lvl)*d < 0.0) continue;
-      if(now - letzter < 3) return;                                             // Aenderungen gedrosselt (alle 3 s)
-      letzter = now;
-      EinstandSetzen(tk, op, rd, NzEinstandAbR, StringFormat("NOISE Teil #%I64u", tk));
-     }
-  }
-
-// Fade-Teilschliessung schon erfolgt? (Ausstiegs-Deal dieser Position in der Historie - auch nach einem Neustart)
-bool FadeTeilSchonZu(const ulong tk)
-  {
-   if(!PositionSelectByTicket(tk)) return false;
-   long pid = PositionGetInteger(POSITION_IDENTIFIER);
-   bool ja = false;
-   if(HistorySelectByPosition(pid))
-      for(int i=HistoryDealsTotal()-1;i>=0;i--)
-        {
-         ulong dt = HistoryDealGetTicket(i);
-         if(dt > 0 && HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_OUT) { ja = true; break; }
-        }
-   PositionSelectByTicket(tk);
-   return ja;
-  }
-
-// Fade: FadeT1Anteil der Position schliessen, sobald der Kurs FadeT1R im Plus ist. true = Teilschliessung gesendet
-bool FadeTeilgewinn(const int m, const ulong tk)
-  {
-   if(FadeT1R <= 0.0 || FadeT1Anteil <= 0.0) return false;
-   if(!PositionSelectByTicket(tk)) return false;
-   string s = S[F[m].k].sym;
-   datetime now = TimeCurrent();
-   if(F[m].t1Chk != tk)                                                        // einmal je Position: schon teilweise geschlossen?
-     {
-      F[m].t1Chk = tk;
-      if(FadeTeilSchonZu(tk)) { F[m].t1Tk = tk; return false; }
-      if(!PositionSelectByTicket(tk)) return false;
-     }
-   double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
-   double vol = PositionGetDouble(POSITION_VOLUME);
-   int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
-   datetime tOpen = (datetime)PositionGetInteger(POSITION_TIME);
-   double rd = (op - sl)*d;
-   if(sl <= 0.0 || rd <= 0.0) { F[m].t1Tk = tk; return false; }              // ohne Stop im Minus kein R: kein Teilgewinn
-   if(!NachEinstiegsKerze(s, tOpen)) return false;
-   double bid = SymbolInfoDouble(s, SYMBOL_BID), ask = SymbolInfoDouble(s, SYMBOL_ASK);
-   if(bid <= 0.0 || ask <= 0.0) return false;
-   double lvl = op + d*FadeT1R*rd;
-   if(!((d > 0) ? (bid >= lvl) : (ask <= lvl))) return false;
-   double stp = SymbolInfoDouble(s, SYMBOL_VOLUME_STEP); if(stp <= 0.0) stp = 0.01;
-   double mnv = SymbolInfoDouble(s, SYMBOL_VOLUME_MIN);
-   double v1 = NormalizeDouble(MathFloor(vol*FadeT1Anteil/stp + 1e-9)*stp, 2);
-   if(v1 < mnv - 1e-9 || vol - v1 < mnv - 1e-9) { F[m].t1Tk = tk; return false; }   // zu klein fuer eine Teilschliessung (Replikat ebenso)
-   double p = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
-   if(!GewinnSchlussOk(tk, p)) return false;                                   // 130-s-/News-Regel
-   if(now - F[m].t1Versuch < 10) return false;
-   F[m].t1Versuch = now;
-   if(SchliesseTeil(tk, v1))
-     {
-      F[m].t1Tk = tk; F[m].nT1++;
-      fadeLetzte = StringFormat("%s Teilgewinn %.2f von %.2f Lot bei %.2f R", FadeName(m), v1, vol, FadeT1R);
-      PrintFormat("DEADBAND4 %s FADE %s (Stop und Ziel bleiben)", s, fadeLetzte);
-      return true;
-     }
-   if(now - F[m].logZeit >= 60) { F[m].logZeit = now; PrintFormat("DEADBAND4 %s FADE %s: Teilgewinn abgelehnt (%d %s) - neuer Versuch alle 10 s", s, FadeName(m), trade.ResultRetcode(), trade.ResultRetcodeDescription()); }
-   return false;
-  }
-
-string TrefferStatusText()
-  {
-   int n = 0;
-   for(int m=0;m<nFade;m++) n += F[m].nT1;
-   return StringFormat("Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s (+%.2f R) | Teilgewinne seit Start %d",
-                       (FadeT1R > 0.0 ? StringFormat("%.0f %% ab %.2f R", FadeT1Anteil*100.0, FadeT1R) : "aus"),
-                       (R21EinstandAbR > 0.0 ? StringFormat("ab %.2f R", R21EinstandAbR) : "aus"),
-                       (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R", NzEinstandAbR) : "aus"), EinstandPlusR, n);
   }
