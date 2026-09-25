@@ -325,7 +325,7 @@ Kerzenschluss) fällt in 2006–16.
 
 ## 8. Der EA `RSI21_EK.mq5`
 
-- **Eigenständig, ohne Code von GFT-Regeln:** rund 1140 Zeilen statt 6577. Zwei Symbole: Gold und NAS100, Namen als
+- **Eigenständig, ohne Code von GFT-Regeln:** rund 1160 Zeilen statt 6577. Zwei Symbole: Gold und NAS100, Namen als
   Eingaben. Ein Chart genügt; der Timer bedient beide Symbole.
 - **Signal wie 6.60** (`HandleR21`, `R21Divergenz`), mit zwei robusteren Umsetzungen, beide gegen das Replikat geprüft
   (Abschnitt 3):
@@ -343,14 +343,16 @@ Kerzenschluss) fällt in 2006–16.
   doppelt so viel riskiert wie vorgesehen, werden ausgelassen (kleine Konten). Die Volumen-Grenze des Brokers je Richtung
   wird beachtet; Stop und Ziel liegen auf der Tick-Größe des Symbols.
 - **Plätze:** Magic = `MagicBase` + 10 × Symbol + Platz. Weitere Positionen nur in Richtung der ersten; eben eröffnete
-  Positionen zählen mit, auch wenn die Positionsliste des Terminals noch nachhinkt. Der EA verlangt ein
-  **Hedging-Konto** und startet sonst nicht.
+  oder eben geschlossene Positionen zählen richtig, auch wenn die Positionsliste des Terminals noch nachhinkt. Der EA
+  verlangt ein **Hedging-Konto**: Ist das Konto beim Start bekannt, startet er sonst nicht; startet er vor der Anmeldung
+  (Terminal-Neustart), prüft er im Betrieb und handelt auf einem Netting-Konto nicht (Warnung).
 - **Ausstieg:**
   - Stop und Ziel liegen beim Broker.
   - Zeit-Ausstieg auf Kerzenbasis wie im Replikat: Schluss der 1152. M5-Kerze nach der Einstiegskerze bzw. der ersten
     Kerze, die mindestens 8 Tage nach der Einstiegskerze beginnt.
   - Optional: Einstand, Nachzug, Teilgewinn (im Preset aus). Ausgelöst wird am besten Kurs der M5-Kerzen seit dem
-    Einstieg wie im Replikat; liegt der Kurs schon jenseits des neuen Stops, schließt der EA.
+    Einstieg wie im Replikat; liegt der Kurs schon jenseits des neuen Stops, schließt der EA. Den Teilgewinn nimmt er
+    nur, solange der Kurs höchstens 0,25 R unter dem Level liegt (das Replikat bucht ihn zum Level).
   - Der ursprüngliche Stopabstand (1 R) steht in einer Terminal-Globalvariablen. Nach einem Neustart kommt er aus der
     Eröffnungs-Order.
 - **Verluste je Tag:** aus der Deal-Historie des Handelstags, je Symbol.
@@ -363,21 +365,28 @@ Kerzenschluss) fällt in 2006–16.
     und `MagicBase`, sofort auf Platte). Eingestiegen wird nur bis 2 min nach Kerzenbeginn. Ein Neustart, eine geänderte
     Eingabe oder eine Verbindungslücke führen so weder zu einem zweiten noch zu einem verspäteten Einstieg.
   - Mit derselben `MagicBase` läuft der EA nur auf einem Chart des Terminals (Sperre über eine temporäre
-    Globalvariable).
+    Globalvariable; eine verwaiste Sperre, deren Chart diesen EA nicht mehr trägt, zählt nicht). Zwischen zwei Terminals
+    wirkt die Sperre nicht (Abschnitt 9).
   - Schließ- und Stop-Aufträge höchstens alle 30 bzw. 5 s je Position und nur, wenn gehandelt werden kann
-    (Algo-Handel an, Verbindung, frische Kurse). Ein Einstieg wird bei Requote oder neuem Kurs einmal wiederholt. Jedes
-    ausgelassene Signal hat eine Journal-Zeile mit Grund.
-  - Warnungen höchstens stündlich (Journal, optional Push): fehlende Historie für Regime oder Divergenz (dann keine
-    Signale), Indikatoren nicht nachgerechnet, fälliger Ausstieg nicht möglich, abgelehnte Aufträge.
-  - Zustandsvariablen geschlossener Positionen räumt der EA frühestens 5 min nach dem Start und nur mit Verbindung weg.
+    (Algo-Handel an, Verbindung, frische Kurse gemessen an der laufenden Serverzeit, also auch am Wochenende). Ein
+    Einstieg wird bei Requote oder neuem Kurs einmal wiederholt. Jedes ausgelassene Signal hat eine Journal-Zeile mit
+    Grund.
+  - Warnungen je Symbol und Art höchstens stündlich (Journal, optional Push): fehlende Historie für Regime oder
+    Divergenz (dann keine Signale), Indikatoren nicht nachgerechnet, fälliger Ausstieg nicht möglich, abgelehnte
+    Aufträge, kein Hedging-Konto; der Hinweis auf kurze H1-Historie höchstens täglich.
+  - Zustandsvariablen geschlossener Positionen räumt der EA frühestens 5 min nach Start bzw. neuer Verbindung weg.
 - **Prüfungen:**
   - `t_ek_set.py`: 57 Eingaben, Preset = Voreinstellungen, handelsrelevante Werte = Replikat-Endstand (45 Größen).
   - `t_mq5.py`: Klammern, Format-Argumente, Deklarationen, unbekannte Funktionen – bestanden. Als „unbekannt“ nennt es
-    nur MQL5-Funktionen, die nicht in seiner Liste stehen (`BarsCalculated`, `ChartFirst`, `ChartNext`,
-    `GlobalVariableName`, `GlobalVariableTemp`, `GlobalVariablesTotal`).
+    nur MQL5-Funktionen, die nicht in seiner Liste stehen (`BarsCalculated`, `ChartFirst`, `ChartGetString`,
+    `ChartNext`, `GlobalVariableName`, `GlobalVariableTemp`, `GlobalVariablesTotal`).
   - Gegengelesen von einem MQL5-Prüfer: keine Kompilierfehler; 16 Befunde zu Betrieb und Randfällen (u. a. doppelter
     Einstieg nach Neustart, ungedrosselte Aufträge, stille Signalausfälle bei fehlender Historie). Alle sind umgesetzt
     (oben unter Betrieb), bis auf die Sommerzeit-Regel des Servers (Abschnitt 10).
+  - Zweite Lesung der Überarbeitung: keine Kompilierfehler; zwei Betriebsrisiken (die Hedging-Prüfung vor der Anmeldung
+    hätte den EA beim Terminal-Neustart vom Chart genommen; eine verwaiste Sperre hätte andere Charts ausgesperrt) und
+    kleinere Punkte (Drosseln über die Ortszeit, geschlossener Markt über die laufende Serverzeit, getrennte Warnarten,
+    Teilgewinn nur nahe dem Level, bester Kurs nach Pausen lückenlos, eben geschlossene Plätze). Alle umgesetzt.
   - Nicht geprüft: Kompilieren und Strategietester.
 
 ## 9. Inbetriebnahme

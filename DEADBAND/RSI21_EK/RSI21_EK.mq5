@@ -155,10 +155,13 @@ int      divDir[NS];
 bool     divGut[NS];
 string   letztesSignal[NS];
 datetime wartet[NS];                  // seit wann auf nachgerechnete Indikatoren gewartet wird (0 = nicht)
-datetime warnZeit[NS][5];             // letzte Warnung je Art: 0 Regime, 1 Divergenz, 2 Indikatoren, 3 Handel, 4 NY-Versatz
-datetime versuchZu[NS][MAXP];         // letzter Schliessversuch je Platz (hoechstens alle 30 s)
-datetime versuchSl[NS][MAXP];         // letzte Stop-Aenderung / Teilschluss je Platz (hoechstens alle 5 s)
-datetime startLokal = 0, anzLokal = 0, aufLokal = 0;
+#define  WA 8                          // Arten von Warnungen: 0 Regime, 1 Divergenz, 2 Indikatoren, 3 Ausstieg, 4 NY-Versatz,
+                                      // 5 Stop/Teilgewinn, 6 Konto, 7 Historie kurz (taeglich)
+datetime warnZeit[NS][WA];            // letzte Warnung je Symbol und Art
+datetime versuchZu[NS][MAXP];         // letzter Schliessversuch je Platz (Ortszeit, hoechstens alle 30 s)
+datetime versuchSl[NS][MAXP];         // letzte Stop-Aenderung / Teilschluss je Platz (Ortszeit, hoechstens alle 5 s)
+bool     zuP[NS][MAXP];               // in diesem Durchlauf geschlossen (die Positionsliste kann kurz nachhinken)
+datetime anzLokal = 0, aufLokal = 0, verbundenSeit = 0;
 string   gLock = "";                  // Sperre gegen eine zweite Instanz (temporaere Globalvariable)
 
 //+------------------------------------------------------------------+
@@ -207,11 +210,11 @@ datetime SrvZuUTC(const datetime srv)
 //+------------------------------------------------------------------+
 //| Meldungen, Globalvariablen                                       |
 //+------------------------------------------------------------------+
-// Warnung je Symbol und Art hoechstens einmal je Stunde (Journal und Push)
-void Warnung(const int s, const int art, const string text)
+// Warnung je Symbol und Art hoechstens einmal je `abstand` Sekunden (Journal und Push)
+void Warnung(const int s, const int art, const string text, const int abstand = 3600)
   {
    datetime lok = TimeLocal();
-   if(warnZeit[s][art] > 0 && lok - warnZeit[s][art] < 3600) return;
+   if(warnZeit[s][art] > 0 && lok - warnZeit[s][art] < abstand) return;
    warnZeit[s][art] = lok;
    Print("RSI21EK ", text);
    if(PushMeldungen) SendNotification("RSI21EK " + text);
@@ -224,15 +227,20 @@ string PosGv(const long pid, const string was) { return Pfx() + "P" + IntegerToS
 string SigGv(const int s, const int di) { return Pfx() + "SIG_" + SymKey(s) + (di == 0 ? "_L" : "_S"); }
 string BarGv(const int s, const int t) { return Pfx() + "BAR_" + SymKey(s) + "_" + IntegerToString(t); }
 void   Sichern() { if(!MQLInfoInteger(MQL_TESTER)) GlobalVariablesFlush(); }        // sofort auf Platte (Absturz, Stromausfall)
+// Konto sicher bekannt? Vor der Anmeldung (Terminal-Start) liefert AccountInfoInteger 0 = Netting
+bool   KontoBekannt() { return (MQLInfoInteger(MQL_TESTER) || (TerminalInfoInteger(TERMINAL_CONNECTED) && AccountInfoInteger(ACCOUNT_LOGIN) != 0)); }
 
-// Kerzen und Signal-Gedaechtnis je Symbol laden (erst mit bekanntem Konto, das Praefix enthaelt den Login)
+// Kerzen und Signal-Gedaechtnis je Symbol laden (erst mit bekanntem Konto, das Praefix enthaelt den Login).
+// Im Tester ohne Vorzustand
 bool LadeZustand(const int s)
   {
+   if(MQLInfoInteger(MQL_TESTER)) { geladen[s] = true; return true; }
    if(AccountInfoInteger(ACCOUNT_LOGIN) == 0) return false;
    for(int t=0;t<NT;t++)
      {
       string g = BarGv(s, t);
       lastBar[s][t] = GlobalVariableCheck(g) ? (datetime)(long)GlobalVariableGet(g) : 0;
+      if(lastBar[s][t] > TimeCurrent() + 3600) lastBar[s][t] = 0;      // Zeit in der Zukunft (anderer Server, Zeitzone): verwerfen
      }
    for(int di=0;di<2;di++)
      {
@@ -343,7 +351,7 @@ bool HandelMoeglich(const int s, const bool eroeffnen, const int dir, string &gr
    if(MQLInfoInteger(MQL_TESTER)) return true;
    if(!TerminalInfoInteger(TERMINAL_CONNECTED)) { grund = "keine Verbindung"; return false; }
    if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) || !MQLInfoInteger(MQL_TRADE_ALLOWED)) { grund = "Algo-Handel ausgeschaltet"; return false; }
-   if(TimeCurrent() - (datetime)SymbolInfoInteger(sym, SYMBOL_TIME) > 60) { grund = "keine frischen Kurse (Markt geschlossen?)"; return false; }
+   if(TimeTradeServer() - (datetime)SymbolInfoInteger(sym, SYMBOL_TIME) > 60) { grund = "keine frischen Kurse (Markt geschlossen?)"; return false; }
    return true;
   }
 
@@ -365,22 +373,19 @@ bool PlatzPosition(const int s, const int q, ulong &tk, int &dir)
   }
 
 // Platzwahl wie im Replikat: erster Platz frei -> erster; sonst naechster freier Platz, wenn der erste in dieselbe Richtung laeuft.
-// neuP/dirNeu: in diesem Durchlauf eroeffnet (die Positionsliste kann kurz nachhinken)
+// neuP/dirNeu: in diesem Durchlauf eroeffnet, zuP: in diesem Durchlauf geschlossen (die Positionsliste kann kurz nachhinken)
 int PlatzWahl(const int s, const int dir, const bool &neuP[], const int dirNeu)
   {
    ulong tk = 0; int dA = 0;
-   if(!PlatzPosition(s, 0, tk, dA))
-     {
-      if(!neuP[0]) return 0;
-      dA = dirNeu;
-     }
+   if(neuP[0]) dA = dirNeu;
+   else if(zuP[s][0] || !PlatzPosition(s, 0, tk, dA)) return 0;
    if(dA != dir) return -1;
    int np = (int)MathMax(1, MathMin(MAXP, Plaetze));
    for(int q=1;q<np;q++)
      {
       if(neuP[q]) continue;
       ulong t2 = 0; int d2 = 0;
-      if(!PlatzPosition(s, q, t2, d2)) return q;
+      if(zuP[s][q] || !PlatzPosition(s, q, t2, d2)) return q;
      }
    return -1;
   }
@@ -424,17 +429,20 @@ bool NachEinstiegsKerze(const string s, const datetime tOpen)
   }
 
 // bester Vorlauf in R ab der M5-Kerze nach dem Einstieg: Hoch (Long) bzw. Tief + Spread (Short) wie im Replikat.
-// Beim ersten Aufruf aus der Historie, danach Globalvariable M + die letzten zwei Kerzen. -1e9 = Historie noch nicht da
+// Globalvariable M = bisher bester Vorlauf, N = zuletzt ausgewertete (noch laufende) Kerze; gelesen wird ab N, damit auch
+// nach einer Pause keine Kerze fehlt. -1e9 = Historie noch nicht da
 double BesterVorlauf(const long pid, const string sym, const int d, const double op, const double rd, const datetime t0)
   {
-   string g = PosGv(pid, "M");
+   string g = PosGv(pid, "M"), gn = PosGv(pid, "N");
    bool erst = !GlobalVariableCheck(g);
    double mfe = erst ? 0.0 : GlobalVariableGet(g);
    int ps = PeriodSeconds(PERIOD_M5);
    datetime ab = (datetime)((long)t0 - (long)t0 % ps + ps);
+   datetime von = ab;
+   if(!erst && GlobalVariableCheck(gn)) { datetime vn = (datetime)(long)GlobalVariableGet(gn); if(vn > von) von = vn; }
    MqlRates r[];
-   int n = erst ? CopyRates(sym, PERIOD_M5, ab, TimeCurrent(), r) : CopyRates(sym, PERIOD_M5, 0, 2, r);
-   if(erst && n <= 0) return -1e9;
+   int n = CopyRates(sym, PERIOD_M5, von, TimeCurrent(), r);
+   if(n <= 0) return (erst ? -1e9 : mfe);
    double pt = SymbolInfoDouble(sym, SYMBOL_POINT);
    for(int j=0;j<n;j++)
      {
@@ -442,6 +450,7 @@ double BesterVorlauf(const long pid, const string sym, const int d, const double
       double f = (d > 0) ? (r[j].high - op)/rd : (op - (r[j].low + r[j].spread*pt))/rd;
       if(f > mfe) mfe = f;
      }
+   GlobalVariableSet(gn, (double)(long)r[n-1].time);
    return mfe;
   }
 
@@ -458,7 +467,7 @@ bool TeilSchonZu(const long pid)
    return ja;
   }
 
-bool Schliesse(const int s, const ulong tk, const string grund)
+bool Schliesse(const int s, const int q, const ulong tk, const string grund)
   {
    if(!PositionSelectByTicket(tk)) return false;
    string sym = PositionGetString(POSITION_SYMBOL);
@@ -468,6 +477,7 @@ bool Schliesse(const int s, const ulong tk, const string grund)
    uint rc = trade.ResultRetcode();
    if(ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_DONE_PARTIAL || rc == TRADE_RETCODE_PLACED))
      {
+      zuP[s][q] = true;
       PrintFormat("RSI21EK %s: %s - geschlossen, Ergebnis %.2f", sym, grund, p);
       if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s: %s, %.2f", sym, grund, p));
       return true;
@@ -565,7 +575,7 @@ bool Regime(const int s, const datetime T, int &regv, bool &shortOk, bool &gateL
       regC[s] = cl[n-1]; regMaL[s] = sl/nl; regMaS[s] = sf/nf; regOk[s] = true;
       regTag[s] = (n >= nMa ? tag : -1);
       if(n < nMa)
-         Warnung(s, 0, StringFormat("%s: nur %d Handelstage H1-Historie (SMA %d/%d mit weniger Tagen) - Max. Balken im Chart erhoehen", gSym[s], n, MaLang, MaSchnell));
+         Warnung(s, 7, StringFormat("%s: nur %d Handelstage H1-Historie (SMA %d/%d mit weniger Tagen) - Max. Balken im Chart erhoehen", gSym[s], n, MaLang, MaSchnell), 86400);
      }
    double c = regC[s], mL = regMaL[s], mS = regMaS[s];
    if(c <= 0.0 || mL <= 0.0 || mS <= 0.0) return false;
@@ -743,7 +753,8 @@ bool Einstieg(const int s, const int t, const int dir, const double rd, const do
          if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s %s, %.2f Lot", sym, was, lots));
          return true;
         }
-      if(!(rc == TRADE_RETCODE_REQUOTE || rc == TRADE_RETCODE_PRICE_CHANGED || rc == TRADE_RETCODE_PRICE_OFF)) break;
+      bool neuKurs = (rc == TRADE_RETCODE_REQUOTE || rc == TRADE_RETCODE_PRICE_CHANGED || rc == TRADE_RETCODE_PRICE_OFF);
+      if(nr > 0 || !neuKurs) break;
       PrintFormat("RSI21EK %s: %s - %d %s, zweiter Versuch mit neuem Kurs", sym, was, rc, trade.ResultRetcodeDescription());
      }
    PrintFormat("RSI21EK %s: Einstieg %s abgelehnt (%d %s) %.2f Lot, SL %.*f, TP %.*f", sym, was, rc, trade.ResultRetcodeDescription(), lots, dg, sl, dg, tp);
@@ -885,7 +896,7 @@ void Signale(const int s)
 //+------------------------------------------------------------------+
 void Verwalten()
   {
-   datetime now = TimeCurrent();
+   datetime now = TimeCurrent(), lok = TimeLocal();                   // Serverzeit fuer das Wochenende, Ortszeit fuer die Drosseln
    bool optionen = (EinstandAbR > 0.0 || NachzugAbR > 0.0 || (TeilAbR > 0.0 && TeilAnteil > 0.0));
    for(int i=PositionsTotal()-1;i>=0;i--)
      {
@@ -916,10 +927,10 @@ void Verwalten()
         }
       if(we || zeit)
         {
-         if(now - versuchZu[s][q] < 30) continue;
+         if(lok - versuchZu[s][q] < 30) continue;
          if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Ausstieg faellig, aber nicht moeglich - %s", sym, grund)); continue; }
-         versuchZu[s][q] = now;
-         Schliesse(s, tk, we ? "Wochenend-Schluss" : StringFormat("Zeit-Ausstieg (%d M5-Kerzen)", sh - 1));
+         versuchZu[s][q] = lok;
+         Schliesse(s, q, tk, we ? "Wochenend-Schluss" : StringFormat("Zeit-Ausstieg (%d M5-Kerzen)", sh - 1));
          continue;
         }
       if(!optionen || !NachEinstiegsKerze(sym, t0)) continue;
@@ -931,8 +942,9 @@ void Verwalten()
       if(mfe < -1e8) continue;
       if(fav > mfe) mfe = fav;
       GlobalVariableSet(PosGv(pid, "M"), mfe);
-      if(now - versuchSl[s][q] < 5) continue;
-      if(TeilAbR > 0.0 && TeilAnteil > 0.0 && mfe >= TeilAbR && !GlobalVariableCheck(PosGv(pid, "T")))
+      if(lok - versuchSl[s][q] < 5) continue;
+      // Teilgewinn: Level erreicht (bester Kurs) und der Kurs jetzt hoechstens 0,25 R darunter (das Replikat bucht zum Level)
+      if(TeilAbR > 0.0 && TeilAnteil > 0.0 && mfe >= TeilAbR && fav >= TeilAbR - 0.25 && !GlobalVariableCheck(PosGv(pid, "T")))
         {
          bool schon = TeilSchonZu(pid);
          if(!PositionSelectByTicket(tk)) continue;
@@ -942,8 +954,8 @@ void Verwalten()
          double v1 = NormalizeDouble(MathFloor(l0*TeilAnteil/stp + 1e-9)*stp, LotStellen(stp));
          if(!schon && v1 >= mnv && vol - v1 >= mnv - 1e-9)
            {
-            if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Teilgewinn faellig, aber nicht moeglich - %s", sym, grund)); continue; }
-            versuchSl[s][q] = now;
+            if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 5, StringFormat("%s: Teilgewinn faellig, aber nicht moeglich - %s", sym, grund)); continue; }
+            versuchSl[s][q] = lok;
             trade.SetExpertMagicNumber((ulong)mg);
             bool ok = trade.PositionClosePartial(tk, v1);
             uint rc = trade.ResultRetcode();
@@ -952,7 +964,7 @@ void Verwalten()
                GlobalVariableSet(PosGv(pid, "T"), 1.0); Sichern();
                PrintFormat("RSI21EK %s: Teilgewinn %.2f Lot (Vorlauf %.2f R, jetzt %.2f R)", sym, v1, mfe, fav);
               }
-            else Warnung(s, 3, StringFormat("%s: Teilgewinn abgelehnt (%d %s)", sym, rc, trade.ResultRetcodeDescription()));
+            else Warnung(s, 5, StringFormat("%s: Teilgewinn abgelehnt (%d %s)", sym, rc, trade.ResultRetcodeDescription()));
             continue;                                             // Stop im naechsten Durchlauf (Position hat neue Werte)
            }
          GlobalVariableSet(PosGv(pid, "T"), 1.0); Sichern();       // schon genommen oder zu klein (wie Replikat: dann ohne Teil)
@@ -973,22 +985,23 @@ void Verwalten()
       double pt = SymbolInfoDouble(sym, SYMBOL_POINT);
       int dg = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
       if(!(sl <= 0.0 || (nsl - sl)*d > 0.5*pt)) continue;
-      if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Stop-Aenderung faellig, aber nicht moeglich - %s", sym, grund)); continue; }
+      if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 5, StringFormat("%s: Stop-Aenderung faellig, aber nicht moeglich - %s", sym, grund)); continue; }
       double px = (d > 0 ? bid : ask);
       if((px - nsl)*d <= 0.0)                                     // Kurs schon jenseits des neuen Stops: schliessen (Replikat: Stop in der naechsten Kerze)
         {
-         versuchSl[s][q] = now;
-         Schliesse(s, tk, StringFormat("Stop %.*f schon erreicht (Vorlauf %.2f R)", dg, nsl, mfe));
+         if(lok - versuchZu[s][q] < 30) continue;
+         versuchZu[s][q] = lok;
+         Schliesse(s, q, tk, StringFormat("Stop %.*f schon erreicht (Vorlauf %.2f R)", dg, nsl, mfe));
          continue;
         }
       long stl = SymbolInfoInteger(sym, SYMBOL_TRADE_STOPS_LEVEL), frz = SymbolInfoInteger(sym, SYMBOL_TRADE_FREEZE_LEVEL);
       if((px - nsl)*d < (double)MathMax(stl, frz)*pt) continue;   // naeher als der Mindestabstand: spaeter erneut
-      versuchSl[s][q] = now;
+      versuchSl[s][q] = lok;
       trade.SetExpertMagicNumber((ulong)mg);
       bool okm = trade.PositionModify(tk, nsl, tp);
       uint rcm = trade.ResultRetcode();
       if(okm && (rcm == TRADE_RETCODE_DONE || rcm == TRADE_RETCODE_NO_CHANGES)) PrintFormat("RSI21EK %s: Stop %.*f -> %.*f (Vorlauf %.2f R)", sym, dg, sl, dg, nsl, mfe);
-      else Warnung(s, 3, StringFormat("%s: Stop-Aenderung abgelehnt (%d %s)", sym, rcm, trade.ResultRetcodeDescription()));
+      else Warnung(s, 5, StringFormat("%s: Stop-Aenderung abgelehnt (%d %s)", sym, rcm, trade.ResultRetcodeDescription()));
      }
   }
 
@@ -1042,12 +1055,20 @@ void Anzeige()
 void Durchlauf()
   {
    OffsetPflegen();
-   Verwalten();
-   for(int s=0;s<NS;s++) Signale(s);
    datetime lok = TimeLocal();
    bool verb = (MQLInfoInteger(MQL_TESTER) || TerminalInfoInteger(TERMINAL_CONNECTED));
-   // Aufraeumen erst 5 min nach dem Start und mit Verbindung (vorher kann die Positionsliste noch leer sein)
-   if(verb && AccountInfoInteger(ACCOUNT_LOGIN) != 0 && lok - startLokal >= 300 && lok - aufLokal >= 3600) { Aufraeumen(); aufLokal = lok; }
+   if(!verb) verbundenSeit = 0;
+   else if(verbundenSeit == 0) verbundenSeit = lok;
+   for(int s=0;s<NS;s++)
+      for(int q=0;q<MAXP;q++) zuP[s][q] = false;
+   if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) == ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
+     {
+      Verwalten();
+      for(int s=0;s<NS;s++) Signale(s);
+      // Aufraeumen erst 5 min nach Start bzw. neuer Verbindung (vorher kann die Positionsliste noch leer sein)
+      if(verb && AccountInfoInteger(ACCOUNT_LOGIN) != 0 && lok - verbundenSeit >= 300 && lok - aufLokal >= 3600) { Aufraeumen(); aufLokal = lok; }
+     }
+   else if(KontoBekannt()) Warnung(0, 6, "kein Hedging-Konto - der EA handelt nicht (nur fuer Hedging-Konten)");
    if(!MQLInfoInteger(MQL_TESTER) && lok - anzLokal >= 2) { Anzeige(); anzLokal = lok; }
   }
 
@@ -1070,14 +1091,14 @@ int OnInit()
    if(NachzugAbR > 0.0 && (NachzugAbstandR <= 0.0 || NachzugAbstandR > NachzugAbR + 5.0)) { Print("RSI21EK: NachzugAbstandR muss > 0 und hoechstens NachzugAbR + 5 sein"); return(INIT_PARAMETERS_INCORRECT); }
    if(TeilAbR > 0.0 && (TeilAnteil < 0.1 || TeilAnteil > 0.9)) { Print("RSI21EK: TeilAnteil 0,1-0,9"); return(INIT_PARAMETERS_INCORRECT); }
    if(MarginMaxPct <= 0.0 || MarginMaxPct > 100.0) { Print("RSI21EK: MarginMaxPct 1-100"); return(INIT_PARAMETERS_INCORRECT); }
-   if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
+   if(KontoBekannt() && AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)   // vor der Anmeldung: Pruefung im Durchlauf
      { Print("RSI21EK: nur fuer Hedging-Konten (auf Netting-Konten verschmelzen die Positionen mit fremden oder manuellen)"); return(INIT_FAILED); }
    gSym[0] = GoldSymbol; gSym[1] = NasSymbol;
    wTf[0] = GewichtM15; wTf[1] = GewichtM30; wTf[2] = GewichtH1;
    tfOn[0][0] = GoldM15; tfOn[0][1] = GoldM30; tfOn[0][2] = GoldH1;
    tfOn[1][0] = NasM15;  tfOn[1][1] = NasM30;  tfOn[1][2] = NasH1;
    nyOff = NYOffsetHours; offGemessen = false; offKand = -99; offLokal = 0;
-   startLokal = TimeLocal(); anzLokal = 0; aufLokal = 0;
+   anzLokal = 0; aufLokal = 0; verbundenSeit = 0;
    for(int s=0;s<NS;s++)
      {
       if(!SymbolSelect(gSym[s], true)) { PrintFormat("RSI21EK: Symbol %s nicht vorhanden - exakten Namen aus dem Market Watch eintragen", gSym[s]); return(INIT_FAILED); }
@@ -1091,8 +1112,8 @@ int OnInit()
       geladen[s] = false;
       regOk[s] = false; regTag[s] = -1; divBucket[s] = 0; divDir[s] = 0; divGut[s] = false; letztesSignal[s] = ""; wartet[s] = 0;
       lastSig[s][0] = 0; lastSig[s][1] = 0;
-      for(int k=0;k<5;k++) warnZeit[s][k] = 0;
-      for(int q=0;q<MAXP;q++) { versuchZu[s][q] = 0; versuchSl[s][q] = 0; }
+      for(int k=0;k<WA;k++) warnZeit[s][k] = 0;
+      for(int q=0;q<MAXP;q++) { versuchZu[s][q] = 0; versuchSl[s][q] = 0; zuP[s][q] = false; }
      }
    // Sperre: dieselbe MagicBase darf nur auf einem Chart laufen (sonst wuerde jedes Signal doppelt gehandelt)
    if(!MQLInfoInteger(MQL_TESTER))
@@ -1105,7 +1126,8 @@ int OnInit()
          long cid = StringToInteger(StringSubstr(g, StringLen(lp)));
          if(cid == ChartID()) continue;
          bool da = false;
-         for(long c=ChartFirst(); c>=0; c=ChartNext(c)) if(c == cid) { da = true; break; }
+         for(long c=ChartFirst(); c>=0; c=ChartNext(c))
+            if(c == cid && ChartGetString(c, CHART_EXPERT_NAME) == MQLInfoString(MQL_PROGRAM_NAME)) { da = true; break; }
          if(da) { Print("RSI21EK: laeuft mit MagicBase ", MagicBase, " schon auf einem anderen Chart (ID ", cid, ") - zweite Instanz abgelehnt"); return(INIT_FAILED); }
          GlobalVariableDel(g);                                      // verwaist
         }
