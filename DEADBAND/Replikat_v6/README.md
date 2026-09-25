@@ -69,7 +69,10 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `pg_guard.py` | Regime-Wächter der Fades: Signal-Studie (Modul- gegen Portfolio-Wächter, 2006–13 / 2014–21 / 2022–25), `known_time` (Zeitpunkt, zu dem der EA ein virtuelles Ergebnis kennt), `port_live_ea` (Portfolio-Wächter wie im EA), `blocks_port`/`blocks_multi` (Fade-Blöcke für den Kontomotor) |
 | `x44.py` | **Konto-Screening 6.40**: Mindestgewinn, Abschluss-Ernte, Schutz gültiger Tage, Fade-Teilgewinn, Risiko, Wächter-Varianten (`P<N>/<PF>`, zusammengesetzt `M:...`), Pufferkurve, Sicher → `ergebnisse/x44_*.json` |
 | `x45.py` | Zwischenbewertung (16 Störungen) der ersten 6.40-Kandidaten ohne stärkere Pufferkurve → `ergebnisse/x45_*.json` |
-| `x46.py` | **Endbewertung 6.40** gegen 6.30 (16 Störungen, Startjahre, Streuung, Abstand zum Boden, Nachbarn, Wartezeit der Auszahlung, Sicher) → `ergebnisse/x46_*.json` |
+| `x47.py` | **Wächter-Formen und Pufferkurven** im Vergleich (Abstand zum Boden): je Modul, Portfolio, zusammengesetzt (UND/ODER), Pufferkurven 4/1,5/0,3 bis 5/3/0,2; Screening mit 8 Störungen → `ergebnisse/x47_gft.json`, `x47_ext.json`, `x47_gft_spread06.json` (Ersatz mit Spreads ×0,6); Auswahl der Kurve mit 16 Störungen → `x47_gft_16.json`, `x47_gft_spread06_16.json` |
+| `nb_diag.py` | Beinahe-Busts im Detail: kleinster Abstand zum Boden je Konto und Störung, Monat des tiefsten Stands (Episode Februar/März 2025) |
+| `x46.py` | **Endbewertung 6.40** gegen 6.30 (16 Störungen, Startjahre, Streuung, Abstand zum Boden, Pufferkurven, Nachbarn, Wartezeit der Auszahlung, Sicher) → `ergebnisse/x46_*.json`, mit engeren Spreads `x46_gft_spread06.json` |
+| `mk_proxy.py` | GFT-Ersatz aus Fremddaten (seit 6.40 mit `SPREAD_FAKTOR`, z. B. 0,6 = GFT-nahe Spreads; nur in einer Kopie des Ordners) |
 | `t_port_640.py` | **Abgleich EA ↔ Replikat** für 6.40: Zeitpunkt der virtuellen Ergebnisse (`FadeKerze`/`FadeVirtSchluss`), Portfolio-Wächter (`FadePortfolioPF`/`FadeWaechterOk`), Schutz gültiger Tage → `ergebnisse/t_port_640.txt` |
 | `t_set.py` | Prüfung: Voreinstellungen des EA = Echtbetrieb-Set (bzw. Abweichungen eines anderen Sets mit `--diff`) |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
@@ -98,7 +101,14 @@ python t_mq5.py                            # statische Pruefung des EA
 # Build 6.40 (Auszahlungstakt)
 python pg_guard.py                         # Signal-Studie: Regime-Waechter je Modul gegen Portfolio
 python x44.py gft "6.30 Ertrag|MP min|MP min B5" 8 2   # Konto-Screening (Varianten siehe VAR in x44.py)
+python x47.py gft all 8 2 ergebnisse/x47_gft.json   # Waechter-Formen und Pufferkurven (Abstand zum Boden)
+python x47.py ext all 8 6 ergebnisse/x47_ext.json
+python x47.py gft "Q5 Port200>1.15, Kurve 5/2.5/0.2|R0 6.30 Ertrag" 16 2 ergebnisse/x47_gft_16.json   # Auswahl der Kurve
+python nb_diag.py gft "6.40 Ertrag" 16 1 nb.json   # Beinahe-Busts je Stoerung und Monat
 python x46.py gft && python x46.py ext     # Endbewertung 6.40 gegen 6.30
+# engere, GFT-nahe Spreads: Ordner DEADBAND kopieren, in der Kopie (Replikat_v6):
+#   SPREAD_FAKTOR=0.6 python mk_proxy.py && python prep5.py && python sig5.py
+#   python x47.py gft all 8 2 x47_gft_spread06.json && X46_OUT=. python x46.py gft   (-> ergebnisse/x46_gft_spread06.json)
 python t_eng8.py && python t_port_640.py   # Pruefungen (eng8 = eng7; EA <-> Replikat)
 python t_set.py                            # Echtbetrieb-Set = Voreinstellungen des EA
 ```

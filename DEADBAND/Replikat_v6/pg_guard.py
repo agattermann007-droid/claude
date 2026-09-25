@@ -257,7 +257,12 @@ def blocks_multi(target, rule, conds, window_days=600, names=PB.F10, filters=Tru
             grp = np.zeros(len(te_all), np.int64) if scope == "port" else (sy_all if scope == "sym" else mi_all + 10)
             L &= live_scope(te_all, kt_all, mi_all, R_all, grp, N, th, window_days)
         return L
-    pl = mask(conds)
+    if conds and isinstance(conds[0], list):                           # ODER ueber UND-Gruppen: [[c, c], [c]]
+        pl = np.zeros(len(te_all), bool)
+        for grp_c in conds:
+            pl |= mask(grp_c)
+    else:
+        pl = mask(conds)
     wl = np.ones(len(te_all))
     if w_extra is not None:
         c2, wv = w_extra

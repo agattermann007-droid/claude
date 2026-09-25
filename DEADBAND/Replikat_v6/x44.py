@@ -103,17 +103,27 @@ for _g in ("P200/1.2", "P200/1.15", "P200/1.1", "P150/1.2", "P250/1.2"):
     VAR[f"D40 {_g} N0.50 R0.55"] = (dict(C40, nz_risk=0.50, r21_risk=0.55, **D42), H, 0.75, _g)
     VAR[f"D40 {_g} N0.55"] = (dict(C40, nz_risk=0.55, **D42), H, 0.75, _g)
     VAR[f"D40 {_g} F0.80 N0.50"] = (dict(C40, nz_risk=0.50, **D42), H, 0.80, _g)
-# 6.40 Endkandidat: Portfolio-Waechter PF200 > 1,15, Pufferkurve DDMinFactor 0,3 (sonst wie 6.30: 4 % / 1,5 %)
-E640 = dict(C40, **D415)
+# 6.40 erster Entwurf: Portfolio-Waechter PF200 > 1,15, Pufferkurve DDMinFactor 0,3 (sonst wie 6.30: 4 % / 1,5 %)
+E640A = dict(C40, **D415)
+VAR["6.40 Entwurf Kurve 4/1.5/0.3"] = (E640A, H, 0.75, "P200/1.15")
+VAR["6.40 Kurve 5/2/0.3"] = (dict(C40, ddfull=5.0, ddmin=2.0, ddfmin=0.3), H, 0.75, "P200/1.15")
+VAR["6.40 Kurve 5.5/2/0.3"] = (dict(C40, ddfull=5.5, ddmin=2.0, ddfmin=0.3), H, 0.75, "P200/1.15")
+# 6.40 endgueltig (x47, 16 Stoerungen, auch mit GFT-nahen Spreads): Pufferkurve volle Groesse bis 1 % Rueckgang (5 % Puffer),
+# dann kleiner bis x0,2 bei 3,5 % Rueckgang (2,5 % Puffer). Der Portfolio-Waechter handelt mehr; die Kurve haelt den
+# kleinsten Abstand zum Boden auf 6.30-Niveau (Episode Maerz 2025).
+D5025 = dict(ddfull=5.0, ddmin=2.5, ddfmin=0.2)
+E640 = dict(C40, **D5025)
 VAR["6.40 Ertrag"] = (E640, H, 0.75, "P200/1.15")
+VAR["6.40 P200/1.1"] = (E640, H, 0.75, "P200/1.1")                     # Nachbarn des Waechters mit der endgueltigen Kurve
+VAR["6.40 P200/1.2"] = (E640, H, 0.75, "P200/1.2")
 VAR["6.40 paydelay1"] = (dict(E640, paydelay=1), H, 0.75, "P200/1.15")
 VAR["6.40 paydelay3"] = (dict(E640, paydelay=3), H, 0.75, "P200/1.15")
 VAR["6.40 Modul-Waechter"] = (E640, H, 0.75, "S70")
-VAR["6.40 DDMinFactor 0.6"] = (C40, H, 0.75, "P200/1.15")
+VAR["6.40 DDMinFactor 0.6"] = (C40, H, 0.75, "P200/1.15")                   # Pufferkurve wie 6.30 (4 % / 1,5 % / x0,6)
 VAR["6.40 MinProfit 3 %"] = (dict(E640, minpayout=240.0), H, 0.75, "P200/1.15")
 for _p in (2.5, 2.0, 1.5):
     VAR[f"6.40 MinProfit {_p} %"] = (dict(E640, minpayout=mp(_p)), H, 0.75, "P200/1.15")
-S640 = dict(SIC, minpayout=105.0, vp_on=3, **D415)
+S640 = dict(SIC, minpayout=105.0, vp_on=3, **D5025)
 VAR["6.40 Sicher"] = (S640, {}, 0.75, "P200/1.15")
 VAR["6.40 Sicher B5"] = (dict(S640, bank_on=1, bank_last=5, bank_minr=0.3, bank_mods=15), dict(harv=1), 0.75, "P200/1.15")
 # Nachbarschaft des Portfolio-Waechters
@@ -178,10 +188,14 @@ def setup(target, rule="S70"):
         if rule.startswith("M:"):
             # zusammengesetzt, z. B. "M:port200/1.2+port30/1.0" oder "M:port200/1.2+sym30/1.0" oder "M:port200/1.2+mod30/1.0"
             import pg_guard as PGd, re as _re
-            conds = []
-            for part in rule[2:].split("+"):
-                mm = _re.match(r"(port|sym|mod)(\d+)/([\d.]+)", part)
-                conds.append((mm.group(1), int(mm.group(2)), float(mm.group(3))))
+            def _conds(s):
+                cs = []
+                for part in s.split("+"):
+                    mm = _re.match(r"(port|sym|mod)(\d+)/([\d.]+)", part)
+                    cs.append((mm.group(1), int(mm.group(2)), float(mm.group(3))))
+                return cs
+            body = rule[2:]
+            conds = [_conds(g) for g in body.split("|")] if "|" in body else _conds(body)   # "|" = ODER, "+" = UND
             blks, info = PGd.blocks_multi(target, x41.S70_OHNE, conds, info=True)
         elif rule.startswith("P"):
             import pg_guard as PGd

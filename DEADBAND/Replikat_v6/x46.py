@@ -2,17 +2,22 @@
 (GFT-Ersatz) bzw. jeder dritte Tag (Fremddaten 2006-21) ein neues Konto, Startjahre, Streuung je Stoerung, zusaetzlich
 Abstand zum Boden (kleinster Abstand je Konto; Anteil der Konten, die dem Boden auf < 100 $ / < 200 $ nahekamen).
 6.40 Ertrag: Mindestgewinn = GFT-Minimum (131,25 $), Abschluss-Ernte immer, Schutz gueltiger Tage (vp_on 3), Fades ohne
-Teilgewinn, Noise 0,45 %, Portfolio-Waechter PF der letzten 200 Fade-Signale > 1,15, Pufferkurve DDMinFactor 0,3.
-Aufruf: python x46.py gft|ext ["Variante|..."]   (Ausgabe ergebnisse/x46_{gft|ext}.json)"""
+Teilgewinn, Noise 0,45 %, Portfolio-Waechter PF der letzten 200 Fade-Signale > 1,15, Pufferkurve volle Groesse ab 5 %
+Puffer, x0,2 bei <= 2,5 % (Wahl der Kurve: x47.py). Mit engeren Spreads: Ordner kopieren, dort
+SPREAD_FAKTOR=0.6 python mk_proxy.py && python prep5.py && python sig5.py, dann x46.py gft in der Kopie.
+Aufruf: python x46.py gft|ext ["Variante|..."]   (Ausgabe ergebnisse/x46_{gft|ext}.json, Ordner per X46_OUT)"""
 import numpy as np, sys, json, os, time
 import eng8 as E, evl6 as V, evl8 as V8, x44
 
 CFG = {
     "6.30 Ertrag": "6.30 Ertrag",
     "6.40 Ertrag": "6.40 Ertrag",
-    "6.40, Waechter PF200 > 1,1, Noise 0,50 %, Kurve 4/2/0,3": "D40 P200/1.1 N0.50",
-    "6.40, Waechter PF200 > 1,2, Kurve 4/2/0,3": "D40 P200/1.2",
-    "6.40 mit DDMinFactor 0,6 (wie 6.30)": "6.40 DDMinFactor 0.6",
+    "6.40 mit Pufferkurve 5,5/2/0,3": "6.40 Kurve 5.5/2/0.3",
+    "6.40 mit Pufferkurve 5/2/0,3": "6.40 Kurve 5/2/0.3",
+    "6.40 erster Entwurf (Pufferkurve 4/1,5/0,3)": "6.40 Entwurf Kurve 4/1.5/0.3",
+    "6.40 mit Pufferkurve wie 6.30 (4/1,5/0,6)": "6.40 DDMinFactor 0.6",
+    "6.40, Waechter PF200 > 1,1": "6.40 P200/1.1",
+    "6.40, Waechter PF200 > 1,2": "6.40 P200/1.2",
     "6.40 mit Modul-Waechter (wie 6.30)": "6.40 Modul-Waechter",
     "6.40 mit Mindestgewinn 3 %": "6.40 MinProfit 3 %",
     "6.40, Auszahlung 1 Tag schneller gebucht": "6.40 paydelay1",
