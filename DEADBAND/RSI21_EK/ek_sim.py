@@ -126,7 +126,7 @@ class Market:
         return R
 
 
-NSL = 10           # Plaetze je Symbol q = 0..4: Index 2*q + sym (A = sym, B = 2 + sym, ...)
+NSL = 20           # Plaetze je Symbol q = 0..9: Index 2*q + sym (A = sym, B = 2 + sym, ...)
 MAXT = 20000
 
 

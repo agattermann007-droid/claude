@@ -31,12 +31,16 @@ Swap als Zinsmodell (Long zahlt US-Leitzins + 2,5 %, Short erhält Leitzins − 
 | `ek_base.py` | Ausgangslage: RSI21 aus 6.60 als Eigenkapital-Konto, Aufschlüsselung je Symbol/Zeitebene/Richtung/Stunde/Jahr |
 | `ek_ofat.py` | Sensitivität: jeder Parameter einzeln (1 % Risiko) → `ergebnisse/ek_ofat.json` |
 | `ek_opt.py` | parallele Auswertung von Varianten (je Periode T 2006–16, V 2017–21, Z 2022–26, G gesamt) |
-| `ek_ca.py` | Koordinatensuche: Rendite bei gleicher Schwankung (25 % Jahresvolatilität), 4 Störungen; `R:TV` = Walk-Forward (Auswahl 2006–21, Sperre für T und V), `R:TVZ` = alle Perioden → `ergebnisse/ek_ca_*.json/.log` |
-| `ek_final.py` | Endbewertung: Vergleich bei gleicher Schwankung (16 Störungen), Risiko-Tabelle (1:20/1:30/1:100), Jahre, Stress, Monte Carlo → `ergebnisse/ek_final.json` |
+| `ek_ca.py` | Koordinatensuche: Rendite bei gleicher Schwankung (25 % Jahresvolatilität), 4 Störungen; `R:TV` = Walk-Forward (Auswahl 2006–21, Sperre für T und V), `R:TVZ` = alle Perioden → `ergebnisse/ek_ca_*.json/.log`; `ek_ca_T_abgebrochen.log` = Auswahl nur 2006–16 (Überanpassung, abgebrochen) |
+| `ek_kand.py` | Kandidaten aus den Walk-Forward-Bausteinen (Größe aus 2006–21, 16 Störungen, paarweise gegen 6.60) → `ergebnisse/ek_kand.json` |
+| `ek_plateau.py` | Plateau um den Endstand: jeder Parameter auf seine Rasterwerte → `ergebnisse/ek_plateau.json` |
+| `ek_rand.py` | Randparameter (Plätze, Gold-Faktor, Verluste je Tag) bei gleichem größten Rückgang 30/40/50 % → `ergebnisse/ek_rand.txt` |
+| `ek_groesse.py` | Positionsgröße: Risiko je Trade normal und unter Stress (20 % der Gewinner entfernt), Monte Carlo 5 Jahre → `ergebnisse/ek_groesse.txt` |
+| `ek_final.py` | Endbewertung (`FINAL_SEL`/`FINAL_SIM` = RSI21 EK 1.00): Vergleich bei gleicher Schwankung (16 Störungen) und bei gleichem Rückgang, Risiko-Tabelle (1:20/1:30/1:100), Jahre, Stress, Monte Carlo → `ergebnisse/ek_final.json`; Trade-Kennzahlen `ergebnisse/ek_final_trades.txt` |
 | `t_ek_sim.py` | Prüfung: Signale = `sig5.r21_signals`, Konto = `eng10` mit abgeschalteten GFT-Regeln (Trade für Trade) → `ergebnisse/t_ek_sim.txt` |
 | `t_ek_port.py` | Abgleich EA ↔ Replikat: Tagesregime aus H1 (EA) gegen D1 (Replikat), RSI des anderen Symbols → `ergebnisse/t_ek_port.txt` |
 | `t_ek_set.py` | Prüfung: EA-Voreinstellungen = `RSI21_EK.set` = Endstand des Replikats |
-| `RSI21_EK.mq5`, `RSI21_EK.set` | EA und Preset |
+| `RSI21_EK.mq5`, `RSI21_EK.set` | EA und Preset (Aufbau und Betrieb: Bericht Abschnitt 8, Inbetriebnahme: Abschnitt 9; nicht kompiliert, nur gegengelesen) |
 
 ## Ablauf
 
@@ -48,6 +52,8 @@ python ek_base.py 0.5             # Ausgangslage
 python ek_ofat.py                 # Sensitivitaet
 python ek_ca.py R:TV 4            # Walk-Forward-Suche (Auswahl 2006-21)
 python ek_ca.py R:TVZ 4           # Endstand (alle Perioden, Sperre je Periode)
-python ek_final.py <Risiko>       # Endbewertung
+python ek_kand.py && python ek_plateau.py && python ek_rand.py   # Kandidaten, Plateau, Randparameter
+python ek_final.py 1.0            # Endbewertung RSI21 EK 1.00 (1,0 % Risiko je Trade)
+python ek_groesse.py              # Wahl der Positionsgroesse (robuster Kelly-Punkt)
 python t_ek_port.py && python t_ek_set.py && python ../Replikat_v6/t_mq5.py RSI21_EK.mq5
 ```

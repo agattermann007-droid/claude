@@ -7,8 +7,39 @@
 //|  Wochenend-Schluss, keine Budgets, keine Pufferkurve, kein       |
 //|  Serien-Stopp). Groesse in % der Equity (Zinseszins), begrenzt   |
 //|  nur durch die Margin des Brokers.                               |
-//|  VOREINSTELLUNGEN: siehe Kopf "Build 1.00" unten und Bericht     |
-//|  RSI21_EK_Bericht.md.                                            |
+//|                                                                  |
+//|  BUILD 1.00 - AUF RENDITE OPTIMIERT (Replikat RSI21_EK/, Bericht |
+//|  RSI21_EK_Bericht.md). Signale wie 6.60, geaendert nur:          |
+//|   1) jedes Signal wird gehandelt (FolgeMin 0; 6.60: nur Folge-   |
+//|      signale), Gold nur M15 (6.60: M15 + M30),                   |
+//|   2) kein Einstand (6.60: Stop auf Einstand ab 1 R - fuer die    |
+//|      gueltigen Tage der Prop-Firma, kostet Rendite),             |
+//|   3) bis 5 Positionen je Symbol in Richtung der ersten (6.60: 2),|
+//|      keine Einstiege mehr nach 1 Verlust am Tag je Symbol,       |
+//|   4) Gewichte M15 1,5 / M30 1,0 / H1 0,5 (6.60: 1,25/1,0/0,75),  |
+//|   5) Risiko 1,0 % der Equity je Trade x Gewicht (x0,7 Gold).     |
+//|  Ziele 2,2 R (NAS) / 2,64 R (Gold), Stop 2 ATR und Zeit-Ausstieg |
+//|  1152 M5-Kerzen wie 6.60.                                        |
+//|  Replikat 2006-26 (Gold/NAS M5, breite Spreads, Zins-Swap, Hebel |
+//|  1:20), bei gleicher Schwankung (25 % Vol., 16 Stoerungen):      |
+//|  CAGR 6.60 -> EK 30,9 -> 45,4 %, Sharpe 1,10 -> 1,39, besser in  |
+//|  2006-16, 2017-21 und 2022-26. Bei gleichem groessten Rueckgang  |
+//|  (40 %): 33,7 -> 61,4 % CAGR. Walk-Forward: die Bausteine, mit   |
+//|  2006-21 gewaehlt, verbesserten 2022-26 in 16 von 16 Stoerungen. |
+//|  Mit 1,0 % Risiko: CAGR 2006-26 60 %, groesster Rueckgang 38 %   |
+//|  (2006-16: 24 % / 38 %, 2017-21: 108 % / 18 %, 2022-26: 122 % /  |
+//|  28 %), ~106 Trades je Jahr. Warum 1,0 %: bei 20 % weniger       |
+//|  Gewinnern hat 2006-16 hier die hoechste Rendite; mehr Risiko    |
+//|  erhoeht nur den Rueckgang (2,0 %: 57 %, unter Stress 69 %).     |
+//|  Gegengelesen (Review, alle Befunde umgesetzt); NICHT kompiliert,|
+//|  nicht im Strategietester, nicht auf Demo geprueft (Pflicht).    |
+//|                                                                  |
+//|  Betrieb: zuletzt verarbeitete Kerze je Zeitebene dauerhaft      |
+//|  gespeichert, Einstieg nur bis 2 min nach Kerzenbeginn (kein     |
+//|  Doppel-Einstieg nach Neustart), Sperre gegen eine zweite        |
+//|  Instanz mit derselben MagicBase, nur Hedging-Konten, Schliess-  |
+//|  und Aenderungsversuche gedrosselt, Warnung, wenn Historie fuer  |
+//|  Regime oder Divergenz fehlt (dann keine Signale).               |
 //|                                                                  |
 //|  Signal (unveraendert wie 6.60, Schwellen als Eingaben):         |
 //|   Long, wenn RSI(21) der zuletzt geschlossenen Kerze > Oben      |
@@ -17,9 +48,9 @@
 //|   > KreuzSchwelle (< 100 - X); Gold alternativ Vortagesschluss   |
 //|   ueber (unter) SMA200 und SMA100. Shorts nur unter SMA200 oder  |
 //|   SMA100, NAS-Longs nur ueber SMA200, kein Einstieg gegen eine   |
-//|   bestaetigte H4-RSI-Divergenz. Nur Folgesignale (frueheres      |
-//|   Signal gleicher Richtung hoechstens FolgeMin alt). Stop        |
-//|   StopATR x ATR(14) der Signal-Zeitebene.                        |
+//|   bestaetigte H4-RSI-Divergenz. Mit FolgeMin > 0 nur Folge-      |
+//|   signale (frueheres Signal gleicher Richtung hoechstens FolgeMin|
+//|   alt). Stop StopATR x ATR(14) der Signal-Zeitebene.             |
 //|  Tagesregime aus H1-Kerzen je Handelstag 17:00-17:00 NY (damit   |
 //|  unabhaengig von der Tagesgrenze des Servers).                   |
 //+------------------------------------------------------------------+
@@ -42,12 +73,12 @@ input int    NYOffsetHours  = 7;          // Serverzeit minus X Stunden = New-Yo
 input long   MagicBase      = 2121000;    // Magic = MagicBase + 10 x Symbol (0 Gold, 1 NAS) + Platz (0..4)
 
 input group             "=== Groesse (Zinseszins) ==="
-input double RiskPct        = 1.0;        // Risiko je Trade in % der Equity (x Gewicht der Zeitebene, x Gold-Faktor)
+input double RiskPct        = 1.0;        // Risiko je Trade in % der Equity (x Gewicht der Zeitebene, x Gold-Faktor); 1,0 = robuster Kelly-Punkt (Bericht Abschnitt 6)
 input bool   RisikoVomSaldo = false;      // true = % vom Saldo statt von der Equity
-input double GewichtM15     = 1.25;       // Gewicht der Zeitebenen (Risiko = RiskPct x Gewicht)
+input double GewichtM15     = 1.5;        // Gewicht der Zeitebenen (Risiko = RiskPct x Gewicht; 6.60: 1,25 / 1,0 / 0,75)
 input double GewichtM30     = 1.0;
-input double GewichtH1      = 0.75;
-input double GoldFaktor     = 0.70;       // Risiko-Faktor fuer Gold
+input double GewichtH1      = 0.5;
+input double GoldFaktor     = 0.70;       // Risiko-Faktor fuer Gold (Risikoparitaet RSI21 v3.4; bei gleichem Rueckgang besser als 0,85-1,6)
 input double MarginMaxPct   = 90.0;       // alle Positionen zusammen hoechstens X % der Equity als Margin (neue Position sonst kleiner)
 input double MaxLotsJePos   = 0.0;        // Obergrenze je Position in Lots (0 = Broker-Maximum)
 input double MinLotToleranz = 2.0;        // Signal auslassen, wenn schon das Mindestlot mehr als X-mal das Soll-Risiko traegt
@@ -67,7 +98,7 @@ input bool   NasM15         = true;       // Zeitebenen je Symbol
 input bool   NasM30         = true;
 input bool   NasH1          = true;
 input bool   GoldM15        = true;
-input bool   GoldM30        = true;
+input bool   GoldM30        = false;      // EK 1.00: Gold nur M15 (6.60: M15 + M30)
 input bool   GoldH1         = false;
 input int    MaLang         = 200;        // Tages-SMA (Handelstage 17:00-17:00 NY) fuer Regime, NAS-Longs, Gold-Tor
 input int    MaSchnell      = 100;        // Tages-SMA schnell fuer Short-Regime und Gold-Tor
@@ -78,14 +109,14 @@ input bool   DivH4          = true;       // kein Einstieg gegen eine bestaetigt
 input int    DivRadius      = 2;
 input double DivAbstand     = 2.0;
 input int    DivHistoryH1   = 6000;
-input int    FolgeMin       = 240;        // nur Folgesignale: frueheres Signal gleicher Richtung hoechstens X min alt (0 = jedes Signal)
-input double ErstesSignalFaktor = 0.0;    // Groesse fuer das erste Signal einer Bewegung (0 = nur merken, nicht handeln)
+input int    FolgeMin       = 0;          // 0 = jedes Signal handeln (EK 1.00); > 0 = nur Folgesignale: frueheres Signal gleicher Richtung hoechstens X min alt (6.60: 240)
+input double ErstesSignalFaktor = 0.0;    // nur mit FolgeMin > 0: Groesse fuer das erste Signal einer Bewegung (0 = nur merken, nicht handeln)
 input double StopATR        = 2.0;        // Stop in ATR(14) der Signal-Zeitebene (= 1 R)
 
 input group             "=== Ausstieg ==="
 input double ZielNasR       = 2.2;        // Ziel NAS in R (0 = kein Ziel)
 input double ZielGoldR      = 2.64;       // Ziel Gold in R (0 = kein Ziel)
-input double EinstandAbR    = 1.0;        // Stop auf Einstand + EinstandPlusR, sobald der Kurs X R im Plus war (0 = aus)
+input double EinstandAbR    = 0.0;        // Stop auf Einstand + EinstandPlusR, sobald der Kurs X R im Plus war (0 = aus; EK 1.00 aus, 6.60: 1,0)
 input double EinstandPlusR  = 0.05;
 input double NachzugAbR     = 0.0;        // Stop-Nachzug, sobald der beste Kurs X R im Plus war (0 = aus) ...
 input double NachzugAbstandR = 0.0;       // ... im Abstand Y R hinter dem besten Kurs
@@ -95,32 +126,40 @@ input int    ZeitExitM5     = 1152;       // Zeit-Ausstieg nach X M5-Kerzen seit
 input double ZeitExitTage   = 8.0;        // ... oder nach X Kalendertagen (0 = aus)
 
 input group             "=== Plaetze, Tag, Wochenende ==="
-input int    Plaetze        = 2;          // Positionen je Symbol (weitere nur in Richtung der ersten), 1-5
-input int    MaxVerlusteTag = 2;          // keine Einstiege mehr nach X Verlust-Trades am Tag je Symbol (0 = aus)
+input int    Plaetze        = 5;          // Positionen je Symbol (weitere nur in Richtung der ersten), 1-5 (6.60: 2)
+input int    MaxVerlusteTag = 1;          // keine Einstiege mehr nach X Verlust-Trades am Tag je Symbol (0 = aus; 6.60: 2)
 input double WeSchlussNY    = 0.0;        // Freitag ab X NY alle Positionen schliessen (0 = ueber das Wochenende halten)
 
 input group             "=== Betrieb ==="
 input int    AbweichungPkt  = 50;         // erlaubte Abweichung beim Einstieg in Punkten
 input bool   PushMeldungen  = false;      // Push-Meldung bei Einstieg, Ausstieg und Fehlern
 
-//--- Zustand
+//--- Zustand (wird in OnInit vollstaendig zurueckgesetzt: bei Re-Init behalten Globale sonst ihre Werte)
 CTrade   trade;
 string   gSym[NS];
 int      hRsi[NS][NT], hAtr[NS][NT];
-datetime lastBar[NS][NT];
-datetime lastSig[NS][2];             // Kerzenzeit des letzten gueltigen Signals je Richtung ([0] long, [1] short)
+datetime lastBar[NS][NT];             // zuletzt verarbeitete Kerze je Zeitebene (dauerhaft in Globalvariablen)
+datetime lastSig[NS][2];              // Kerzenzeit des letzten gueltigen Signals je Richtung ([0] long, [1] short)
+bool     geladen[NS];                 // Kerzen und Signal-Gedaechtnis aus den Globalvariablen geladen
 bool     tfOn[NS][NT];
 double   wTf[NT];
 int      nyOff = 7;
-datetime offZeit = 0;
-long     regTag[NS];                  // Handelstag, fuer den das Regime gerechnet wurde
+bool     offGemessen = false;         // NY-Versatz schon einmal mit Verbindung gemessen
+int      offKand = -99;               // abweichende Messung, die noch bestaetigt werden muss
+datetime offLokal = 0;                // Ortszeit der letzten Messung
+long     regTag[NS];                  // Handelstag, fuer den das Regime gerechnet wurde (-1 = neu rechnen)
 bool     regOk[NS];
 double   regC[NS], regMaL[NS], regMaS[NS];
 datetime divBucket[NS];
 int      divDir[NS];
 bool     divGut[NS];
-datetime letzteMeldung = 0;
 string   letztesSignal[NS];
+datetime wartet[NS];                  // seit wann auf nachgerechnete Indikatoren gewartet wird (0 = nicht)
+datetime warnZeit[NS][5];             // letzte Warnung je Art: 0 Regime, 1 Divergenz, 2 Indikatoren, 3 Handel, 4 NY-Versatz
+datetime versuchZu[NS][MAXP];         // letzter Schliessversuch je Platz (hoechstens alle 30 s)
+datetime versuchSl[NS][MAXP];         // letzte Stop-Aenderung / Teilschluss je Platz (hoechstens alle 5 s)
+datetime startLokal = 0, anzLokal = 0, aufLokal = 0;
+string   gLock = "";                  // Sperre gegen eine zweite Instanz (temporaere Globalvariable)
 
 //+------------------------------------------------------------------+
 //| Zeit                                                             |
@@ -148,22 +187,6 @@ bool UsDst(const datetime gmt)
    return (gmt >= StructToTime(m) && gmt < StructToTime(n));
   }
 
-int AutoOffset()
-  {
-   if(MQLInfoInteger(MQL_TESTER) || !AutoNYOffset) return NYOffsetHours;
-   if(!TerminalInfoInteger(TERMINAL_CONNECTED)) return nyOff;
-   datetime gmt = TimeGMT(), srv = TimeTradeServer();
-   if(gmt <= 0 || srv <= 0) return nyOff;
-   int srvOff = (int)MathRound((double)(srv - gmt) / 3600.0);
-   int off = srvOff - (UsDst(gmt) ? -4 : -5);
-   if(off < -12 || off > 14)
-     {
-      PrintFormat("RSI21EK: automatischer NY-Versatz %d unplausibel (Server %+d h GMT) - bleibe bei %d", off, srvOff, nyOff);
-      return nyOff;
-     }
-   return off;
-  }
-
 // Serverzeit -> UTC (fuer die H4-Buckets der Divergenz; US-Sommerzeit aus dem NY-Datum wie RSI21 v3.4)
 int SonntagImMonat(const int jahr, const int monat, const int nr)
   {
@@ -179,6 +202,99 @@ datetime SrvZuUTC(const datetime srv)
    if(d.mon == 3)  { int st = SonntagImMonat(d.year, 3, 2);  dst = (d.day > st || (d.day == st && d.hour >= 2)); }
    if(d.mon == 11) { int en = SonntagImMonat(d.year, 11, 1); dst = (d.day < en || (d.day == en && d.hour < 2)); }
    return (datetime)((long)ny + (dst ? 4 : 5)*3600);
+  }
+
+//+------------------------------------------------------------------+
+//| Meldungen, Globalvariablen                                       |
+//+------------------------------------------------------------------+
+// Warnung je Symbol und Art hoechstens einmal je Stunde (Journal und Push)
+void Warnung(const int s, const int art, const string text)
+  {
+   datetime lok = TimeLocal();
+   if(warnZeit[s][art] > 0 && lok - warnZeit[s][art] < 3600) return;
+   warnZeit[s][art] = lok;
+   Print("RSI21EK ", text);
+   if(PushMeldungen) SendNotification("RSI21EK " + text);
+  }
+
+// Praefix mit Login und MagicBase: Konten und Instanzen im selben Terminal bleiben getrennt
+string Pfx() { return GVP + IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN)) + "_" + IntegerToString(MagicBase) + "_"; }
+string SymKey(const int s) { return (StringLen(gSym[s]) <= 16 ? gSym[s] : "S" + IntegerToString(s)); }
+string PosGv(const long pid, const string was) { return Pfx() + "P" + IntegerToString(pid) + "_" + was; }
+string SigGv(const int s, const int di) { return Pfx() + "SIG_" + SymKey(s) + (di == 0 ? "_L" : "_S"); }
+string BarGv(const int s, const int t) { return Pfx() + "BAR_" + SymKey(s) + "_" + IntegerToString(t); }
+void   Sichern() { if(!MQLInfoInteger(MQL_TESTER)) GlobalVariablesFlush(); }        // sofort auf Platte (Absturz, Stromausfall)
+
+// Kerzen und Signal-Gedaechtnis je Symbol laden (erst mit bekanntem Konto, das Praefix enthaelt den Login)
+bool LadeZustand(const int s)
+  {
+   if(AccountInfoInteger(ACCOUNT_LOGIN) == 0) return false;
+   for(int t=0;t<NT;t++)
+     {
+      string g = BarGv(s, t);
+      lastBar[s][t] = GlobalVariableCheck(g) ? (datetime)(long)GlobalVariableGet(g) : 0;
+     }
+   for(int di=0;di<2;di++)
+     {
+      lastSig[s][di] = 0;
+      string g = SigGv(s, di);
+      if(GlobalVariableCheck(g))
+        {
+         datetime v = (datetime)(long)GlobalVariableGet(g);
+         if(v > 0 && TimeCurrent() - v <= 86400) lastSig[s][di] = v;
+        }
+     }
+   geladen[s] = true;
+   return true;
+  }
+
+//+------------------------------------------------------------------+
+//| NY-Versatz                                                       |
+//+------------------------------------------------------------------+
+// aus Server- und GMT-Zeit; false = keine Verbindung oder unplausibel
+bool OffsetMessen(int &off)
+  {
+   if(!TerminalInfoInteger(TERMINAL_CONNECTED)) return false;
+   datetime gmt = TimeGMT(), srv = TimeTradeServer();
+   if(gmt <= 0 || srv <= 0) return false;
+   int srvOff = (int)MathRound((double)(srv - gmt) / 3600.0);
+   int m = srvOff - (UsDst(gmt) ? -4 : -5);
+   if(m < -12 || m > 14)
+     {
+      Warnung(0, 4, StringFormat("automatischer NY-Versatz %d unplausibel (Server %+d h GMT) - bleibe bei %d h", m, srvOff, nyOff));
+      return false;
+     }
+   off = m;
+   return true;
+  }
+
+void OffsetSetzen(const int off, const string grund)
+  {
+   PrintFormat("RSI21EK: NY-Versatz %d -> %d h (%s)%s", nyOff, off, grund,
+               (off != NYOffsetHours ? " - weicht von NYOffsetHours ab: PC-Uhr, Zeitzone und Broker-Serverzeit pruefen" : ""));
+   nyOff = off;
+   for(int s=0;s<NS;s++) { regTag[s] = -1; regOk[s] = false; divBucket[s] = 0; }   // Tagesgrenzen und H4-Buckets neu
+  }
+
+// erste Messung mit Verbindung sofort, danach alle 600 s; ein Wechsel erst nach zwei gleichen Messungen
+void OffsetPflegen()
+  {
+   if(MQLInfoInteger(MQL_TESTER) || !AutoNYOffset) return;
+   datetime lok = TimeLocal();
+   if(offGemessen && lok - offLokal < 600) return;
+   int m = 0;
+   if(!OffsetMessen(m)) return;
+   offLokal = lok;
+   if(!offGemessen)
+     {
+      offGemessen = true;
+      if(m != nyOff) OffsetSetzen(m, "erste Messung");
+      return;
+     }
+   if(m == nyOff) { offKand = -99; return; }
+   if(m != offKand) { offKand = m; return; }
+   OffsetSetzen(m, "zweimal gemessen");
+   offKand = -99;
   }
 
 //+------------------------------------------------------------------+
@@ -199,6 +315,14 @@ int LotStellen(const double stp)
    return d;
   }
 
+// Preis auf die Tick-Groesse des Symbols (Index-CFDs: 0,25 / 0,5 ...)
+double AufTick(const string sym, const double px)
+  {
+   double ts = SymbolInfoDouble(sym, SYMBOL_TRADE_TICK_SIZE);
+   int dg = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+   return NormalizeDouble(ts > 0.0 ? MathRound(px/ts)*ts : px, dg);
+  }
+
 long MagicOf(const int s, const int q) { return MagicBase + 10*s + q; }
 bool UnsereMagic(const long mg, int &s, int &q)
   {
@@ -206,6 +330,21 @@ bool UnsereMagic(const long mg, int &s, int &q)
    if(o < 0 || o >= 10*NS) return false;
    s = (int)(o / 10); q = (int)(o % 10);
    return (q < MAXP);
+  }
+
+// Handel moeglich? Algo-Handel erlaubt, Symbol handelbar (Eroeffnen: in dieser Richtung), frische Kurse (Markt offen)
+bool HandelMoeglich(const int s, const bool eroeffnen, const int dir, string &grund)
+  {
+   string sym = gSym[s];
+   long tm = SymbolInfoInteger(sym, SYMBOL_TRADE_MODE);
+   if(tm == SYMBOL_TRADE_MODE_DISABLED) { grund = "Symbol fuer den Handel gesperrt"; return false; }
+   if(eroeffnen && !(tm == SYMBOL_TRADE_MODE_FULL || (dir > 0 && tm == SYMBOL_TRADE_MODE_LONGONLY) || (dir < 0 && tm == SYMBOL_TRADE_MODE_SHORTONLY)))
+     { grund = "Symbol nur eingeschraenkt handelbar (Handelsmodus des Brokers)"; return false; }
+   if(MQLInfoInteger(MQL_TESTER)) return true;
+   if(!TerminalInfoInteger(TERMINAL_CONNECTED)) { grund = "keine Verbindung"; return false; }
+   if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED) || !MQLInfoInteger(MQL_TRADE_ALLOWED)) { grund = "Algo-Handel ausgeschaltet"; return false; }
+   if(TimeCurrent() - (datetime)SymbolInfoInteger(sym, SYMBOL_TIME) > 60) { grund = "keine frischen Kurse (Markt geschlossen?)"; return false; }
+   return true;
   }
 
 // Position eines Platzes (Symbol + Magic); Richtung +1/-1
@@ -225,33 +364,39 @@ bool PlatzPosition(const int s, const int q, ulong &tk, int &dir)
    return false;
   }
 
-// Platzwahl wie im Replikat: erster Platz frei -> erster; sonst naechster freier Platz, wenn der erste in dieselbe Richtung laeuft
-int PlatzWahl(const int s, const int dir)
+// Platzwahl wie im Replikat: erster Platz frei -> erster; sonst naechster freier Platz, wenn der erste in dieselbe Richtung laeuft.
+// neuP/dirNeu: in diesem Durchlauf eroeffnet (die Positionsliste kann kurz nachhinken)
+int PlatzWahl(const int s, const int dir, const bool &neuP[], const int dirNeu)
   {
    ulong tk = 0; int dA = 0;
-   if(!PlatzPosition(s, 0, tk, dA)) return 0;
+   if(!PlatzPosition(s, 0, tk, dA))
+     {
+      if(!neuP[0]) return 0;
+      dA = dirNeu;
+     }
    if(dA != dir) return -1;
    int np = (int)MathMax(1, MathMin(MAXP, Plaetze));
    for(int q=1;q<np;q++)
      {
+      if(neuP[q]) continue;
       ulong t2 = 0; int d2 = 0;
       if(!PlatzPosition(s, q, t2, d2)) return q;
      }
    return -1;
   }
 
-string PosGv(const long pid, const string was) { return GVP + "P" + IntegerToString(pid) + "_" + was; }
-string SigGv(const int s, const int di) { return GVP + "SIG_" + gSym[s] + (di == 0 ? "_L" : "_S"); }
-
-// urspruenglicher Stop-Abstand (1 R): gemerkt beim Einstieg, sonst aus der Eroeffnungs-Order
+// urspruenglicher Stop-Abstand (1 R): gemerkt beim Einstieg, sonst aus der Eroeffnungs-Order (nur dieser Wert wird gespeichert).
+// Aufrufer waehlt die Position danach neu (HistorySelectByPosition)
 double PositionR(const ulong tk)
   {
    if(!PositionSelectByTicket(tk)) return 0.0;
    long pid = PositionGetInteger(POSITION_IDENTIFIER);
    string g = PosGv(pid, "R");
    if(GlobalVariableCheck(g)) { double r = GlobalVariableGet(g); if(r > 0.0) return r; }
+   int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
    double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
-   double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
+   double rd = 0.0;
+   bool ausHist = false;
    if(HistorySelectByPosition(pid))
      {
       for(int i=0;i<HistoryDealsTotal();i++)
@@ -261,13 +406,12 @@ double PositionR(const ulong tk)
          ulong ot = (ulong)HistoryDealGetInteger(dt, DEAL_ORDER);
          double osl = (ot > 0 && HistoryOrderSelect(ot)) ? HistoryOrderGetDouble(ot, ORDER_SL) : 0.0;
          double px = HistoryDealGetDouble(dt, DEAL_PRICE);
-         if(osl > 0.0 && px > 0.0) rd = MathAbs(px - osl);
+         if(osl > 0.0 && px > 0.0 && (px - osl)*d > 0.0) { rd = (px - osl)*d; ausHist = true; }
          break;
         }
      }
-   PositionSelectByTicket(tk);
-   if(rd > 0.0) GlobalVariableSet(g, rd);
-   return rd;
+   if(ausHist) { GlobalVariableSet(g, rd); Sichern(); return rd; }
+   return (sl > 0.0 && (op - sl)*d > 0.0) ? (op - sl)*d : 0.0;      // Ersatz nur fuer diesen Durchlauf (Stop auf Verlustseite)
   }
 
 // erst ab der M5-Kerze nach der Einstiegskerze (wie im Replikat)
@@ -279,47 +423,61 @@ bool NachEinstiegsKerze(const string s, const datetime tOpen)
    return (b0 > 0 && b0 >= naechste);
   }
 
-// bester Vorlauf in R seit der Kerze nach dem Einstieg (Nachzug): aus M5-Kerzen und dem aktuellen Kurs
-double BesterVorlauf(const ulong tk, const string s, const int d, const double op, const double rd, const datetime t0)
+// bester Vorlauf in R ab der M5-Kerze nach dem Einstieg: Hoch (Long) bzw. Tief + Spread (Short) wie im Replikat.
+// Beim ersten Aufruf aus der Historie, danach Globalvariable M + die letzten zwei Kerzen. -1e9 = Historie noch nicht da
+double BesterVorlauf(const long pid, const string sym, const int d, const double op, const double rd, const datetime t0)
   {
-   long pid = PositionGetInteger(POSITION_IDENTIFIER);
    string g = PosGv(pid, "M");
-   double mfe = GlobalVariableCheck(g) ? GlobalVariableGet(g) : -1e9;
-   if(mfe < -1e8)
+   bool erst = !GlobalVariableCheck(g);
+   double mfe = erst ? 0.0 : GlobalVariableGet(g);
+   int ps = PeriodSeconds(PERIOD_M5);
+   datetime ab = (datetime)((long)t0 - (long)t0 % ps + ps);
+   MqlRates r[];
+   int n = erst ? CopyRates(sym, PERIOD_M5, ab, TimeCurrent(), r) : CopyRates(sym, PERIOD_M5, 0, 2, r);
+   if(erst && n <= 0) return -1e9;
+   double pt = SymbolInfoDouble(sym, SYMBOL_POINT);
+   for(int j=0;j<n;j++)
      {
-      mfe = 0.0;
-      int ps = PeriodSeconds(PERIOD_M5);
-      datetime ab = (datetime)((long)t0 - (long)t0 % ps + ps);
-      MqlRates r[];
-      int n = CopyRates(s, PERIOD_M5, ab, TimeCurrent(), r);
-      double pt = SymbolInfoDouble(s, SYMBOL_POINT);
-      for(int j=0;j<n;j++)
-        {
-         double f = (d > 0) ? (r[j].high - op)/rd : (op - (r[j].low + r[j].spread*pt))/rd;
-         if(f > mfe) mfe = f;
-        }
-      PositionSelectByTicket(tk);
+      if(r[j].time < ab) continue;
+      double f = (d > 0) ? (r[j].high - op)/rd : (op - (r[j].low + r[j].spread*pt))/rd;
+      if(f > mfe) mfe = f;
      }
    return mfe;
   }
 
-bool Schliesse(const ulong tk, const string grund)
+// Teilgewinn schon genommen? (Deal-Historie: ein Ausstiegs-Deal der Position; Aufrufer waehlt die Position danach neu)
+bool TeilSchonZu(const long pid)
+  {
+   bool ja = false;
+   if(HistorySelectByPosition(pid))
+      for(int i=HistoryDealsTotal()-1;i>=0 && !ja;i--)
+        {
+         ulong dt = HistoryDealGetTicket(i);
+         ja = (dt > 0 && HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_OUT);
+        }
+   return ja;
+  }
+
+bool Schliesse(const int s, const ulong tk, const string grund)
   {
    if(!PositionSelectByTicket(tk)) return false;
-   string s = PositionGetString(POSITION_SYMBOL);
+   string sym = PositionGetString(POSITION_SYMBOL);
    double p = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
    trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
-   if(trade.PositionClose(tk))
+   bool ok = trade.PositionClose(tk);
+   uint rc = trade.ResultRetcode();
+   if(ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_DONE_PARTIAL || rc == TRADE_RETCODE_PLACED))
      {
-      PrintFormat("RSI21EK %s: %s - geschlossen, Ergebnis %.2f", s, grund, p);
-      if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s: %s, %.2f", s, grund, p));
+      PrintFormat("RSI21EK %s: %s - geschlossen, Ergebnis %.2f", sym, grund, p);
+      if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s: %s, %.2f", sym, grund, p));
       return true;
      }
-   PrintFormat("RSI21EK %s: Schliessen (%s) abgelehnt (%d %s)", s, grund, trade.ResultRetcode(), trade.ResultRetcodeDescription());
+   Warnung(s, 3, StringFormat("%s: Schliessen (%s) abgelehnt (%d %s) - neuer Versuch alle 30 s", sym, grund, rc, trade.ResultRetcodeDescription()));
    return false;
   }
 
-// Verlust-Trades heute (Handelstag 17:00 NY) je Symbol; Verlust = Gewinn + Swap < 0 (wie Replikat, ohne Kommission)
+// Verlust-Trades heute (Handelstag 17:00 NY) je Symbol; Verlust = Gewinn + Swap < 0 (wie Replikat, ohne Kommission).
+// Von Hand geschlossene Positionen (Deal-Magic 0) zaehlen nicht.
 int VerlusteHeute(const int s)
   {
    datetime von = TagBeginn(TagIndex(TimeCurrent()));
@@ -353,22 +511,27 @@ int BarVor(const string sym, const ENUM_TIMEFRAMES tf, const datetime T)
    return (bt > 0 && bt < T) ? sh : -1;
   }
 
+// Indikatorwert der zur Zeit T zuletzt geschlossenen Kerze, ueber die Kerzenzeit gelesen (nicht ueber den Index)
 bool Wert(const int handle, const string sym, const int t, const datetime T, double &v)
   {
-   int sh = BarVor(sym, TfOf(t), T);
+   ENUM_TIMEFRAMES tf = TfOf(t);
+   int sh = BarVor(sym, tf, T);
    if(sh < 0) return false;
+   datetime bt = iTime(sym, tf, sh);
+   if(bt <= 0) return false;
    double b[];
-   if(CopyBuffer(handle, 0, sh, 1, b) != 1) return false;
+   if(CopyBuffer(handle, 0, bt, 1, b) != 1) return false;
    if(b[0] == EMPTY_VALUE || !MathIsValidNumber(b[0])) return false;
    v = b[0];
    return true;
   }
 
-// Tagesregime aus H1: Schlusskurse je Handelstag (17:00-17:00 NY), ohne den laufenden Tag; SMA lang/schnell
-bool Regime(const int s, int &regv, bool &shortOk, bool &gateL, bool &gateS)
+// Tagesregime aus H1: Schlusskurse je Handelstag (17:00-17:00 NY) vor dem Handelstag der Signalzeit T; SMA lang/schnell.
+// Gilt fuer den ganzen Handelstag nur mit voller Historie (sonst beim naechsten Mal neu laden)
+bool Regime(const int s, const datetime T, int &regv, bool &shortOk, bool &gateL, bool &gateS)
   {
-   long heute = TagIndex(TimeCurrent());
-   if(!(regOk[s] && regTag[s] == heute))
+   long tag = TagIndex(T);
+   if(!(regOk[s] && regTag[s] == tag))
      {
       regOk[s] = false;
       int nMa = (int)MathMax(MaLang, MaSchnell);
@@ -376,24 +539,33 @@ bool Regime(const int s, int &regv, bool &shortOk, bool &gateL, bool &gateS)
       MqlRates r[];
       ArraySetAsSeries(r, false);
       int got = CopyRates(gSym[s], PERIOD_H1, 0, need, r);
-      if(got < 200) return false;
+      if(got < 200)
+        {
+         Warnung(s, 0, StringFormat("%s: Tagesregime nicht berechenbar (%d H1-Kerzen) - KEINE Signale; Historie / Max. Balken im Chart pruefen", gSym[s], got));
+         return false;
+        }
       double cl[]; ArrayResize(cl, got);
       int n = 0; long lastD = -1;
       for(int i=0;i<got;i++)
         {
          long dI = TagIndex(r[i].time);
-         if(dI >= heute) break;
+         if(dI >= tag) break;
          if(dI != lastD) { cl[n] = r[i].close; n++; lastD = dI; }
          else cl[n-1] = r[i].close;
         }
-      if(n < 50) return false;
+      if(n < 50)
+        {
+         Warnung(s, 0, StringFormat("%s: Tagesregime nicht berechenbar (%d Handelstage H1-Historie) - KEINE Signale", gSym[s], n));
+         return false;
+        }
       int nl = (int)MathMin(n, MaLang), nf = (int)MathMin(n, MaSchnell);
       double sl = 0.0, sf = 0.0;
       for(int i=n-nl;i<n;i++) sl += cl[i];
       for(int i=n-nf;i<n;i++) sf += cl[i];
-      regC[s] = cl[n-1]; regMaL[s] = sl/nl; regMaS[s] = sf/nf;
-      regTag[s] = heute; regOk[s] = true;
-      if(n < nMa) PrintFormat("RSI21EK %s: nur %d Handelstage H1-Historie (SMA %d/%d mit weniger Tagen) - Max. Balken im Chart erhoehen", gSym[s], n, MaLang, MaSchnell);
+      regC[s] = cl[n-1]; regMaL[s] = sl/nl; regMaS[s] = sf/nf; regOk[s] = true;
+      regTag[s] = (n >= nMa ? tag : -1);
+      if(n < nMa)
+         Warnung(s, 0, StringFormat("%s: nur %d Handelstage H1-Historie (SMA %d/%d mit weniger Tagen) - Max. Balken im Chart erhoehen", gSym[s], n, MaLang, MaSchnell));
      }
    double c = regC[s], mL = regMaL[s], mS = regMaS[s];
    if(c <= 0.0 || mL <= 0.0 || mS <= 0.0) return false;
@@ -404,17 +576,22 @@ bool Regime(const int s, int &regv, bool &shortOk, bool &gateL, bool &gateS)
    return true;
   }
 
-// bestaetigte RSI-Divergenz auf UTC-H4 (aus H1 wie RSI21 v3.4 / DEADBAND 6.60): +1 bullisch, -1 baerisch, 0 keine/beide
-bool Divergenz(const int s, int &direction)
+// bestaetigte RSI-Divergenz auf UTC-H4 (aus H1 wie RSI21 v3.4 / DEADBAND 6.60), nur H4-Buckets vor dem Bucket der Signalzeit T:
+// +1 bullisch, -1 baerisch, 0 keine/beide; false = nicht berechenbar (sperrt alle Signale, mit Warnung)
+bool Divergenz(const int s, const datetime T, int &direction)
   {
    long sek = 14400;
    string sym = gSym[s];
-   datetime current = (datetime)(((long)SrvZuUTC(TimeCurrent())/sek)*sek);
+   datetime current = (datetime)(((long)SrvZuUTC(T)/sek)*sek);
    if(divBucket[s] == current && current > 0) { direction = divDir[s]; return divGut[s]; }
    MqlRates rates[];
    ArraySetAsSeries(rates, false);
-   int got = CopyRates(sym, PERIOD_H1, 1, DivHistoryH1, rates);
-   if(got < 2000) return false;
+   int got = CopyRates(sym, PERIOD_H1, 0, DivHistoryH1, rates);
+   if(got < 2000)
+     {
+      Warnung(s, 1, StringFormat("%s: H4-Divergenz nicht berechenbar (%d H1-Kerzen, noetig 2000) - KEINE Signale; Historie / Max. Balken im Chart pruefen", sym, got));
+      return false;
+     }
    double closes[]; ArrayResize(closes, got);
    int n = 0; datetime last = 0;
    for(int i=0;i<got;i++)
@@ -425,7 +602,11 @@ bool Divergenz(const int s, int &direction)
       if(n == 0 || bucket != last) { closes[n] = rates[i].close; n++; last = bucket; }
       else closes[n-1] = rates[i].close;
      }
-   if(n < 500) return false;
+   if(n < 500)
+     {
+      Warnung(s, 1, StringFormat("%s: H4-Divergenz nicht berechenbar (%d H4-Kerzen, noetig 500) - KEINE Signale", sym, n));
+      return false;
+     }
    double rsi[]; ArrayResize(rsi, n); ArrayInitialize(rsi, 50.0);
    int period = RsiLen;
    double gain = 0.0, loss = 0.0;
@@ -464,71 +645,110 @@ bool Divergenz(const int s, int &direction)
 bool Einstieg(const int s, const int t, const int dir, const double rd, const double fak, const int q)
   {
    string sym = gSym[s];
+   string was = StringFormat("%s M%d Platz %d", (dir > 0 ? "LONG" : "SHORT"), TfMin(t), q + 1);
    double mpp = MoneyPerPricePerLot(sym);
    double pt  = SymbolInfoDouble(sym, SYMBOL_POINT);
    long   stl = SymbolInfoInteger(sym, SYMBOL_TRADE_STOPS_LEVEL);
-   if(rd <= 0.0 || mpp <= 0.0) return false;
-   if(stl > 0 && rd < stl*pt*1.2) { PrintFormat("RSI21EK %s: Stop %.5f unter dem Mindestabstand des Brokers - ausgelassen", sym, rd); return false; }
+   if(rd <= 0.0 || mpp <= 0.0) { PrintFormat("RSI21EK %s: %s ausgelassen - Stop %.5f oder Geld je Preis-Einheit %.5f ungueltig", sym, was, rd, mpp); return false; }
+   if(stl > 0 && rd < stl*pt*1.2) { PrintFormat("RSI21EK %s: %s ausgelassen - Stop %.5f unter dem Mindestabstand des Brokers (%d Punkte)", sym, was, rd, (int)stl); return false; }
    double w = wTf[t]*(s == 0 ? GoldFaktor : 1.0)*fak;
    double basis = RisikoVomSaldo ? AccountInfoDouble(ACCOUNT_BALANCE) : AccountInfoDouble(ACCOUNT_EQUITY);
    double risk = basis*RiskPct/100.0*w;
-   if(risk <= 0.0) return false;
+   if(risk <= 0.0) { PrintFormat("RSI21EK %s: %s ausgelassen - Risiko %.2f (Basis %.2f, Gewicht %.2f)", sym, was, risk, basis, w); return false; }
    double mnv = SymbolInfoDouble(sym, SYMBOL_VOLUME_MIN), mxv = SymbolInfoDouble(sym, SYMBOL_VOLUME_MAX);
    double stp = SymbolInfoDouble(sym, SYMBOL_VOLUME_STEP);
    if(stp <= 0.0) stp = 0.01;
    if(mnv <= 0.0) mnv = stp;
    if(mnv*rd*mpp > risk*MinLotToleranz)
      {
-      PrintFormat("RSI21EK %s: Mindestlot %.2f traegt %.2f Risiko, Soll %.2f - ausgelassen (Konto zu klein fuer diesen Stop)", sym, mnv, mnv*rd*mpp, risk);
+      PrintFormat("RSI21EK %s: %s ausgelassen - Mindestlot %.2f traegt %.2f Risiko, Soll %.2f (Konto zu klein fuer diesen Stop)", sym, was, mnv, mnv*rd*mpp, risk);
       return false;
      }
    double lots = MathFloor(risk/(rd*mpp)/stp + 0.5)*stp;                 // kaufmaennisch gerundet (wie Replikat)
    if(lots < mnv) lots = mnv;
    if(MaxLotsJePos > 0.0 && lots > MaxLotsJePos) lots = MathFloor(MaxLotsJePos/stp + 1e-9)*stp;
    if(mxv > 0.0 && lots > mxv) lots = MathFloor(mxv/stp + 1e-9)*stp;
-   double ask = SymbolInfoDouble(sym, SYMBOL_ASK), bid = SymbolInfoDouble(sym, SYMBOL_BID);
-   if(ask <= 0.0 || bid <= 0.0) return false;
-   double ent = (dir > 0 ? ask : bid);
+   // Volumen-Grenze des Brokers je Richtung (alle Positionen des Symbols)
+   double lim = SymbolInfoDouble(sym, SYMBOL_VOLUME_LIMIT);
+   if(lim > 0.0)
+     {
+      double offen = 0.0;
+      for(int i=PositionsTotal()-1;i>=0;i--)
+        {
+         ulong pk = PositionGetTicket(i);
+         if(pk == 0 || PositionGetString(POSITION_SYMBOL) != sym) continue;
+         if((PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1) == dir) offen += PositionGetDouble(POSITION_VOLUME);
+        }
+      double rest = MathFloor((lim - offen)/stp + 1e-9)*stp;
+      if(rest < mnv) { PrintFormat("RSI21EK %s: %s ausgelassen - Volumen-Grenze %.2f Lot je Richtung erreicht (offen %.2f)", sym, was, lim, offen); return false; }
+      if(lots > rest) { PrintFormat("RSI21EK %s: Groesse wegen Volumen-Grenze %.2f -> %.2f Lot", sym, lots, rest); lots = rest; }
+     }
+   MqlTick tick;
+   if(!SymbolInfoTick(sym, tick) || tick.ask <= 0.0 || tick.bid <= 0.0) { PrintFormat("RSI21EK %s: %s ausgelassen - kein Kurs", sym, was); return false; }
+   double ent = (dir > 0 ? tick.ask : tick.bid);
    // Margin: alle Positionen zusammen hoechstens MarginMaxPct % der Equity - sonst kleiner
+   ENUM_ORDER_TYPE ot = (dir > 0 ? ORDER_TYPE_BUY : ORDER_TYPE_SELL);
    double m1 = 0.0;
-   if(!OrderCalcMargin(dir > 0 ? ORDER_TYPE_BUY : ORDER_TYPE_SELL, sym, 1.0, ent, m1) || m1 <= 0.0)
-     { PrintFormat("RSI21EK %s: Margin nicht berechenbar (%d) - ausgelassen", sym, GetLastError()); return false; }
+   if(!OrderCalcMargin(ot, sym, 1.0, ent, m1) || m1 <= 0.0)
+     { PrintFormat("RSI21EK %s: %s ausgelassen - Margin nicht berechenbar (%d)", sym, was, GetLastError()); return false; }
    double eq = AccountInfoDouble(ACCOUNT_EQUITY);
    double frei = MathMin(eq*MarginMaxPct/100.0 - AccountInfoDouble(ACCOUNT_MARGIN), AccountInfoDouble(ACCOUNT_MARGIN_FREE));
    if(lots*m1 > frei)
      {
       double lmax = MathFloor(frei/m1/stp + 1e-9)*stp;
-      if(lmax < mnv) { PrintFormat("RSI21EK %s: Margin reicht nicht (frei %.2f, je Lot %.2f) - ausgelassen", sym, frei, m1); return false; }
+      if(lmax < mnv) { PrintFormat("RSI21EK %s: %s ausgelassen - Margin reicht nicht (frei %.2f, je Lot %.2f)", sym, was, frei, m1); return false; }
       PrintFormat("RSI21EK %s: Groesse wegen Margin %.2f -> %.2f Lot", sym, lots, lmax);
       lots = lmax;
      }
+   for(int k=0;k<3;k++)                                                   // Gegenprobe mit dem Endvolumen (gestaffelte Margin)
+     {
+      double mE = 0.0;
+      if(!OrderCalcMargin(ot, sym, lots, ent, mE) || mE <= frei) break;
+      double l2 = MathFloor(lots*frei/mE/stp + 1e-9)*stp;
+      if(l2 >= lots) l2 = lots - stp;
+      if(l2 < mnv) { PrintFormat("RSI21EK %s: %s ausgelassen - Margin reicht nicht (frei %.2f, fuer %.2f Lot %.2f)", sym, was, frei, lots, mE); return false; }
+      PrintFormat("RSI21EK %s: Groesse wegen Margin (gestaffelt) %.2f -> %.2f Lot", sym, lots, l2);
+      lots = l2;
+     }
    lots = NormalizeDouble(lots, LotStellen(stp));
    int dg = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-   double sl = NormalizeDouble(ent - dir*rd, dg);
    double rr = (s == 0 ? ZielGoldR : ZielNasR);
-   double tp = (rr > 0.0 ? NormalizeDouble(ent + dir*rr*rd, dg) : 0.0);
    double minD = (stl > 0 ? stl*pt : 0.0);
-   if(dir > 0 && (bid - sl < minD || (tp > 0.0 && tp - bid < minD))) return false;
-   if(dir < 0 && (sl - ask < minD || (tp > 0.0 && ask - tp < minD))) return false;
    trade.SetExpertMagicNumber((ulong)MagicOf(s, q));
-   trade.SetDeviationInPoints(AbweichungPkt);
+   trade.SetDeviationInPoints((ulong)AbweichungPkt);
    string kom = StringFormat("RSI21EK %s M%d P%d%s", (dir > 0 ? "L" : "S"), TfMin(t), q + 1, (fak < 1.0 ? " erst" : ""));
-   bool ok = (dir > 0) ? trade.Buy(lots, sym, 0.0, sl, tp, kom) : trade.Sell(lots, sym, 0.0, sl, tp, kom);
-   uint rc = trade.ResultRetcode();
-   if(!ok || (rc != TRADE_RETCODE_DONE && rc != TRADE_RETCODE_DONE_PARTIAL && rc != TRADE_RETCODE_PLACED))
+   uint rc = 0;
+   double sl = 0.0, tp = 0.0;
+   for(int nr=0;nr<2;nr++)                                                // einmal wiederholen bei Requote / neuem Kurs
      {
-      PrintFormat("RSI21EK %s: Einstieg abgelehnt (%d %s) %.2f Lot, SL %.*f, TP %.*f", sym, rc, trade.ResultRetcodeDescription(), lots, dg, sl, dg, tp);
-      if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s: Einstieg abgelehnt (%d)", sym, rc));
-      return false;
+      if(nr > 0)
+        {
+         if(!SymbolInfoTick(sym, tick) || tick.ask <= 0.0 || tick.bid <= 0.0) break;
+         ent = (dir > 0 ? tick.ask : tick.bid);
+        }
+      sl = AufTick(sym, ent - dir*rd);
+      tp = (rr > 0.0 ? AufTick(sym, ent + dir*rr*rd) : 0.0);
+      if((dir > 0 && (tick.bid - sl < minD || (tp > 0.0 && tp - tick.bid < minD))) || (dir < 0 && (sl - tick.ask < minD || (tp > 0.0 && tick.ask - tp < minD))))
+        { PrintFormat("RSI21EK %s: %s ausgelassen - Stop oder Ziel naeher als der Mindestabstand des Brokers (%d Punkte)", sym, was, (int)stl); return false; }
+      bool ok = (dir > 0) ? trade.Buy(lots, sym, 0.0, sl, tp, kom) : trade.Sell(lots, sym, 0.0, sl, tp, kom);
+      rc = trade.ResultRetcode();
+      if(ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_DONE_PARTIAL || rc == TRADE_RETCODE_PLACED))
+        {
+         long pid = (long)trade.ResultOrder();                               // Hedging-Konto: Positions-Kennung = Eroeffnungs-Order
+         GlobalVariableSet(PosGv(pid, "R"), rd);
+         GlobalVariableSet(PosGv(pid, "L"), lots);
+         Sichern();
+         PrintFormat("RSI21EK %s: Einstieg %s, %.2f Lot, Risiko %.2f (%.2f %% x %.2f), Stop %.*f, Ziel %s",
+                     sym, was, lots, lots*rd*mpp, RiskPct, w, dg, sl, (tp > 0.0 ? DoubleToString(tp, dg) : "keins"));
+         if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s %s, %.2f Lot", sym, was, lots));
+         return true;
+        }
+      if(!(rc == TRADE_RETCODE_REQUOTE || rc == TRADE_RETCODE_PRICE_CHANGED || rc == TRADE_RETCODE_PRICE_OFF)) break;
+      PrintFormat("RSI21EK %s: %s - %d %s, zweiter Versuch mit neuem Kurs", sym, was, rc, trade.ResultRetcodeDescription());
      }
-   long pid = (long)trade.ResultOrder();                                  // Hedging-Konto: Positions-Kennung = Eroeffnungs-Order
-   GlobalVariableSet(PosGv(pid, "R"), rd);
-   GlobalVariableSet(PosGv(pid, "L"), lots);
-   PrintFormat("RSI21EK %s: Einstieg %s M%d Platz %d, %.2f Lot, Risiko %.2f (%.2f %% x %.2f), Stop %.*f, Ziel %s",
-               sym, (dir > 0 ? "LONG" : "SHORT"), TfMin(t), q + 1, lots, lots*rd*mpp, RiskPct, w, dg, sl,
-               (tp > 0.0 ? DoubleToString(tp, dg) : "keins"));
-   if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s %s M%d, %.2f Lot", sym, (dir > 0 ? "LONG" : "SHORT"), TfMin(t), lots));
-   return true;
+   PrintFormat("RSI21EK %s: Einstieg %s abgelehnt (%d %s) %.2f Lot, SL %.*f, TP %.*f", sym, was, rc, trade.ResultRetcodeDescription(), lots, dg, sl, dg, tp);
+   if(PushMeldungen) SendNotification(StringFormat("RSI21EK %s: Einstieg %s abgelehnt (%d)", sym, was, rc));
+   return false;
   }
 
 //+------------------------------------------------------------------+
@@ -538,12 +758,16 @@ bool Einstieg(const int s, const int t, const int dir, const double rd, const do
 bool Bereit(const int s, const int t)
   {
    int nb = Bars(gSym[s], TfOf(t));
-   return (nb > 0 && BarsCalculated(hRsi[s][t]) >= nb && BarsCalculated(hAtr[s][t]) >= nb);
+   if(!(nb > 0 && BarsCalculated(hRsi[s][t]) >= nb && BarsCalculated(hAtr[s][t]) >= nb)) return false;
+   if(!KreuzAn) return true;
+   int no = Bars(gSym[1-s], TfOf(t));                         // RSI des anderen Symbols (Bestaetigung)
+   return (no > 0 && BarsCalculated(hRsi[1-s][t]) >= no);
   }
 
 void Signale(const int s)
   {
    string sym = gSym[s];
+   if(!geladen[s] && !LadeZustand(s)) return;
    datetime jetzt = TimeCurrent();
    bool neu[NT]; bool jede = false;
    datetime nb[NT];
@@ -551,29 +775,36 @@ void Signale(const int s)
      {
       neu[t] = false; nb[t] = 0;
       datetime bt = iTime(sym, TfOf(t), 0);
-      if(bt <= 0 || bt == lastBar[s][t]) continue;
-      if(tfOn[s][t] && !Bereit(s, t)) return;                 // noch nicht nachgerechnet: im naechsten Durchlauf erneut
+      if(bt <= 0 || bt <= lastBar[s][t]) continue;
+      if(tfOn[s][t] && !Bereit(s, t))                         // noch nicht nachgerechnet: im naechsten Durchlauf erneut
+        {
+         if(wartet[s] == 0) wartet[s] = jetzt;
+         else if(jetzt - wartet[s] >= 300)
+            Warnung(s, 2, StringFormat("%s: Indikatoren M%d seit %d s nicht nachgerechnet - keine Signale (Historie beider Symbole pruefen)", sym, TfMin(t), (int)(jetzt - wartet[s])));
+         return;
+        }
       nb[t] = bt;
      }
+   wartet[s] = 0;
+   datetime T0 = 0;
+   bool gs = false;
    for(int t=0;t<NT;t++)
      {
       if(nb[t] == 0) continue;
-      bool start = (lastBar[s][t] == 0);
-      lastBar[s][t] = nb[t];
-      if(start && jetzt - nb[t] > 120) continue;               // Start mitten in einer Kerze: nicht nachtraeglich einsteigen
+      lastBar[s][t] = nb[t];                                  // dauerhaft: nach Neustart wird diese Kerze nicht noch einmal gehandelt
+      GlobalVariableSet(BarGv(s, t), (double)(long)nb[t]);
+      gs = true;
+      if(jetzt - nb[t] > 120) continue;                        // nie verspaetet einsteigen (Start, Neustart, Verbindungsluecke)
       neu[t] = true; jede = true;
+      if(nb[t] > T0) T0 = nb[t];
      }
+   if(gs) Sichern();
    if(!jede) return;
 
    int regv = 0; bool shortOk = false, gateL = false, gateS = false;
-   if(!Regime(s, regv, shortOk, gateL, gateS))              // Regime unbekannt: kein Signal, kein Gedaechtnis (wie Replikat)
-     {
-      static datetime warn = 0;
-      if(jetzt - warn >= 3600) { PrintFormat("RSI21EK %s: Tagesregime nicht berechenbar (zu wenig H1-Historie) - keine Signale", sym); warn = jetzt; }
-      return;
-     }
+   if(!Regime(s, T0, regv, shortOk, gateL, gateS)) return;    // Regime unbekannt: kein Signal, kein Gedaechtnis (wie Replikat)
    int div = 0; bool divOk = true;
-   if(DivH4) divOk = Divergenz(s, div);
+   if(DivH4) divOk = Divergenz(s, T0, div);
    int sigDir[NT]; double sigRd[NT];
    bool hat[2]; hat[0] = false; hat[1] = false;
    datetime T = 0;
@@ -610,6 +841,7 @@ void Signale(const int s)
      }
    if(!hat[0] && !hat[1]) return;
    bool folge[2];
+   bool gm = false;
    for(int di=0;di<2;di++)
      {
       datetime vor = lastSig[s][di];
@@ -618,26 +850,33 @@ void Signale(const int s)
         {
          lastSig[s][di] = T;
          GlobalVariableSet(SigGv(s, di), (double)(long)T);
+         gm = true;
         }
      }
+   if(gm) Sichern();
    // Einstiege
    if(WeSchlussNY > 0.0 && NYWeekday(jetzt) == 5 && NYHour(jetzt) >= WeSchlussNY - 5.0/60.0) return;
-   if(SymbolInfoInteger(sym, SYMBOL_TRADE_MODE) != SYMBOL_TRADE_MODE_FULL) return;
    int verl = (MaxVerlusteTag > 0 ? VerlusteHeute(s) : 0);
+   bool neuP[MAXP];
+   for(int k=0;k<MAXP;k++) neuP[k] = false;
+   int dirNeu = 0;
    for(int t=0;t<NT;t++)
      {
       int dir = sigDir[t];
       if(dir == 0) continue;
+      string was = StringFormat("%s-Signal M%d", (dir > 0 ? "LONG" : "SHORT"), TfMin(t));
       double fak = 1.0;
       if(!folge[dir > 0 ? 0 : 1])
         {
-         if(ErstesSignalFaktor <= 0.0) { PrintFormat("RSI21EK %s: erstes %s-Signal M%d gemerkt (Einstieg erst beim Folgesignal)", sym, (dir > 0 ? "LONG" : "SHORT"), TfMin(t)); continue; }
+         if(ErstesSignalFaktor <= 0.0) { PrintFormat("RSI21EK %s: erstes %s gemerkt (Einstieg erst beim Folgesignal)", sym, was); continue; }
          fak = ErstesSignalFaktor;
         }
-      if(MaxVerlusteTag > 0 && verl >= MaxVerlusteTag) { PrintFormat("RSI21EK %s: %d Verluste heute - keine Einstiege mehr", sym, verl); return; }
-      int q = PlatzWahl(s, dir);
-      if(q < 0) continue;
-      Einstieg(s, t, dir, sigRd[t], fak, q);
+      if(MaxVerlusteTag > 0 && verl >= MaxVerlusteTag) { PrintFormat("RSI21EK %s: %s ausgelassen - %d Verlust(e) heute, keine Einstiege mehr bis 17:00 NY", sym, was, verl); return; }
+      int q = PlatzWahl(s, dir, neuP, dirNeu);
+      if(q < 0) { PrintFormat("RSI21EK %s: %s ausgelassen - kein freier Platz (erste Position in Gegenrichtung oder %d Plaetze belegt)", sym, was, Plaetze); continue; }
+      string grund = "";
+      if(!HandelMoeglich(s, true, dir, grund)) { PrintFormat("RSI21EK %s: %s ausgelassen - %s", sym, was, grund); continue; }
+      if(Einstieg(s, t, dir, sigRd[t], fak, q)) { neuP[q] = true; if(q == 0) dirNeu = dir; }
      }
   }
 
@@ -647,6 +886,7 @@ void Signale(const int s)
 void Verwalten()
   {
    datetime now = TimeCurrent();
+   bool optionen = (EinstandAbR > 0.0 || NachzugAbR > 0.0 || (TeilAbR > 0.0 && TeilAnteil > 0.0));
    for(int i=PositionsTotal()-1;i>=0;i--)
      {
       ulong tk = PositionGetTicket(i);
@@ -657,82 +897,113 @@ void Verwalten()
       if(sym != gSym[s]) continue;
       int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
       double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL), tp = PositionGetDouble(POSITION_TP);
+      double vol = PositionGetDouble(POSITION_VOLUME);
       datetime t0 = (datetime)PositionGetInteger(POSITION_TIME);
       long pid = PositionGetInteger(POSITION_IDENTIFIER);
+      long mg = PositionGetInteger(POSITION_MAGIC);
       double bid = SymbolInfoDouble(sym, SYMBOL_BID), ask = SymbolInfoDouble(sym, SYMBOL_ASK);
       if(bid <= 0.0 || ask <= 0.0) continue;
-      if(SymbolInfoInteger(sym, SYMBOL_TRADE_MODE) == SYMBOL_TRADE_MODE_DISABLED) continue;
-      // Wochenende (optional)
-      if(WeSchlussNY > 0.0 && NYWeekday(now) == 5 && NYHour(now) >= WeSchlussNY) { Schliesse(tk, "Wochenend-Schluss"); continue; }
-      // Zeit-Ausstieg: Schluss der Kerze Einstieg + ZeitExitM5 (wie Replikat), bzw. nach ZeitExitTage
+      string grund = "";
+      // Wochenende (optional) und Zeit-Ausstieg auf Kerzenbasis wie im Replikat: Schluss der Kerze Einstieg + ZeitExitM5,
+      // bzw. Schluss der ersten Kerze, die mindestens ZeitExitTage nach Beginn der Einstiegskerze beginnt
+      bool we = (WeSchlussNY > 0.0 && NYWeekday(now) == 5 && NYHour(now) >= WeSchlussNY);
       int sh = iBarShift(sym, PERIOD_M5, t0, false);
-      bool zeit = (ZeitExitM5 > 0 && sh >= ZeitExitM5 + 1) || (ZeitExitTage > 0.0 && (double)(now - t0) >= ZeitExitTage*86400.0);
-      if(zeit) { Schliesse(tk, StringFormat("Zeit-Ausstieg (%d M5-Kerzen)", sh)); continue; }
-      double rd = PositionR(tk);
-      if(rd <= 0.0 || !PositionSelectByTicket(tk)) continue;
-      if(!NachEinstiegsKerze(sym, t0)) continue;
-      double fav = (d > 0) ? (bid - op)/rd : (op - ask)/rd;
-      // Teilgewinn (einmal)
-      if(TeilAbR > 0.0 && TeilAnteil > 0.0 && fav >= TeilAbR && !GlobalVariableCheck(PosGv(pid, "T")))
+      bool zeit = false;
+      if(sh >= 1)
         {
-         double vol = PositionGetDouble(POSITION_VOLUME);
+         datetime tE = iTime(sym, PERIOD_M5, sh), t1 = iTime(sym, PERIOD_M5, 1);
+         zeit = (ZeitExitM5 > 0 && sh >= ZeitExitM5 + 1) || (ZeitExitTage > 0.0 && tE > 0 && t1 > 0 && (double)(t1 - tE) >= ZeitExitTage*86400.0);
+        }
+      if(we || zeit)
+        {
+         if(now - versuchZu[s][q] < 30) continue;
+         if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Ausstieg faellig, aber nicht moeglich - %s", sym, grund)); continue; }
+         versuchZu[s][q] = now;
+         Schliesse(s, tk, we ? "Wochenend-Schluss" : StringFormat("Zeit-Ausstieg (%d M5-Kerzen)", sh - 1));
+         continue;
+        }
+      if(!optionen || !NachEinstiegsKerze(sym, t0)) continue;
+      // Einstand / Nachzug / Teilgewinn (im Preset aus): ab der M5-Kerze nach dem Einstieg, ausgeloest am besten Kurs (Kerzenextrem)
+      double rd = PositionR(tk);
+      if(!PositionSelectByTicket(tk) || rd <= 0.0) continue;
+      double fav = (d > 0) ? (bid - op)/rd : (op - ask)/rd;
+      double mfe = BesterVorlauf(pid, sym, d, op, rd, t0);
+      if(mfe < -1e8) continue;
+      if(fav > mfe) mfe = fav;
+      GlobalVariableSet(PosGv(pid, "M"), mfe);
+      if(now - versuchSl[s][q] < 5) continue;
+      if(TeilAbR > 0.0 && TeilAnteil > 0.0 && mfe >= TeilAbR && !GlobalVariableCheck(PosGv(pid, "T")))
+        {
+         bool schon = TeilSchonZu(pid);
+         if(!PositionSelectByTicket(tk)) continue;
          double l0 = GlobalVariableCheck(PosGv(pid, "L")) ? GlobalVariableGet(PosGv(pid, "L")) : vol;
          double stp = SymbolInfoDouble(sym, SYMBOL_VOLUME_STEP); if(stp <= 0.0) stp = 0.01;
          double mnv = SymbolInfoDouble(sym, SYMBOL_VOLUME_MIN);
          double v1 = NormalizeDouble(MathFloor(l0*TeilAnteil/stp + 1e-9)*stp, LotStellen(stp));
-         if(v1 >= mnv && vol - v1 >= mnv - 1e-9)
+         if(!schon && v1 >= mnv && vol - v1 >= mnv - 1e-9)
            {
-            trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
-            if(trade.PositionClosePartial(tk, v1)) { GlobalVariableSet(PosGv(pid, "T"), 1.0); PrintFormat("RSI21EK %s: Teilgewinn %.2f Lot bei %.2f R", sym, v1, fav); }
+            if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Teilgewinn faellig, aber nicht moeglich - %s", sym, grund)); continue; }
+            versuchSl[s][q] = now;
+            trade.SetExpertMagicNumber((ulong)mg);
+            bool ok = trade.PositionClosePartial(tk, v1);
+            uint rc = trade.ResultRetcode();
+            if(ok && (rc == TRADE_RETCODE_DONE || rc == TRADE_RETCODE_DONE_PARTIAL || rc == TRADE_RETCODE_PLACED))
+              {
+               GlobalVariableSet(PosGv(pid, "T"), 1.0); Sichern();
+               PrintFormat("RSI21EK %s: Teilgewinn %.2f Lot (Vorlauf %.2f R, jetzt %.2f R)", sym, v1, mfe, fav);
+              }
+            else Warnung(s, 3, StringFormat("%s: Teilgewinn abgelehnt (%d %s)", sym, rc, trade.ResultRetcodeDescription()));
+            continue;                                             // Stop im naechsten Durchlauf (Position hat neue Werte)
            }
-         else GlobalVariableSet(PosGv(pid, "T"), 1.0);
-         if(!PositionSelectByTicket(tk)) continue;
-         sl = PositionGetDouble(POSITION_SL); tp = PositionGetDouble(POSITION_TP);
+         GlobalVariableSet(PosGv(pid, "T"), 1.0); Sichern();       // schon genommen oder zu klein (wie Replikat: dann ohne Teil)
         }
       double nsl = sl;
-      if(EinstandAbR > 0.0 && fav >= EinstandAbR)
+      if(EinstandAbR > 0.0 && mfe >= EinstandAbR)
         {
          double c = op + d*EinstandPlusR*rd;
          if(nsl <= 0.0 || (c - nsl)*d > 0.0) nsl = c;
         }
-      if(NachzugAbR > 0.0)
+      if(NachzugAbR > 0.0 && mfe >= NachzugAbR)
         {
-         double mfe = BesterVorlauf(tk, sym, d, op, rd, t0);
-         if(fav > mfe) mfe = fav;
-         GlobalVariableSet(PosGv(pid, "M"), mfe);
-         if(mfe >= NachzugAbR)
-           {
-            double c = op + d*(mfe - NachzugAbstandR)*rd;
-            if(nsl <= 0.0 || (c - nsl)*d > 0.0) nsl = c;
-           }
+         double c = op + d*(mfe - NachzugAbstandR)*rd;
+         if(nsl <= 0.0 || (c - nsl)*d > 0.0) nsl = c;
         }
-      int dg = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
-      nsl = NormalizeDouble(nsl, dg);
+      if(nsl <= 0.0) continue;
+      nsl = AufTick(sym, nsl);
       double pt = SymbolInfoDouble(sym, SYMBOL_POINT);
-      if(nsl > 0.0 && (sl <= 0.0 || (nsl - sl)*d > 0.5*pt))
+      int dg = (int)SymbolInfoInteger(sym, SYMBOL_DIGITS);
+      if(!(sl <= 0.0 || (nsl - sl)*d > 0.5*pt)) continue;
+      if(!HandelMoeglich(s, false, d, grund)) { Warnung(s, 3, StringFormat("%s: Stop-Aenderung faellig, aber nicht moeglich - %s", sym, grund)); continue; }
+      double px = (d > 0 ? bid : ask);
+      if((px - nsl)*d <= 0.0)                                     // Kurs schon jenseits des neuen Stops: schliessen (Replikat: Stop in der naechsten Kerze)
         {
-         long stl = SymbolInfoInteger(sym, SYMBOL_TRADE_STOPS_LEVEL), frz = SymbolInfoInteger(sym, SYMBOL_TRADE_FREEZE_LEVEL);
-         double minD = (double)MathMax(stl, frz)*pt;
-         if((d > 0 && bid - nsl >= minD) || (d < 0 && nsl - ask >= minD))
-           {
-            trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
-            if(trade.PositionModify(tk, nsl, tp)) PrintFormat("RSI21EK %s: Stop %.*f -> %.*f (Vorlauf %.2f R)", sym, dg, sl, dg, nsl, fav);
-            else PrintFormat("RSI21EK %s: Stop-Aenderung abgelehnt (%d %s)", sym, trade.ResultRetcode(), trade.ResultRetcodeDescription());
-           }
+         versuchSl[s][q] = now;
+         Schliesse(s, tk, StringFormat("Stop %.*f schon erreicht (Vorlauf %.2f R)", dg, nsl, mfe));
+         continue;
         }
+      long stl = SymbolInfoInteger(sym, SYMBOL_TRADE_STOPS_LEVEL), frz = SymbolInfoInteger(sym, SYMBOL_TRADE_FREEZE_LEVEL);
+      if((px - nsl)*d < (double)MathMax(stl, frz)*pt) continue;   // naeher als der Mindestabstand: spaeter erneut
+      versuchSl[s][q] = now;
+      trade.SetExpertMagicNumber((ulong)mg);
+      bool okm = trade.PositionModify(tk, nsl, tp);
+      uint rcm = trade.ResultRetcode();
+      if(okm && (rcm == TRADE_RETCODE_DONE || rcm == TRADE_RETCODE_NO_CHANGES)) PrintFormat("RSI21EK %s: Stop %.*f -> %.*f (Vorlauf %.2f R)", sym, dg, sl, dg, nsl, mfe);
+      else Warnung(s, 3, StringFormat("%s: Stop-Aenderung abgelehnt (%d %s)", sym, rcm, trade.ResultRetcodeDescription()));
      }
   }
 
-// Zustands-Variablen geschlossener Positionen loeschen
+// Zustands-Variablen geschlossener Positionen dieses Kontos und dieser MagicBase loeschen
 void Aufraeumen()
   {
+   string pp = Pfx() + "P";
+   int lp = StringLen(pp);
    for(int i=GlobalVariablesTotal()-1;i>=0;i--)
      {
       string g = GlobalVariableName(i);
-      if(StringFind(g, GVP + "P") != 0) continue;
-      int us = StringFind(g, "_", StringLen(GVP) + 1);
+      if(StringFind(g, pp) != 0) continue;
+      int us = StringFind(g, "_", lp);
       if(us < 0) continue;
-      long pid = StringToInteger(StringSubstr(g, StringLen(GVP) + 1, us - StringLen(GVP) - 1));
+      long pid = StringToInteger(StringSubstr(g, lp, us - lp));
       bool offen = false;
       for(int k=PositionsTotal()-1;k>=0 && !offen;k--)
         {
@@ -741,12 +1012,14 @@ void Aufraeumen()
         }
       if(!offen) GlobalVariableDel(g);
      }
+   Sichern();
   }
 
 void Anzeige()
   {
-   string t = StringFormat("RSI21 EK 1.00 | Equity %.2f | Risiko %.2f %% je Trade | NY %s (Versatz %d h)\n",
-                           AccountInfoDouble(ACCOUNT_EQUITY), RiskPct, TimeToString(TimeCurrent() - nyOff*3600, TIME_MINUTES), nyOff);
+   string t = StringFormat("RSI21 EK 1.00 | Equity %.2f | Risiko %.2f %% je Trade | NY %s (Versatz %d h, %s)\n",
+                           AccountInfoDouble(ACCOUNT_EQUITY), RiskPct, TimeToString(TimeCurrent() - nyOff*3600, TIME_MINUTES), nyOff,
+                           (AutoNYOffset ? (offGemessen ? "gemessen" : "noch nicht gemessen") : "Eingabe"));
    for(int s=0;s<NS;s++)
      {
       t += StringFormat("%s: Regime %s", gSym[s], (regOk[s] ? StringFormat("Schluss %.2f / SMA%d %.2f / SMA%d %.2f", regC[s], MaLang, regMaL[s], MaSchnell, regMaS[s]) : "unbekannt"));
@@ -768,34 +1041,43 @@ void Anzeige()
 //+------------------------------------------------------------------+
 void Durchlauf()
   {
-   datetime now = TimeCurrent();
-   if(now - offZeit >= 600) { int o = AutoOffset(); if(o != nyOff) { PrintFormat("RSI21EK: NY-Versatz %d -> %d h", nyOff, o); nyOff = o; } offZeit = now; }
+   OffsetPflegen();
    Verwalten();
    for(int s=0;s<NS;s++) Signale(s);
-   static datetime auf = 0;
-   if(now - auf >= 3600) { Aufraeumen(); auf = now; }
-   static datetime anz = 0;
-   if(!MQLInfoInteger(MQL_TESTER) && now - anz >= 2) { Anzeige(); anz = now; }
+   datetime lok = TimeLocal();
+   bool verb = (MQLInfoInteger(MQL_TESTER) || TerminalInfoInteger(TERMINAL_CONNECTED));
+   // Aufraeumen erst 5 min nach dem Start und mit Verbindung (vorher kann die Positionsliste noch leer sein)
+   if(verb && AccountInfoInteger(ACCOUNT_LOGIN) != 0 && lok - startLokal >= 300 && lok - aufLokal >= 3600) { Aufraeumen(); aufLokal = lok; }
+   if(!MQLInfoInteger(MQL_TESTER) && lok - anzLokal >= 2) { Anzeige(); anzLokal = lok; }
   }
 
 int OnInit()
   {
-   if(RiskPct <= 0.0 || StopATR <= 0.0 || Oben <= 50.0 || Unten >= 50.0 || RsiLen < 2 || MaLang < 1 || MaSchnell < 1)
-     { Print("RSI21EK: Eingaben ungueltig (RiskPct > 0, StopATR > 0, Oben > 50 > Unten, RsiLen >= 2, SMA >= 1)"); return(INIT_PARAMETERS_INCORRECT); }
-   if(Plaetze < 1 || Plaetze > MAXP || MaxVerlusteTag < 0 || ZielNasR < 0.0 || ZielGoldR < 0.0 || EinstandAbR < 0.0 || NachzugAbR < 0.0 || TeilAbR < 0.0)
-     { Print("RSI21EK: Eingaben ungueltig (Plaetze 1-5, Ziele/Einstand/Nachzug/Teilgewinn >= 0)"); return(INIT_PARAMETERS_INCORRECT); }
+   gLock = "";
+   for(int s=0;s<NS;s++)
+      for(int t=0;t<NT;t++) { hRsi[s][t] = INVALID_HANDLE; hAtr[s][t] = INVALID_HANDLE; }
+   if(RiskPct <= 0.0 || StopATR <= 0.0 || Oben <= 50.0 || Unten >= 50.0 || RsiLen < 2 || RsiLen > 100 || MaLang < 1 || MaSchnell < 1)
+     { Print("RSI21EK: Eingaben ungueltig (RiskPct > 0, StopATR > 0, Oben > 50 > Unten, RsiLen 2-100, SMA >= 1)"); return(INIT_PARAMETERS_INCORRECT); }
+   if(GewichtM15 < 0.0 || GewichtM30 < 0.0 || GewichtH1 < 0.0 || GoldFaktor <= 0.0 || MinLotToleranz <= 0.0 || MaxLotsJePos < 0.0 || KreuzSchwelle < 0.0 || KreuzSchwelle > 100.0)
+     { Print("RSI21EK: Eingaben ungueltig (Gewichte >= 0, GoldFaktor > 0, MinLotToleranz > 0, MaxLotsJePos >= 0, KreuzSchwelle 0-100)"); return(INIT_PARAMETERS_INCORRECT); }
+   if(DivH4 && (DivRadius < 1 || DivAbstand < 0.0 || DivHistoryH1 < 2000))
+     { Print("RSI21EK: Eingaben ungueltig (DivRadius >= 1, DivAbstand >= 0, DivHistoryH1 >= 2000)"); return(INIT_PARAMETERS_INCORRECT); }
+   if(Plaetze < 1 || Plaetze > MAXP || MaxVerlusteTag < 0 || FolgeMin < 0 || ErstesSignalFaktor < 0.0 || ZeitExitM5 < 0 || ZeitExitTage < 0.0 || AbweichungPkt < 0)
+     { Print("RSI21EK: Eingaben ungueltig (Plaetze 1-5, MaxVerlusteTag/FolgeMin/ErstesSignalFaktor/Zeit-Ausstieg/AbweichungPkt >= 0)"); return(INIT_PARAMETERS_INCORRECT); }
+   if(ZielNasR < 0.0 || ZielGoldR < 0.0 || EinstandAbR < 0.0 || NachzugAbR < 0.0 || TeilAbR < 0.0)
+     { Print("RSI21EK: Eingaben ungueltig (Ziele, Einstand, Nachzug, Teilgewinn >= 0)"); return(INIT_PARAMETERS_INCORRECT); }
    if(EinstandAbR > 0.0 && EinstandPlusR >= EinstandAbR) { Print("RSI21EK: EinstandPlusR muss unter EinstandAbR liegen"); return(INIT_PARAMETERS_INCORRECT); }
-   if(NachzugAbR > 0.0 && (NachzugAbstandR <= 0.0 || NachzugAbstandR > NachzugAbR + 5.0)) { Print("RSI21EK: NachzugAbstandR muss > 0 sein"); return(INIT_PARAMETERS_INCORRECT); }
+   if(NachzugAbR > 0.0 && (NachzugAbstandR <= 0.0 || NachzugAbstandR > NachzugAbR + 5.0)) { Print("RSI21EK: NachzugAbstandR muss > 0 und hoechstens NachzugAbR + 5 sein"); return(INIT_PARAMETERS_INCORRECT); }
    if(TeilAbR > 0.0 && (TeilAnteil < 0.1 || TeilAnteil > 0.9)) { Print("RSI21EK: TeilAnteil 0,1-0,9"); return(INIT_PARAMETERS_INCORRECT); }
    if(MarginMaxPct <= 0.0 || MarginMaxPct > 100.0) { Print("RSI21EK: MarginMaxPct 1-100"); return(INIT_PARAMETERS_INCORRECT); }
-   if(Plaetze > 1 && AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
-     { Print("RSI21EK: Konto ist kein Hedging-Konto - mehrere Positionen je Symbol wuerden verschmelzen. Hedging-Konto verwenden oder Plaetze=1."); return(INIT_FAILED); }
+   if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
+     { Print("RSI21EK: nur fuer Hedging-Konten (auf Netting-Konten verschmelzen die Positionen mit fremden oder manuellen)"); return(INIT_FAILED); }
    gSym[0] = GoldSymbol; gSym[1] = NasSymbol;
    wTf[0] = GewichtM15; wTf[1] = GewichtM30; wTf[2] = GewichtH1;
    tfOn[0][0] = GoldM15; tfOn[0][1] = GoldM30; tfOn[0][2] = GoldH1;
    tfOn[1][0] = NasM15;  tfOn[1][1] = NasM30;  tfOn[1][2] = NasH1;
-   nyOff = NYOffsetHours;
-   nyOff = AutoOffset(); offZeit = TimeCurrent();
+   nyOff = NYOffsetHours; offGemessen = false; offKand = -99; offLokal = 0;
+   startLokal = TimeLocal(); anzLokal = 0; aufLokal = 0;
    for(int s=0;s<NS;s++)
      {
       if(!SymbolSelect(gSym[s], true)) { PrintFormat("RSI21EK: Symbol %s nicht vorhanden - exakten Namen aus dem Market Watch eintragen", gSym[s]); return(INIT_FAILED); }
@@ -806,25 +1088,38 @@ int OnInit()
          if(hRsi[s][t] == INVALID_HANDLE || hAtr[s][t] == INVALID_HANDLE) { PrintFormat("RSI21EK: Indikator fuer %s fehlgeschlagen", gSym[s]); return(INIT_FAILED); }
          lastBar[s][t] = 0;
         }
-      regOk[s] = false; regTag[s] = -1; divBucket[s] = 0; divDir[s] = 0; divGut[s] = false; letztesSignal[s] = "";
-      for(int di=0;di<2;di++)
-        {
-         lastSig[s][di] = 0;
-         string g = SigGv(s, di);
-         if(GlobalVariableCheck(g))
-           {
-            datetime v = (datetime)(long)GlobalVariableGet(g);
-            if(v > 0 && TimeCurrent() - v <= 86400) lastSig[s][di] = v;
-           }
-        }
+      geladen[s] = false;
+      regOk[s] = false; regTag[s] = -1; divBucket[s] = 0; divDir[s] = 0; divGut[s] = false; letztesSignal[s] = ""; wartet[s] = 0;
+      lastSig[s][0] = 0; lastSig[s][1] = 0;
+      for(int k=0;k<5;k++) warnZeit[s][k] = 0;
+      for(int q=0;q<MAXP;q++) { versuchZu[s][q] = 0; versuchSl[s][q] = 0; }
      }
-   trade.SetDeviationInPoints(AbweichungPkt);
+   // Sperre: dieselbe MagicBase darf nur auf einem Chart laufen (sonst wuerde jedes Signal doppelt gehandelt)
+   if(!MQLInfoInteger(MQL_TESTER))
+     {
+      string lp = GVP + "LOCK_" + IntegerToString(MagicBase) + "_";
+      for(int i=GlobalVariablesTotal()-1;i>=0;i--)
+        {
+         string g = GlobalVariableName(i);
+         if(StringFind(g, lp) != 0) continue;
+         long cid = StringToInteger(StringSubstr(g, StringLen(lp)));
+         if(cid == ChartID()) continue;
+         bool da = false;
+         for(long c=ChartFirst(); c>=0; c=ChartNext(c)) if(c == cid) { da = true; break; }
+         if(da) { Print("RSI21EK: laeuft mit MagicBase ", MagicBase, " schon auf einem anderen Chart (ID ", cid, ") - zweite Instanz abgelehnt"); return(INIT_FAILED); }
+         GlobalVariableDel(g);                                      // verwaist
+        }
+      gLock = lp + IntegerToString(ChartID());
+      if(!GlobalVariableCheck(gLock) && !GlobalVariableTemp(gLock)) Print("RSI21EK: Sperre gegen eine zweite Instanz nicht gesetzt");
+     }
+   OffsetPflegen();
+   trade.SetDeviationInPoints((ulong)AbweichungPkt);
    PrintFormat("RSI21EK 1.00: %s + %s, NY-Versatz %d h | Risiko %.2f %% der %s je Trade x Gewicht (M15 %.2f, M30 %.2f, H1 %.2f), Gold x%.2f, Margin bis %.0f %% | Plaetze %d, Verluste/Tag %d",
                gSym[0], gSym[1], nyOff, RiskPct, (RisikoVomSaldo ? "Saldo" : "Equity"), GewichtM15, GewichtM30, GewichtH1, GoldFaktor, MarginMaxPct, Plaetze, MaxVerlusteTag);
    PrintFormat("RSI21EK 1.00: Signal RSI(%d) > %.1f / < %.1f, Kreuz %s, NY %.2f-%.2f (NAS) / -%.2f (Gold), Folge %d min, Div %s | Stop %.2f ATR, Ziel NAS %.2f R / Gold %.2f R, Einstand %.2f R, Nachzug %.2f/%.2f R, Zeit %d M5 / %.1f Tage, Wochenende %s",
                RsiLen, Oben, Unten, (KreuzAn ? DoubleToString(KreuzSchwelle, 1) : "aus"), AbNY, NasBisNY, GoldBisNY, FolgeMin, (DivH4 ? "an" : "aus"),
                StopATR, ZielNasR, ZielGoldR, EinstandAbR, NachzugAbR, NachzugAbstandR, ZeitExitM5, ZeitExitTage, (WeSchlussNY > 0.0 ? "schliessen" : "halten"));
-   EventSetTimer(1);
+   if(!EventSetTimer(1)) { Print("RSI21EK: Timer nicht gesetzt - ohne Timer wird das zweite Symbol nur mit den Ticks des Chart-Symbols bedient"); return(INIT_FAILED); }
    return(INIT_SUCCEEDED);
   }
 
@@ -832,7 +1127,13 @@ void OnDeinit(const int reason)
   {
    EventKillTimer();
    for(int s=0;s<NS;s++)
-      for(int t=0;t<NT;t++) { IndicatorRelease(hRsi[s][t]); IndicatorRelease(hAtr[s][t]); }
+      for(int t=0;t<NT;t++)
+        {
+         if(hRsi[s][t] != INVALID_HANDLE) IndicatorRelease(hRsi[s][t]);
+         if(hAtr[s][t] != INVALID_HANDLE) IndicatorRelease(hAtr[s][t]);
+        }
+   if(StringLen(gLock) > 0) GlobalVariableDel(gLock);
+   Sichern();
    Comment("");
   }
 

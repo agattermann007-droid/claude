@@ -1,7 +1,8 @@
 """RSI21 Eigenkapital - Endbewertung.
 
-Konfigurationen: 6.60 (RSI21 wie im DEADBAND-EA, nur ohne Prop-Regeln), WF = Endstand der Suche mit Auswahl 2006-21
-(ergebnisse/ek_ca_RTV.json, 2022-26 ungesehen), END = Endstand der Suche ueber alle Perioden (ek_ca_RTVZ.json).
+Konfigurationen: 6.60 (RSI21 wie im DEADBAND-EA, nur ohne Prop-Regeln), K4 = Bausteine Ausstieg/Positionsfuehrung aus dem
+Walk-Forward (Auswahl 2006-21, 2022-26 ungesehen; ek_kand.py), END = RSI21 EK 1.00 (Endlauf R:TVZ, auf dem Plateau
+vereinfacht: Einstand aus, jedes Signal; Gold-Faktor 0,7 nach dem Vergleich bei gleichem groessten Rueckgang).
   A  Vergleich bei gleicher Schwankung: Risiko r* so, dass die Tagesrenditen 2006-26 25 % Jahresvolatilitaet haben
      (Hebel 1:20, Margin bis 90 %), 16 Stoerungen (Seed 0 ungestoert, sonst 3 % Signale ausgelassen, Schlupf bis 0,3 Spreads)
   B  Risiko-Tabelle END: Risiko je Trade x Hebel (1:20 / 1:30 / 1:100): CAGR und groesster Rueckgang je Periode
@@ -18,6 +19,9 @@ sys.path.insert(0, HERE)
 import ek_opt as O, ek_ca as C, ek_data, ek_sig, ek_sim, ek_eval as V      # noqa: E402
 
 PERS = ("T", "V", "Z", "G")
+FINAL_SEL = dict(C.BASE_SEL, tf_gold=(0,), folge_min=0)                       # Signale 6.60, Gold nur M15, jedes Signal
+FINAL_SIM = dict(be_at=0.0, nslots=5, maxloss=1, w0=1.5, w1=1.0, w2=0.5, goldmult=0.7)
+K4 = dict(be_at=0.0, rr_nas=3.0, rr_gold=3.5, nslots=5, maxloss=2, w0=1.5, w1=1.0, w2=0.5, first_mult=1.0, goldmult=1.3)
 
 
 def load_cfg(fn):
@@ -48,10 +52,7 @@ def line_agg(nm, a, rk):
 if __name__ == "__main__":
     risk = float(sys.argv[1]) if len(sys.argv) > 1 else 1.0
     t0 = time.time()
-    cfgs = {"6.60": (dict(C.BASE_SEL), {})}
-    for nm, fn in (("WF (Auswahl 2006-21)", "ek_ca_RTV.json"), ("END", "ek_ca_RTVZ.json")):
-        if os.path.exists(os.path.join(HERE, "ergebnisse", fn)):
-            cfgs[nm] = load_cfg(fn)
+    cfgs = {"6.60": (dict(C.BASE_SEL), {}), "K4": (dict(C.BASE_SEL), dict(K4)), "END": (dict(FINAL_SEL), dict(FINAL_SIM))}
     out = dict(risk=risk, cfg={k: dict(sel=v[0], sim=v[1]) for k, v in cfgs.items()})
     # ---- A: gleiche Schwankung, 16 Stoerungen
     print("A  Vergleich bei 25 % Jahresvolatilitaet 2006-26 (16 Stoerungen, Mittel ± SD)")
@@ -61,7 +62,27 @@ if __name__ == "__main__":
         a = agg(rows)
         out["A"][nm] = dict(r=rk, m=a)
         print("  " + line_agg(nm, a, rk), flush=True)
-    sel, sim = cfgs["END"] if "END" in cfgs else cfgs["6.60"]
+    print("A2 Vergleich bei gleichem groessten Rueckgang 2006-26 (40 %, 4 Stoerungen, Risiko interpoliert)")
+    out["A2"] = {}
+    risks2 = [0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0]
+    for nm, (sel_, sim_) in cfgs.items():
+        V2 = []
+        for rk in risks2:
+            for x in C.seeds_of(dict(sim_, risk=rk), 4):
+                V2.append((nm, sel_, x))
+        rr2 = O.evaluate(V2, workers=4)
+        cur = []
+        for i, rk in enumerate(risks2):
+            g = rr2[4 * i:4 * i + 4]
+            cur.append((rk, float(np.mean([r["G"]["maxdd"] for r in g])), {p: float(np.mean([r[p]["cagr"] for r in g])) for p in PERS}))
+        dds = np.array([c[1] for c in cur]); j = int(np.searchsorted(dds, 0.40))
+        if 0 < j < len(cur):
+            w = (0.40 - dds[j - 1]) / (dds[j] - dds[j - 1])
+            rk = cur[j - 1][0] + w * (cur[j][0] - cur[j - 1][0])
+            cg = {p: cur[j - 1][2][p] + w * (cur[j][2][p] - cur[j - 1][2][p]) for p in PERS}
+            out["A2"][nm] = dict(r=rk, cagr=cg, curve=cur)
+            print(f"  {nm:8s} Risiko {rk:4.2f} % -> " + " | ".join(f"{p} {100 * cg[p]:6.1f} %" for p in PERS), flush=True)
+    sel, sim = cfgs["END"]
     # ---- B: Risiko-Tabelle
     print("B  Risiko-Tabelle END (Seed 0): CAGR / groesster Rueckgang je Periode")
     risks = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0]

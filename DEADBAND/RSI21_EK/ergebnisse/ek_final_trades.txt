@@ -1,0 +1,13 @@
+RSI21 EK 1.00, 1,0 % Risiko, 2006-26: Trades 2198
+  T: CAGR 23.5 %, DD 37.9 %, Sharpe 0.65, Vol 31 %, Trades/J 102, Treffer 37.6 %, R/Trade +0.233, PF 1.36
+  V: CAGR 107.6 %, DD 17.9 %, Sharpe 2.16, Vol 33 %, Trades/J 105, Treffer 51.6 %, R/Trade +0.706, PF 2.40
+  Z: CAGR 121.6 %, DD 27.7 %, Sharpe 2.11, Vol 37 %, Trades/J 119, Treffer 48.9 %, R/Trade +0.613, PF 2.14
+  G: CAGR 59.7 %, DD 37.9 %, Sharpe 1.38, Vol 33 %, Trades/J 106, Treffer 43.8 %, R/Trade +0.442, PF 1.76
+  Symbol: Gold: n 1297 (63/J), R +0.402, Treffer 41 %, Summe +521 R | NAS: n 901 (44/J), R +0.501, Treffer 49 %, Summe +451 R
+  Zeitebene: M15: n 1952 (95/J), R +0.435, Treffer 43 %, Summe +849 R | M30: n 194 (9/J), R +0.523, Treffer 50 %, Summe +101 R | H1: n 52 (3/J), R +0.416, Treffer 48 %, Summe +22 R
+  Richtung: Short: n 595 (29/J), R +0.527, Treffer 45 %, Summe +313 R | Long: n 1603 (78/J), R +0.411, Treffer 43 %, Summe +659 R
+  Platz: 1.: n 776 (38/J), R +0.313, Treffer 40 %, Summe +243 R | 2.: n 513 (25/J), R +0.474, Treffer 45 %, Summe +243 R | 3.-5.: n 909 (44/J), R +0.535, Treffer 47 %, Summe +486 R
+  Ausstieg: Stop: n 1232 (60/J), R -1.041, Treffer 0 %, Summe -1283 R | Ziel: n 931 (46/J), R +2.394, Treffer 100 %, Summe +2229 R | Zeit: n 24 (1/J), R +0.926, Treffer 100 %, Summe +22 R | Datenloch: n 11 (1/J), R +0.396, Treffer 73 %, Summe +4 R
+  Haltedauer (Ereignisse, ~M5-Kerzen): Median 117, Mittel 205
+  Kosten je Trade in R: Swap -0.031, Kommission -0.005
+  Zaehler: sig_seen 3497, sig_maxloss 142, sig_slot 1033, sig_budget 0, sig_minlot 0, margin_cut 282, margin_skip 124, entries 2198, stopout 0, dd_halt 0, maxdd_bar 0.40428

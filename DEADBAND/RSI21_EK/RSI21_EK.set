@@ -1,0 +1,71 @@
+; RSI21 EK 1.00 - EIGENKAPITAL, 25.09.2026. RSI21 Continuation aus DEADBAND LIVE 4 Build 6.60, ohne Prop-Firmen-Regeln,
+;   auf Rendite optimiert. Alle Werte = Voreinstellung des EA (Pruefung RSI21_EK/t_ek_set.py). Bericht RSI21_EK_Bericht.md.
+; Geaendert gegenueber 6.60 (RSI21-Teil): jedes Signal handeln (FolgeMin 0), Gold nur M15, kein Einstand, bis 5 Positionen
+;   je Symbol, nach 1 Verlust am Tag je Symbol keine Einstiege mehr, Gewichte M15 1,5 / M30 1,0 / H1 0,5, Risiko 1,0 % der
+;   Equity je Trade (x Gewicht, Gold x0,7). Signale, Stop 2 ATR, Ziele 2,2 / 2,64 R und Zeit-Ausstieg wie 6.60.
+; Replikat 2006-26 (breite Spreads, Zins-Swap, Hebel 1:20), 1,0 % Risiko: CAGR 60 %, groesster Rueckgang 38 %;
+;   2006-16 24 % / 38 %, 2017-21 108 % / 18 %, 2022-26 122 % / 28 %. Stress (20 % der Gewinner entfernt): 39 % / 47 %.
+;   Monte Carlo 5 Jahre: groesster Rueckgang Median 28 %, 95 % der Pfade unter 43 %, >= 50 % in 1,3 % der Pfade.
+; RiskPct ist der einzige Regler fuer Rendite und Rueckgang: 0,5 % -> 30 % CAGR / 22 % Rueckgang, 1,5 % -> 77 % / 49 %,
+;   2,0 % -> 88 % / 57 %. Ueber 1,0 % steigt die Rendite nur, solange die Kante so stark bleibt wie 2017-26.
+; Voraussetzungen: MT5-Hedging-Konto (Pflicht), beide Symbole im Market Watch, exakte Namen unten eintragen,
+;   genug H1-Historie (mind. ~300 Handelstage), Serverzeit mit ganzen Stunden Versatz zu New York (AutoNYOffset).
+; Ein Chart genuegt (z. B. NAS100 M15); der EA arbeitet ueber Timer auch fuer das zweite Symbol. Je MagicBase nur ein
+;   Chart (eine zweite Instanz im selben Terminal wird abgelehnt). VPS erlaubt, aber nicht zugleich lokal laufen lassen.
+GoldSymbol=XAUUSD
+NasSymbol=NAS100
+AutoNYOffset=true
+NYOffsetHours=7
+MagicBase=2121000
+RiskPct=1.0
+RisikoVomSaldo=false
+GewichtM15=1.5
+GewichtM30=1.0
+GewichtH1=0.5
+GoldFaktor=0.70
+MarginMaxPct=90.0
+MaxLotsJePos=0.0
+MinLotToleranz=2.0
+RsiLen=21
+Oben=75.0
+Unten=25.0
+Longs=true
+Shorts=true
+KreuzAn=true
+KreuzSchwelle=55.0
+AbNY=9.5
+NasBisNY=13.0
+GoldBisNY=17.0
+NasM15=true
+NasM30=true
+NasH1=true
+GoldM15=true
+GoldM30=false
+GoldH1=false
+MaLang=200
+MaSchnell=100
+ShortRegime=true
+NasLongRegime=true
+GoldTor=true
+DivH4=true
+DivRadius=2
+DivAbstand=2.0
+DivHistoryH1=6000
+FolgeMin=0
+ErstesSignalFaktor=0.0
+StopATR=2.0
+ZielNasR=2.2
+ZielGoldR=2.64
+EinstandAbR=0.0
+EinstandPlusR=0.05
+NachzugAbR=0.0
+NachzugAbstandR=0.0
+TeilAbR=0.0
+TeilAnteil=0.0
+ZeitExitM5=1152
+ZeitExitTage=8.0
+Plaetze=5
+MaxVerlusteTag=1
+WeSchlussNY=0.0
+AbweichungPkt=50
+PushMeldungen=false
