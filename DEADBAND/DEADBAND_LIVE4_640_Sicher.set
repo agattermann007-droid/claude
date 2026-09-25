@@ -1,28 +1,17 @@
-; DEADBAND LIVE 6.40 TAKT - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: Handelslogik 6.30 (10 Fehlausbruch-Fades 0,75 % mit Probability Grid, RSI21 0,50 %,
-;   NAS-Noise, Einstand RSI21/Noise ab 1 R, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %), dazu 6.40 Auszahlungstakt:
-;   Auszahlung ab dem GFT-Minimum (MinProfitPct 0 = 131,25 $ Gewinn), Abschluss-Ernte immer (AbschlussLetzte 5), Schutz
-;   gueltiger Tage (GueltigSchutz), Regime-Waechter ueber das Fade-Portfolio (PF der letzten 200 Signale > 1,15),
-;   Pufferkurve nahe am Boden x0,3 (DDMinFactor), Fades ohne Teilgewinn (FadeT1R 0), Noise 0,45 %.
-; Replikat GFT-Ersatz 2022-25 (Fremddaten, breitere Spreads als GFT; 16 Stoerungen, rollierend 1/2/3 J, jeder Handelstag ein
-;   neues Konto, Waechter wie im EA): Ausz/J (Tage je Auszahlung), Busts/J, Netto/J, Serien >= 6 je J, Trefferquote
-;   6.30 Ertrag:               7,33 (49,9 T) / 0,000 / 2171 $ / 0,96 / 65,0 %
-;   6.40 Ertrag (Echtbetrieb): 12,31 (29,7 T) / 0,000 / 2234 $ / 0,70 / 65,7 %
-;   Startjahr 2022 / 2023 / 2024 / 2025: alle 28,6 / 27,0 / 36,5 / 39,6 Tage (6.30: 43,2 / 44,6 / 71,6 / 82,6)
-; Fremddaten 2006-21 (anderes Marktregime), Ausz/J / Busts/J / Konten mit Bust im 1. Jahr:
-;   6.30 Ertrag 1,83 / 0,347 / 29,2 %  -  6.40 Ertrag 2,56 / 0,121 / 7,2 %
-; Auszahlungen sind kleiner (im Mittel 234 $ statt 382 $ Gewinn), dafuer haeufiger; Netto je Jahr gleich.
-; Die 30 Tage setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet, und GFT bucht
-;   binnen etwa eines Tages (bucht GFT einen Tag spaeter: 31,1 Tage; einen Tag schneller: 29,0 Tage).
-; Mit den GFT-Exporten nachrechnen: Replikat_v6/x46.py gft (die GFT-Daten fehlten in dieser Sitzung).
-; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
-; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
-; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
-;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.40 Auszahlungstakt | ...'.
-; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
-; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
-; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.30: rollback_6.30/ (mq5 und beide Sets). Bericht: DEADBAND_LIVE4_640_Bericht.md.
+; DEADBAND LIVE 6.40 TAKT - Auspraegung SICHER (nur die 10 Fehlausbruch-Fades), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Wie das Echtbetrieb-Set (6.40 Ertrag), aber R21Aktiv=false, NzAktiv=false, SerienStopp=4 (wie 6.00-6.30 Sicher).
+;   6.40-Regeln: Auszahlung ab dem GFT-Minimum, Abschluss-Ernte immer, Schutz gueltiger Tage, Portfolio-Waechter
+;   (PF der letzten 200 Fade-Signale > 1,15), Pufferkurve x0,3 nahe am Boden, Fades ohne Teilgewinn.
+; Replikat GFT-Ersatz 2022-25 (16 Stoerungen): Ausz/J (Tage je Auszahlung) / Busts/J / Netto/J / Serien >= 6 je J / Treffer
+;   6.30 Sicher: 4,13 (88,4 T) / 0,000 / 1123 $ / 0,05 / 70,4 %
+;   6.40 Sicher: 7,95 (45,9 T) / 0,000 / 1370 $ / 0,02 / 69,5 %
+; Fremddaten 2006-21: 6.30 Sicher 0,48 Ausz / 0,228 Busts / 97 $, 6.40 Sicher 0,31 / 0,063 / 47 $ je Jahr.
+; Eine Auszahlung alle 30 Tage erreicht nur 'Ertrag' (Echtbetrieb-Set). 'Sicher' hat die kuerzesten Verlustserien.
+; ACHTUNG Inaktivitaet: schaltet der Portfolio-Waechter die Fades ab (anderes Marktregime), handelt 'Sicher' womoeglich
+;   wochenlang nicht. GFT: 30 Tage ohne Trade = Konto weg. Kommt der Push nach 20 Tagen ohne Einstieg, von Hand einen
+;   kleinen Trade setzen (0,01 Lot, > 2 min halten).
+; Sonst wie DEADBAND_LIVE4_Echtbetrieb.set (Max. Balken = Unbegrenzt, nur eigener PC, ein Chart, Kontoerkennung pruefen).
+; Zurueck auf 6.30 Sicher: rollback_6.30/DEADBAND_LIVE4_630_Sicher.set mit rollback_6.30/DEADBAND_LIVE4.mq5.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -136,7 +125,7 @@ WeAufnahmeReif=true
 WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
-R21Aktiv=true
+R21Aktiv=false
 R21RiskPct=0.50
 R21GoldMult=0.70
 R21Gewichte=1.25,1.0,0.75
@@ -180,7 +169,7 @@ InaktivWarnTage=20
 TagesRefEquity=true
 PayoutErkennMinUSD=50.0
 R21ReifeModus=2
-NzAktiv=true
+NzAktiv=false
 NzSymbol=NAS100.x
 NzRiskPct=0.45
 NzStops=0.35,0.5,0.75
@@ -209,7 +198,7 @@ AbschlussMinR=0.3
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
 AbschlussModule=15
-SerienStopp=3
+SerienStopp=4
 SerienPauseTage=0
 DbAktiv=false
 FadeAktiv=true

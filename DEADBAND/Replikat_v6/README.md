@@ -62,6 +62,16 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `x42.py` | **Konto-Screening 6.30**: Einstand/Teilgewinn/Ziel für Fades, RSI21, Noise und Kombinationen → `ergebnisse/x42_gft.json` |
 | `x43.py` | **Endbewertung 6.30** gegen 6.20 (16 Störungen, Startjahre, Streuung inkl. Trefferquote) → `ergebnisse/x43_*.json` |
 | `t_port_630.py` | **Abgleich EA ↔ Replikat** für 6.30: wörtliche Übertragung von `FadeTeilgewinn`/`EinstandSetzen`/`NzEinstand` gegen die Replikat-Logik auf echten Signalen |
+| **Build 6.40 (Auszahlungstakt)** | |
+| `eng8.py` | Kontomotor v8 = eng7 plus Schutz gültiger Tage (`vp_on`: 1 Risiko begrenzt, 2 keine Einstiege nach gültigem Tag, **3** = 2, aber nur solange dem Zyklus noch gültige Tage fehlen, 4 = 1 ebenso), Abschluss-Ernte ganz oder Rest auf Einstand (`bank_full`, `bank_be`), Tages-Diagnose (Tagesergebnis < 0 / 0–25 / 25–50,50 $ / gültig, verlorene gültige Tage, Wartetage, Tage ohne Trade) und kleinster Abstand zum Boden je Konto (`minbuf`) |
+| `t_eng8.py` | Prüfung: eng8 mit Voreinstellungen = eng7 (alle Zähler, Trades, Ereignisse) |
+| `evl8.py` | Bewertung v8: wie evl6, zusätzlich Tage je Auszahlung, Lücken zwischen Auszahlungen, was die Auszahlung zuletzt aufhielt (gültige Tage / Mindestgewinn / 10-Tage-Frist), Tages-Diagnose, Abstand zum Boden (Anteil Konten < 100 $ / < 200 $) |
+| `pg_guard.py` | Regime-Wächter der Fades: Signal-Studie (Modul- gegen Portfolio-Wächter, 2006–13 / 2014–21 / 2022–25), `known_time` (Zeitpunkt, zu dem der EA ein virtuelles Ergebnis kennt), `port_live_ea` (Portfolio-Wächter wie im EA), `blocks_port`/`blocks_multi` (Fade-Blöcke für den Kontomotor) |
+| `x44.py` | **Konto-Screening 6.40**: Mindestgewinn, Abschluss-Ernte, Schutz gültiger Tage, Fade-Teilgewinn, Risiko, Wächter-Varianten (`P<N>/<PF>`, zusammengesetzt `M:...`), Pufferkurve, Sicher → `ergebnisse/x44_*.json` |
+| `x45.py` | Zwischenbewertung (16 Störungen) der ersten 6.40-Kandidaten ohne stärkere Pufferkurve → `ergebnisse/x45_*.json` |
+| `x46.py` | **Endbewertung 6.40** gegen 6.30 (16 Störungen, Startjahre, Streuung, Abstand zum Boden, Nachbarn, Wartezeit der Auszahlung, Sicher) → `ergebnisse/x46_*.json` |
+| `t_port_640.py` | **Abgleich EA ↔ Replikat** für 6.40: Zeitpunkt der virtuellen Ergebnisse (`FadeKerze`/`FadeVirtSchluss`), Portfolio-Wächter (`FadePortfolioPF`/`FadeWaechterOk`), Schutz gültiger Tage → `ergebnisse/t_port_640.txt` |
+| `t_set.py` | Prüfung: Voreinstellungen des EA = Echtbetrieb-Set (bzw. Abweichungen eines anderen Sets mit `--diff`) |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
@@ -85,6 +95,12 @@ python x42.py gft all 8 2                  # Konto-Screening (8 Stoerungen, jede
 python x43.py gft && python x43.py ext     # Endbewertung 6.30 gegen 6.20
 python t_eng7.py && python t_port_630.py   # Pruefungen
 python t_mq5.py                            # statische Pruefung des EA
+# Build 6.40 (Auszahlungstakt)
+python pg_guard.py                         # Signal-Studie: Regime-Waechter je Modul gegen Portfolio
+python x44.py gft "6.30 Ertrag|MP min|MP min B5" 8 2   # Konto-Screening (Varianten siehe VAR in x44.py)
+python x46.py gft && python x46.py ext     # Endbewertung 6.40 gegen 6.30
+python t_eng8.py && python t_port_640.py   # Pruefungen (eng8 = eng7; EA <-> Replikat)
+python t_set.py                            # Echtbetrieb-Set = Voreinstellungen des EA
 ```
 
 ## Konventionen
