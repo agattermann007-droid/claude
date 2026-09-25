@@ -5,3 +5,8 @@ data/
 extdata/raw/
 extdata/work/
 extdata/fx1m/
+
+# Replikat-Zwischenstaende (neu erzeugbar)
+Replikat_v6/cache/
+Replikat_v7/cache/
+__pycache__/

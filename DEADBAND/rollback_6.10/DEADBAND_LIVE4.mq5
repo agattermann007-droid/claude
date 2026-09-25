@@ -1,26 +1,5 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND LIVE 4  -  Build 6.20 FADE, 25.09.2026                 |
-//|  BUILD 6.20: RSI21 MIT VOLUMEN-BESTAETIGUNG, RISIKO UMGESCHICHTET|
-//|  Alles andere = 6.10. Geaendert nur das RSI21-Modul:             |
-//|  1) NEU: RSI21-Einstieg nur, wenn das Tick-Volumen der Signal-   |
-//|     kerze >= 1,5 x Mittel der letzten 50 Kerzen derselben Zeit-  |
-//|     ebene ist (R21VolFaktor 1.5, R21VolKerzen 50; 0 = aus). Das  |
-//|     Signal zaehlt fuer das Folgesignal auch ohne Volumen. Signale|
-//|     unter 1,0 x Mittel brachten 2006-25 nur +0,18 R je Trade     |
-//|     (uebrige +0,41 R).                                           |
-//|  2) R21GoldMult 0,70 -> 0,50 (Gold-RSI21 +0,25 R je Trade gegen  |
-//|     NAS +0,66 R) und R21RiskPct 0,50 -> 0,60 %.                  |
-//|  Replikat, Ausz / Busts / Netto je Jahr (6.10 -> 6.20):          |
-//|    Ersatz-GFT-Daten 2022-25 (16 Stoerungen):                     |
-//|      8,14 / 0,028 / 2459 -> 8,20 / 0,004 / 2467                  |
-//|    Fremddaten 2006-21 (8 Stoerungen):                            |
-//|      1,94 / 0,364 / 494 -> 2,09 / 0,259 / 536                    |
-//|  RSI21 allein 2006-25: Sharpe 1,23 -> 1,36, laengste Verlust-    |
-//|  serie 21 -> 16 Trades. Die Kreuz-Bestaetigung bleibt: ohne sie  |
-//|  mehr RSI21-Gewinn, aber im Konto viel mehr Busts.               |
-//|  Bericht DEADBAND_LIVE4_620_Bericht.md. Zurueck: rollback_6.10/. |
-//|                                                                  |
-//|  Build 6.10 FADE, 24.09.2026                                     |
+//|  DEADBAND LIVE 4  -  Build 6.10 FADE, 24.09.2026                 |
 //|  BUILD 6.10: ECHTBETRIEB - ERNTE ALLER MODULE, KONTOERKENNUNG    |
 //|  Handelslogik = 6.00, dazu:                                      |
 //|  1) Abschluss-Ernte fuer ALLE Module (AbschlussModule 15):       |
@@ -429,7 +408,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "6.20"
+#property version   "6.10"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -562,8 +541,8 @@ input bool   WeGroesseBudget = false;  // Lots bei Wiederaufnahme kuerzen, bis d
 input string WeSpreadMaxList = "0,0";  // Wiederaufnahme nur bei Spread <= X Punkte je Symbol (0 = ohne Pruefung)
 input group             "=== 4.40: RSI21-Modul ==="
 input bool   R21Aktiv        = true;   // zweite Signalquelle RSI21 Continuation (Regeln RSI21 v3.4)
-input double R21RiskPct      = 0.60;   // 6.20: 0,60 (6.00/6.10: 0,50; 5.10: 0,63; 4.80-5.00: 0,7; 4.60/4.70: 0,6) - Risiko je RSI21-Trade in % vom Startsaldo (x Zeitebenen-Gewicht, x Gold-Faktor, x Pufferkurve)
-input double R21GoldMult     = 0.50;   // 6.20: 0,50 - Gold-Faktor (bis 6.10: 0,70 = RSI21 v3.4 Risikoparitaet)
+input double R21RiskPct      = 0.50;   // 6.00: 0,50 (5.10: 0,63; 4.80-5.00: 0,7; 4.60/4.70: 0,6) - Risiko je RSI21-Trade in % vom Startsaldo (x Zeitebenen-Gewicht, x Gold-Faktor, x Pufferkurve)
+input double R21GoldMult     = 0.70;   // Gold-Faktor (RSI21 v3.4 Risikoparitaet)
 input string R21Gewichte     = "1.25,1.0,0.75"; // Gewicht je Zeitebene M15, M30, H1
 input string R21GoldSymbol   = "XAUUSD.x";
 input string R21NasSymbol    = "NAS100.x";
@@ -594,9 +573,6 @@ input long   R21MagicOffset  = 10;     // RSI21-Magic = MagicBase + Offset + Sym
 input group             "=== 4.50: RSI21 Folgesignal, zweiter Platz ==="
 input int    R21FolgeMin     = 240;    // RSI21 nur als Folgesignal: frueheres gueltiges Signal (Symbol, Richtung) hoechstens X Minuten alt (0 = aus, wie 4.40)
 input bool   R21ZweiterPlatz = true;   // zweite RSI21-Position je Symbol, wenn die erste in dieselbe Richtung laeuft
-input group             "=== 6.20: RSI21 Volumen-Bestaetigung ==="
-input double R21VolFaktor    = 1.5;    // Einstieg nur, wenn das Tick-Volumen der Signalkerze >= X x Mittel der letzten R21VolKerzen Kerzen ist (0 = aus wie 6.10); das Signal zaehlt fuer das Folgesignal auch ohne Volumen
-input int    R21VolKerzen    = 50;     // Kerzen fuer das Volumen-Mittel (inkl. Signalkerze, Zeitebene des Signals)
 input group             "=== 4.90: GFT-Regeln und Betriebssicherheit ==="
 input bool   HedgeSperre      = true;   // kein Einstieg/keine Wiederaufnahme gegen eine offene Position im selben Symbol (GFT: Hedging = Konto weg)
 input int    NewsSperreMin    = 6;      // +-X min um rote USD-Termine: keine Einstiege, keine eigenen Gewinnschliessungen > 1 % (0 = aus; nur live)
@@ -1011,10 +987,6 @@ int OnInit()
    FadeInitMeldung();                                                   // 6.00
    PrintFormat("DEADBAND4: 4.70 Floating-Bremse %.2f %% auf %s (jetzt %.2f, Firmengrenze %.2f)",
                FloatStopPct, (FloatBasisMinSaldo ? "min(Startsaldo, Saldo)" : "Startsaldo"), -FloatBasis()*FloatStopPct/100.0, -FloatBasis()*kRuleFloatPct/100.0);
-   if(R21Aktiv)
-      PrintFormat("DEADBAND4: 6.20 RSI21 Volumen-Bestaetigung %s | Risiko %.2f %% je Trade x Gewicht, Gold x%.2f (6.10: 0,50 %% / x0,70)",
-                  (R21VolFaktor > 0.0 ? StringFormat("AN (Tick-Volumen der Signalkerze >= %.2f x Mittel der letzten %d Kerzen)", R21VolFaktor, R21VolKerzen) : "aus"),
-                  R21RiskPct, R21GoldMult);
    if(R21Aktiv)
       PrintFormat("DEADBAND4: 4.60 RSI21 Folgesignal %s | zweiter Platz %s (%d RSI21-Plaetze) | Floating-Bremse %s",
                   (R21FolgeMin > 0 ? StringFormat("AN (frueheres Signal hoechstens %d min alt)", R21FolgeMin) : "aus"),
@@ -3919,7 +3891,6 @@ bool R21PlaetzeAnlegen()
    for(int t=0;t<3;t++) r21w[t] = StringToDouble(wp[t]);
    if(R21MagicOffset < MAXSYM) { Print("DEADBAND4: R21MagicOffset muss mindestens 8 sein"); return false; }
    if(R21RiskPct <= 0.0 || R21StopATR <= 0.0 || R21NasRR <= 0.0 || R21GoldRR <= 0.0) { Print("DEADBAND4: RSI21-Risiko, Stop und Ziele muessen > 0 sein"); return false; }
-   if(R21Aktiv && (R21VolFaktor < 0.0 || (R21VolFaktor > 0.0 && (R21VolKerzen < 2 || R21VolKerzen > 1000)))) { Print("DEADBAND4: R21VolFaktor >= 0 und R21VolKerzen 2..1000"); return false; }   // 6.20: nur fuer Einstiege noetig
    if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
      {
       Print("DEADBAND4: RSI21-Modul AUS - Konto ist kein Hedging-Konto (DEADBAND- und RSI21-Position auf demselben Symbol wuerden verschmelzen)");
@@ -4133,9 +4104,8 @@ string R21StatusText()
   {
    if(!R21Aktiv) return "aus (keine neuen Einstiege; offene RSI21-Positionen werden weiter verwaltet)";
    if(nSlot <= nSym) return "AUS (Gold- oder NAS-Symbol fehlt in der SymbolList)";
-   string t = StringFormat("Risiko %.2f %% x Gewicht, Budget %.2f %% (gesamt %.2f %%), Folgesignal %s, 2. Platz %s, Volumen %s", R21RiskPct, R21BudgetPct, GesamtBudgetPct,
-                           (R21FolgeMin > 0 ? IntegerToString(R21FolgeMin) + " min" : "aus"), (R21ZweiterPlatz ? "an" : "aus"),
-                           (R21VolFaktor > 0.0 ? StringFormat(">= %.2f x Mittel(%d)", R21VolFaktor, R21VolKerzen) : "aus"));   // 6.20
+   string t = StringFormat("Risiko %.2f %% x Gewicht, Budget %.2f %% (gesamt %.2f %%), Folgesignal %s, 2. Platz %s", R21RiskPct, R21BudgetPct, GesamtBudgetPct,
+                           (R21FolgeMin > 0 ? IntegerToString(R21FolgeMin) + " min" : "aus"), (R21ZweiterPlatz ? "an" : "aus"));
    for(int k=nSym;k<nSlot;k++)
      {
       ulong tk=0;
@@ -4144,25 +4114,6 @@ string R21StatusText()
                            S[k].tfMin, PositionGetDouble(POSITION_VOLUME), S[k].mfeR);
      }
    return t;
-  }
-
-// 6.20: Volumen-Bestaetigung des RSI21-Einstiegs. Tick-Volumen der Signalkerze (Kerze 1 der Signal-Zeitebene) gegen das
-// Mittel der letzten R21VolKerzen Kerzen inkl. Signalkerze (wie das Replikat: Volumen / SMA(Volumen) der Signalkerze).
-// Rueckgabe 1 = bestaetigt oder Filter aus, 0 = zu wenig Volumen, -1 = Kerzen nicht verfuegbar (kein Einstieg).
-int R21Volumen(string sym, int t, double &anteil)
-  {
-   anteil = 0.0;
-   if(R21VolFaktor <= 0.0) return 1;
-   long v[];
-   ArraySetAsSeries(v, true);
-   int got = CopyTickVolume(sym, R21Tf(t), 1, R21VolKerzen, v);
-   if(got != R21VolKerzen) return -1;
-   double sum = 0.0;
-   for(int i=0;i<got;i++) sum += (double)v[i];
-   double mittel = sum/got;
-   if(mittel <= 0.0 || v[0] <= 0) return 1;                   // ohne Tick-Volumen keine Aussage (Replikat: erlaubt)
-   anteil = (double)v[0]/mittel;
-   return (anteil >= R21VolFaktor ? 1 : 0);
   }
 
 void HandleR21(int k, long today, bool dayLocked)
@@ -4309,16 +4260,6 @@ void HandleR21(int k, long today, bool dayLocked)
         }
       if(ke < 0) continue;
       if(!HedgeFrei(ke, dir)) continue;                            // 4.90: GFT-Hedging-Verbot
-        {                                                          // 6.20: Volumen-Bestaetigung
-         double vq = 0.0;
-         int vok = R21Volumen(s, t, vq);
-         if(vok <= 0)
-           {
-            if(vok == 0) PrintFormat("DEADBAND4 %s RSI21: %s-Signal M%d ohne Volumen-Bestaetigung (%.2f x Mittel < %.2f) - kein Einstieg", s, (dir > 0 ? "LONG" : "SHORT"), R21TfMin(t), vq, R21VolFaktor);
-            else         PrintFormat("DEADBAND4 %s RSI21: Tick-Volumen M%d nicht verfuegbar - kein Einstieg", s, R21TfMin(t));
-            continue;
-           }
-        }
       double unsicht = 0.0;                                        // 4.90: Risiko eben eroeffneter, noch nicht sichtbarer Positionen
       { ulong tx = 0; if(neuK && !HavePosition(k, tx)) unsicht += neuRiskK; if(neuK2 && k2 >= 0 && !HavePosition(k2, tx)) unsicht += neuRiskK2; }
       double a[]; if(CopyBuffer(S[k].hR21Atr[t], 0, 1, 1, a) != 1 || a[0] <= 0.0) continue;

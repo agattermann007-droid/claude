@@ -66,3 +66,8 @@ Gold 5 $/Lot. Fremddaten: Spread proportional zum Kurs (Stand 2022–26).
   beseitigt sie nicht.
 - Kein Tick-Replay, keine News-Sperre im Nachbau, NAS-Datenloch 2024.
 - Absolute Zahlen sind Schätzungen. Belastbar ist der Vergleich der Varianten unter gleichen Annahmen.
+
+## Fortsetzung
+
+Build 6.20 (RSI21 mit Volumen-Bestätigung) wurde mit `../Replikat_v7` (RSI21-Labor, Ersatz-GFT-Daten, Kontobewertung
+über diesen Motor) entwickelt, siehe `../Replikat_v7/README.md` und `../DEADBAND_LIVE4_620_Bericht.md`.

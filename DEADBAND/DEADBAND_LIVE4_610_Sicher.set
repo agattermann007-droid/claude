@@ -1,4 +1,6 @@
 ; DEADBAND LIVE 6.10 FADE - Auspraegung SICHER, GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Gilt unveraendert fuer Build 6.20 (dort ist nur das RSI21-Modul geaendert, und das ist hier aus). Die RSI21-Werte
+;   unten sind die von 6.20 (R21RiskPct 0,60, R21GoldMult 0,50, Volumen-Bestaetigung 1,5 x Mittel(50)) - wirksam nur mit R21Aktiv=true.
 ; Nur die 10 Fehlausbruch-Fades (R21Aktiv=false, NzAktiv=false, DbAktiv=false), Serien-Stopp nach 4 Verlusten, Abschluss-Ernte aus,
 ;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %. Weniger Ertrag, keine Busts im Replikat, kuerzeste Serien.
 ; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
@@ -127,8 +129,8 @@ WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
 R21Aktiv=false
-R21RiskPct=0.50
-R21GoldMult=0.70
+R21RiskPct=0.60
+R21GoldMult=0.50
 R21Gewichte=1.25,1.0,0.75
 R21GoldSymbol=XAUUSD.x
 R21NasSymbol=NAS100.x
@@ -158,6 +160,8 @@ R21ReifeSchliessen=true
 R21MagicOffset=10
 R21FolgeMin=240
 R21ZweiterPlatz=true
+R21VolFaktor=1.5
+R21VolKerzen=50
 HedgeSperre=true
 NewsSperreMin=6
 MinHalteSek=130
