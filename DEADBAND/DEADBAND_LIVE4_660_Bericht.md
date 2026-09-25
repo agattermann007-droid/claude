@@ -579,6 +579,61 @@ Inbetriebnahme:
 10. **Lizenz** des Grid-Konzepts unverändert (Bericht 6.20, Abschnitt 10). Die Dukascopy-Daten unterliegen deren
     Nutzungsbedingungen (Datenbericht).
 
+## Anhang B: Konsistenzregel 15 % (Instant GOAT, Instant HERO)
+
+Frage vom 25.09.2026: Lässt sich eine 15-%-Konsistenzregel einbauen, ohne Gewinn zu verlieren und ohne mehr Busts?
+
+**Regel** (GFT-Hilfe, Suchauszüge vom 25.09.2026; die Seiten selbst waren aus dieser Umgebung nicht erreichbar):
+- Kein einzelner Handelstag darf 15 % oder mehr des Gewinns der Auszahlungsperiode ausmachen.
+- Geprüft wird beim Auszahlungsantrag. Ein Verstoß bricht das Konto nicht, aber die Auszahlung ist gesperrt, bis der beste
+  Tag unter 15 % liegt.
+- Teilschließungen zählen als ein Trade am Tag der letzten Schließung.
+- Die Regel gilt für Instant GOAT und Instant HERO. Bei beiden ist ein VPS erlaubt. Instant Premium hat keine
+  Konsistenzregel.
+
+**Replikat** (`eng10`, Eingabe `cons_pct`; `x62.py`): Auszahlung erst, wenn der beste Tag unter 14,5 % der Summe der
+Tagesergebnisse seit der letzten Auszahlung liegt (0,5 Prozentpunkte Reserve).
+- *passiv*: Handel wie 6.60, es wird nur später ausgezahlt.
+- *Tagesdeckel*: zusätzlich nach einem gültigen Tag keine neuen Einstiege bis 17:00 NY, die ganze Periode lang.
+- *Netto inkl. offen*: Netto plus der am Ende noch nicht ausgezahlte Gewinn (× 0,8 × 0,97). Dieser Gewinn ist bei einem
+  Bust verloren.
+
+Zellen: breite / GFT-nahe Spreads (2022–25: 8 Störungen, jeder 2. Handelstag; Fremddaten und Stress: 16 Störungen).
+
+| | 6.60 (Instant Premium, ohne Regel) | 15 %, passiv | 15 %, Tagesdeckel |
+|---|---|---|---|
+| Auszahlungen je Jahr (Tage je Auszahlung) | 11,66 (31) / 12,04 (30) | 2,07 (177) / 2,28 (161) | 2,89 (127) / 3,14 (117) |
+| Auszahlung im Mittel | 252 / 268 $ | 1163 / 1258 $ | 810 / 818 $ |
+| Netto je Jahr, ausgezahlt | 2282 / 2503 $ | 1891 / 2244 $ | 1818 / 1998 $ |
+| Netto je Jahr inkl. offen | 2320 / 2545 $ | 2403 / 2743 $ | 2041 / 2210 $ |
+| Konten < 200 $ am Boden | 0,4 / 1,2 % | 29 / 42 % | 1,4 / 12 % |
+| Fremddaten 2006–21: Busts je Jahr · Bust im 1. Jahr | 0,038 · 1,0 % | **0,055 · 3,3 %** | 0,045 · 2,3 % |
+| Stress (20 % der Fade-Gewinner entfernt, breit): Auszahlungen · Netto inkl. offen | 6,29 · rund 1260 $ | 0,91 · 1288 $ | 1,19 · 945 $ |
+
+Ein 14-Tage-Zyklus wie bei Instant GOAT allein kostet 0,4 Auszahlungen und 90 $ je Jahr (breit). Mit Konsistenzregel spielt
+er keine Rolle mehr.
+
+**Warum die Regel so stark bremst** (`a67_kons.py`, durchgehendes Konto 2022–25, 16 Störungen, 653 Auszahlungen):
+- Gewinn je Auszahlungsperiode im Median 234 $, bester Tag im Median 102 $. Das ist meist ein einzelner Treffer von RSI21
+  oder einem Fade.
+- Der beste Tag macht im Median 45 % des Gewinns aus. Keine einzige der 653 Auszahlungen erfüllt 15 %, 7 % erfüllen 25 %.
+- Bei 15 % braucht eine Auszahlung im Median 705 $ Gewinn, das sind 3,4 Monatsgewinne. Jeder neue Rekordtag hebt die
+  Latte auf das 6,9-Fache.
+- Untergrenze: 5 gültige Tage verlangen je mindestens 50,50 $. Also liegt der beste Tag bei mindestens 50,50 $, und jede
+  Periode braucht mindestens rund 350 $. Selbst wenn jeder Gewinntag genau an der Schwelle läge, wären das bei rund 210 $
+  Gewinn im Monat 1,7 Monate.
+
+**Warum mehr Busts:** Jede Auszahlung setzt den trailenden Boden zurück. Wird nur alle vier bis sechs Monate ausgezahlt,
+steigt der Boden monatelang mit dem Equity-Hoch. Der nicht ausgezahlte Gewinn liegt dann über dem Boden, und ein normaler
+Rückgang von 6 % nimmt ihn mit. Im alten Regime steigen die Busts deshalb um 45 %, im ersten Jahr auf das Dreifache.
+
+**Ergebnis:** Ohne Verluste geht es nicht.
+- *Passiv*: Der Gesamtgewinn bleibt, inklusive nicht ausgezahltem Gewinn sogar +4 / +8 %. Ausgezahlt wird aber nur rund
+  zweimal im Jahr, und das Bust-Risiko steigt.
+- *Tagesdeckel*: Die Sicherheit bleibt fast wie heute. Das kostet 12–13 % Gewinn, und ausgezahlt wird dreimal im Jahr.
+- Für diesen EA ist Instant Premium (ohne Konsistenzregel) auf dem eigenen PC klar besser.
+- Im EA ist die Regel noch nicht umgesetzt. Die Entscheidung über den Kontotyp steht aus.
+
 ## Anhang: Replikat
 
 `Replikat_v6/README.md` (Abschnitt Build 6.60):

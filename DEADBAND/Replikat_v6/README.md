@@ -95,6 +95,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `a60_sig.py`, `a60_jahr.py`, `a60_drag.py`, `a60_stufen.py`, `a60_stufen2.py`, `a60_fak.py` | Diagnosen: Fade-Signale je Periode / Trend / gespiegelt / Zielweite, Konto je Startjahr und Modul, Konto gegen virtuelles Signal, Signal -> Filter -> Waechter -> Konto, ausgelassene Signale, Anteil verkleinerter Trades |
 | `a60_spx.py`, `a60_schock.py`, `a60_nzs.py` | Kandidaten auf Signal-Ebene: NAS-Fades auf US500 (K2), Schocktag-Filter (K3), Noise short und Gold-Noise (K6) -> `ergebnisse/a60_*.txt` |
 | `a60_warn.py` | Regime-Meldungen des EA rueckwirkend (Fruehwarnung, Abschaltung, wieder live) 2006-2025 bzw. bis 08/2026 in der Ordnerkopie -> `ergebnisse/a60_warn.txt` |
+| `x62.py`, `a67_kons.py` | **Konsistenzregel 15 %** (Instant GOAT/HERO, Bericht 6.60 Anhang B): eng10 `cons_pct` (Auszahlung erst bei bestem Tag < `cons_pct` - `cons_res` % des Gewinns der Periode), `cons_cap` 1/2 = Deckel ab bestem Tag bzw. nach gueltigem Tag, Kennzahl `net_open` (inkl. am Ende nicht ausgezahltem Gewinn); a67: bester Tag je Auszahlungsperiode heute -> `ergebnisse/x62_*.json`, `a67_kons.txt` |
 | `t_port_660.py` | **Abgleich EA <-> Replikat** fuer 6.60: Voreinstellungen = `6.60b`, Pruefungen 2-4 aus `t_port_650`, Regime-Meldungen ohne Einfluss auf den Handel -> `ergebnisse/t_port_660.txt` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
@@ -151,6 +152,9 @@ ABSCHLAG=0.2 python x61.py gft             # Stresstest
 #   python prep5.py && python sig5.py && python sig_ext.py && python x60f.py "6.40 Ertrag|6.50 Ertrag|6.60b" 100   (bzw. 60)
 python a60_warn.py                         # Regime-Meldungen rueckwirkend (Vorgabe 1,25 wie der EA)
 python t_port_660.py && python t_set.py && python t_set.py ../DEADBAND_LIVE4_660_Sicher.set --diff && python t_mq5.py
+# Konsistenzregel 15 % (Instant GOAT/HERO): Kosten der Regel, passiv und mit Deckel
+python x62.py gft "6.60|6.60 K15|6.60 K15 Tagesdeckel 1.0" 8 2 && python x62.py ext "6.60|6.60 K15|6.60 K15 Tagesdeckel 1.0" 16 3
+ABSCHLAG=0.2 python x61.py gft "6.60 K15|6.60 K15 Tagesdeckel 1.0" && python a67_kons.py
 ```
 
 ## Konventionen

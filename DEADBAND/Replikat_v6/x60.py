@@ -84,6 +84,22 @@ VAR["6.60b"] = (E660, H, 0.75, "P200/1.15", _ex(FREI2), None)
 for _c in (0.80, 0.85):
     VAR[f"6.60b SV{_c}"] = (dict(E660, sv_on=1, sv_cap=_c), H, 0.75, "P200/1.15", _ex(FREI2), None)
 
+# 6.70: Konsistenzregel (Instant GOAT: bester Tag < 15 % des Gewinns der Auszahlungsperiode, geprueft beim Antrag)
+#   K15 = passiv: Auszahlung erst, wenn die Regel mit 0,5 Prozentpunkten Reserve erfuellt ist (Handel unveraendert)
+#   Deckel = aktiv: sind die gueltigen Tage erreicht, heute keine neuen Einstiege, sobald der Tag den besten Tag erreicht
+#   T14 = 14-Tage-Zyklus (Instant GOAT: Auszahlung alle 14 Tage)
+VAR["6.60"] = VAR["6.60b"]
+VAR["6.60 T14"] = (dict(E660, cycledays=14), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15"] = (dict(E660, cons_pct=15.0), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15 R0"] = (dict(E660, cons_pct=15.0, cons_res=0.0), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15 T14"] = (dict(E660, cons_pct=15.0, cycledays=14), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15 Deckel"] = (dict(E660, cons_pct=15.0, cons_cap=1, cons_capfrac=1.0), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15 Deckel 0.8"] = (dict(E660, cons_pct=15.0, cons_cap=1, cons_capfrac=0.8), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.60 K15 Deckel T14"] = (dict(E660, cons_pct=15.0, cons_cap=1, cons_capfrac=1.0, cycledays=14), H, 0.75, "P200/1.15", _ex(FREI2), None)
+#   Tagesdeckel = nach einem gueltigen Tag (x Faktor) heute keine neuen Einstiege, die ganze Periode (Schutz gueltiger Tage fuer alle)
+for _f in (1.0, 1.5, 2.0):
+    VAR[f"6.60 K15 Tagesdeckel {_f}"] = (dict(E660, cons_pct=15.0, cons_cap=2, cons_capfrac=_f), H, 0.75, "P200/1.15", _ex(FREI2), None)
+
 # Sicher (nur Fades): 6.40 Sicher (Fade-Risiko 0,75 %) gegen 6.50 Sicher (0,70 %)
 VAR["6.40 Sicher"] = tuple(x48.VAR["6.40 Sicher"]) + (None, None)
 VAR["6.50 Sicher"] = tuple(x48.VAR["6.50 Sicher"]) + (None, None)

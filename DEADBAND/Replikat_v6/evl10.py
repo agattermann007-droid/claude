@@ -1,4 +1,6 @@
 """Bewertung v10 (Build 6.60): wie evl9 mit eng10 (Zaehler sv_up = vergroesserte Einstiege fuer den gueltigen Tag).
+6.70: Konsistenzregel - Wartetage, gesperrte Tage, Anteil der Auszahlungen mit Konsistenz als letzter Bedingung, Netto inkl.
+am Ende noch nicht ausgezahltem Gewinn (net_open).
 Bewertung v9 (Build 6.50): wie evl8 mit eng9, zusaetzlich Ergebnis der Trades, die nach einem schon gueltigen Tag
 eroeffnet wurden (pv: Anzahl, Summe, je Modul).
 Bewertung v8 (Build 6.40): wie evl6 (rollierende Konten 1/2/3 Jahre, Stoerungen), mit eng8 und zusaetzlich
@@ -18,7 +20,8 @@ WARM = V6.WARM
 starts = V6.starts
 line6 = V6.line
 EXTRA = ["d_neg", "d_0_25", "d_25_50", "d_valid", "d_vlost", "d_wait", "d_notrade", "vp_cut", "vp_block",
-         "lim_valid", "lim_profit", "lim_ten", "cyc_v5", "cyc_pr", "trade_days", "gaps_sum", "bank", "sv_up"]
+         "lim_valid", "lim_profit", "lim_ten", "cyc_v5", "cyc_pr", "trade_days", "gaps_sum", "bank", "sv_up",
+         "cons_wait", "cons_block", "open_end", "lim_cons"]
 
 
 def _job(args):
@@ -73,6 +76,8 @@ def agg(rows):
     a["lim_valid_pct"] = 100.0 * a["x_lim_valid"] / max(ncyc, 1e-9)
     a["lim_profit_pct"] = 100.0 * a["x_lim_profit"] / max(ncyc, 1e-9)
     a["lim_ten_pct"] = 100.0 * a["x_lim_ten"] / max(ncyc, 1e-9)
+    a["lim_cons_pct"] = 100.0 * a["x_lim_cons"] / max(a["pay"] + 1e-9, 1e-9)   # 6.70: Anteil der Auszahlungen, die zuletzt auf die Konsistenz warteten
+    a["net_open"] = a["net"] + 0.8 * 0.97 * a["x_open_end"]                     # 6.70: Netto inkl. am Ende noch nicht ausgezahltem Gewinn
     a["t_v5"] = a["x_cyc_v5"] / max(ncyc, 1e-9)
     a["t_pr"] = a["x_cyc_pr"] / max(ncyc, 1e-9)
     g = np.concatenate([r["gaps"] for r in rows]) if rows else np.zeros(0)
@@ -120,10 +125,10 @@ def evaluate(Pv, GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)), sk
         per = []
         for s in seeds:
             hsr = [agg([o for (h, s2, a), o in zip(tags, outs) if h == hh and s2 == s]) for hh in hs]
-            per.append([np.mean([x[k] for x in hsr]) for k in ("pay", "bust", "net", "s5", "s6", "mx", "wr")])
+            per.append([np.mean([x[k] for x in hsr]) for k in ("pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open")])
         per = np.array(per)
-        mean["streuung"] = dict(mean=per.mean(0).tolist(), sd=per.std(0, ddof=1).tolist() if len(seeds) > 1 else [0.0] * 7,
-                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr"], per=per.tolist())
+        mean["streuung"] = dict(mean=per.mean(0).tolist(), sd=per.std(0, ddof=1).tolist() if len(seeds) > 1 else [0.0] * 8,
+                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open"], per=per.tolist())
     if by_year:
         by = {}
         for (h, s, a), o in zip(tags, outs):
@@ -134,7 +139,7 @@ def evaluate(Pv, GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)), sk
         mean["jahre"] = {}
         for y, rows in sorted(by.items()):
             a = agg(rows)
-            mean["jahre"][y] = {k: a[k] for k in ("pay", "paymean", "bust", "net", "s6", "mx", "mxmax", "wr", "gap_mean", "n")}
+            mean["jahre"][y] = {k: a[k] for k in ("pay", "paymean", "bust", "net", "s6", "mx", "mxmax", "wr", "gap_mean", "n", "net_open")}
     return mean
 
 

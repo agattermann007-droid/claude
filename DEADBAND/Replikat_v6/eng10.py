@@ -92,6 +92,8 @@ PN = [
     "sv_on", "sv_cap", "sv_margin",
     # --- 6.60: Noise auch short (Voreinstellung = aus)
     "nz_short", "nz_s_risk",
+    # --- 6.70: Konsistenzregel (Instant GOAT: bester Tag < 15 % des Gewinns der Auszahlungsperiode; Voreinstellung = aus)
+    "cons_pct", "cons_res", "cons_cap", "cons_capfrac",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -124,7 +126,8 @@ def params(**kw):
              nz_tp1r=0.0, nz_tp1f=0.0, nz_be=-99.0, nz_tp=0.0,
              vp_on=0, vp_margin=2.0, vp_from=0.0, bank_full=0, bank_be=0,
              vp_mods=15, vp_k=1.0, vp_minfrac=0.0, vp_r21_to=0.0, vp_r21_dd=0, vp_r21_reg=0,
-             sv_on=0, sv_cap=0.85, sv_margin=0.05, nz_short=0, nz_s_risk=0.45)
+             sv_on=0, sv_cap=0.85, sv_margin=0.05, nz_short=0, nz_s_risk=0.45,
+             cons_pct=0.0, cons_res=0.5, cons_cap=0, cons_capfrac=1.0)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -296,7 +299,8 @@ ST = ["ntr", "wins", "pnl", "npay", "sumpay", "nbust", "floor_b", "float_b", "da
       "harv", "ge", "brake_f", "brake_d", "we_close", "we_re", "cyc_days", "entries", "maxstreak",
       "streak5", "streak8", "maxlday", "lday3", "maxdd", "db_w", "r21_w", "nz_w", "ripe_lost", "bank", "cool",
       "gaps_max", "gaps_sum", "fg_skip", "lim_valid", "lim_profit", "lim_ten", "cyc_v5", "cyc_pr", "swapg", "r_seen", "r_mode", "r_loss", "r_slot", "r_hedge", "r_budget", "r_minlot", "r_margin", "r_taken",
-      "d_neg", "d_0_25", "d_25_50", "d_valid", "d_vlost", "d_wait", "d_notrade", "vp_cut", "vp_block", "minbuf", "minbuf_day", "sv_up"]
+      "d_neg", "d_0_25", "d_25_50", "d_valid", "d_vlost", "d_wait", "d_notrade", "vp_cut", "vp_block", "minbuf", "minbuf_day", "sv_up",
+      "cons_wait", "cons_block", "open_end", "lim_cons"]
 SI = {n: i for i, n in enumerate(ST)}
 MAXEV = 2000
 MAXTR = 6000
@@ -401,6 +405,8 @@ def run_path(Pv, d0, d1, seed,
     vp_mods = int(Pv[141]); vp_k = Pv[142]; vp_minfrac = Pv[143]; vp_r21_to = Pv[144]; vp_r21_dd = int(Pv[145]); vp_r21_reg = int(Pv[146])
     sv_on = int(Pv[147]); sv_cap = Pv[148]; sv_margin = Pv[149]
     nz_short = Pv[150] > 0.5; nz_s_risk = Pv[151]
+    cons_pct = Pv[152]; cons_res = Pv[153]; cons_cap = int(Pv[154]); cons_capfrac = Pv[155]
+    cons_thr = (cons_pct - cons_res) / 100.0          # 6.70: bester Tag < cons_thr x Gewinn der Periode
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
@@ -445,6 +451,7 @@ def run_path(Pv, d0, d1, seed,
     last_pay_day = -1; gaps_max = 0.0; gaps_sum = 0.0; first_day = -1
     day_trades_all = 0
     v5_day = -1; pr_day = -1; pr_ok = False
+    cyc_sum = 0.0; cyc_best = 0.0; day_cb = False     # 6.70: Summe und bestes Tagesergebnis der Auszahlungsperiode
     tr_done = 0; nz_pid = -1.0; nz_sum = 0.0; nz_pend = False
 
     if d0 >= nd:
@@ -495,6 +502,9 @@ def run_path(Pv, d0, d1, seed,
             if day_had:
                 trade_days += 1
                 st[9] += 1
+                cyc_sum += day_real
+                if day_real > cyc_best:
+                    cyc_best = day_real
                 if day_real >= needday:
                     valid_days += 1
                     st[10] += 1
@@ -507,6 +517,10 @@ def run_path(Pv, d0, d1, seed,
                         st[30] += 1
                 else:
                     cur_lday = 0
+            if cons_pct > 0.0 and mode == 0 and cyc_start >= 0 and valid_days >= needvalid \
+                    and days[di] - cyc_start >= cycledays and bal - start >= minprofit:
+                if not (cyc_sum > 0.0 and cyc_best < cons_thr * cyc_sum):
+                    st[68] += 1                                # 6.70: nur die Konsistenz fehlt noch
             if mode == 2 or mode == 3:
                 wait -= 1
                 if wait <= 0:
@@ -538,6 +552,7 @@ def run_path(Pv, d0, d1, seed,
                             n_out += 1
                     valid_days = 0; trade_days = 0; cyc_start = -1
                     v5_day = -1; pr_day = -1; pr_ok = False
+                    cyc_sum = 0.0; cyc_best = 0.0
                     bal_peak_c = bal
                     mode = 0
             dayidx = di
@@ -549,7 +564,7 @@ def run_path(Pv, d0, d1, seed,
             day_ref_plus = flt0 if (tagesrefeq and flt0 > 0.0) else 0.0
             if floor_eod and bal + flt0 > peak:
                 peak = bal + flt0
-            day_real = 0.0; day_had = False; day_locked = False; day_wv = False
+            day_real = 0.0; day_had = False; day_locked = False; day_wv = False; day_cb = False
             db_trades[0] = 0; db_trades[1] = 0
             for q in range(2 * NG):
                 g_trades[q] = 0
@@ -628,6 +643,23 @@ def run_path(Pv, d0, d1, seed,
         if stop_after_valid > 0 and cyc_start >= 0:
             vsa = valid_days + (1 if (day_had and day_real >= needday) else 0)
             if vsa >= needvalid and bal - start >= minprofit * prot_minprofit:
+                entries_ok = False
+        # 6.70: Konsistenz-Deckel (ein neuer Rekordtag hebt den noetigen Gewinn der Periode um das 6,9-Fache)
+        #   cons_cap 1: sind die gueltigen Tage erreicht, heute keine neuen Einstiege, sobald der Tag den besten Tag der
+        #               Periode x cons_capfrac erreicht
+        #   cons_cap 2: immer - heute keine neuen Einstiege, sobald der Tag cons_capfrac x Schwelle des gueltigen Tags erreicht
+        if cons_cap > 0 and cons_pct > 0.0 and mode == 0 and day_had:
+            cblk = False
+            if cons_cap == 1 and cyc_start >= 0 and cyc_best > 0.0:
+                vcc = valid_days + (1 if day_real >= needday else 0)
+                if vcc >= needvalid and day_real >= cons_capfrac * cyc_best:
+                    cblk = True
+            elif cons_cap == 2 and day_real >= cons_capfrac * needday:
+                cblk = True
+            if cblk:
+                if entries_ok and not day_cb:
+                    st[69] += 1
+                    day_cb = True
                 entries_ok = False
         # Sonntag-/Montag-Wiederaufnahme
         if we_on and we_reentry and (dow == 0 and nyh >= 18.0 or dow == 1):
@@ -1948,11 +1980,20 @@ def run_path(Pv, d0, d1, seed,
         if mode == 0 or mode == 1:
             vh = valid_days + (1 if (day_had and day_real >= needday) else 0)
             ripe = (vh >= needvalid) and (cyc_start >= 0) and (days[dayidx] - cyc_start >= cycledays) and (bal - start >= minprofit)
+            if ripe and cons_pct > 0.0:                        # 6.70: bester Tag < Schwelle x Gewinn der Periode
+                tot_c = cyc_sum + (day_real if day_had else 0.0)
+                best_c = cyc_best
+                if day_had and day_real > best_c:
+                    best_c = day_real
+                if not (tot_c > 0.0 and best_c < cons_thr * tot_c):
+                    ripe = False
             if mode == 0 and ripe:
                 mode = 1
                 tday = cyc_start + cycledays
                 lv = v5_day if v5_day >= 0 else days[dayidx]
                 lp = pr_day if pr_day >= 0 else days[dayidx]
+                if cons_pct > 0.0 and max(lv, max(lp, tday)) < days[dayidx]:
+                    st[71] += 1                                # 6.70: zuletzt fehlte nur die Konsistenz
                 if lv >= lp and lv >= tday:
                     st[41] += 1
                 elif lp >= lv and lp >= tday:
@@ -2042,6 +2083,13 @@ def run_path(Pv, d0, d1, seed,
                 if (not anyon) and not (we_reif and wwait):
                     vh = valid_days + (1 if (day_had and day_real >= needday) else 0)
                     ripe = (vh >= needvalid) and (cyc_start >= 0) and (days[dayidx] - cyc_start >= cycledays) and (bal - start >= minprofit)
+                    if ripe and cons_pct > 0.0:
+                        tot_c = cyc_sum + (day_real if day_had else 0.0)
+                        best_c = cyc_best
+                        if day_had and day_real > best_c:
+                            best_c = day_real
+                        if not (tot_c > 0.0 and best_c < cons_thr * tot_c):
+                            ripe = False
                     if ripe:
                         mode = 2; wait = paydelay
                         for k in range(NSLOT):
@@ -2122,6 +2170,7 @@ def run_path(Pv, d0, d1, seed,
         p += 1
 
     st[26] = max_streak; st[29] = max_lday; st[31] = maxdd; st[65] = min_buf
+    st[70] = max(bal - start, 0.0) if mode != 3 else 0.0      # 6.70: noch nicht ausgezahlter Gewinn am Ende
     st[38] = gaps_max; st[39] = gaps_sum
     # offene Luecke bis zum Ende zaehlt fuer gaps_max
     if end_ev > 0:
