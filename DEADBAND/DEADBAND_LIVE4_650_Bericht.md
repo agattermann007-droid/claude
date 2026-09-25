@@ -42,7 +42,8 @@ ein neues Konto). Wie bei 6.40 auf dem GFT-Ersatz aus Fremddaten 2022–2025, mi
 - **Mehr Netto:** +278 $ je Jahr mit GFT-nahen, +268 $ mit breiten Spreads. Die Auszahlungen sind größer (267 statt 239 $
   im Mittel, GFT-nah), weil an gültigen Tagen mehr gute Trades laufen.
 - **Nicht weniger Auszahlungen:** im Mittel über 2022–2025 12,12 statt 12,06 (GFT-nah) bzw. 11,66 statt 11,25 (breit).
-  GFT-nah ist das ein Gleichstand im Rahmen der Streuung (±0,5–0,7 je Störung), kein Gewinn.
+  GFT-nah ist das ein Gleichstand (paarweise +0,07 ± 0,10), kein Gewinn. Das Netto-Plus zeigt sich dagegen in allen 16
+  Störungen beider Spread-Lagen (Abschnitt 3.5).
 - **Nicht mehr Bust-Risiko:** 0 Busts in beiden Rechnungen, kein Konto näher als 100 $ am Boden, im Mittel 7–13 $ weiter
   weg als bei 6.40. Im alten Regime 2006–21 Busts, Auszahlungen und Netto wie 6.40.
 - **Nach Startjahr** (1-Jahres-Konten) ist 6.50 nicht in jedem Jahr vorn (Abschnitt 3.6): GFT-nah Start 2022 12,6 statt
@@ -252,6 +253,16 @@ Fremddaten 2006–2021, 16 Störungen, jeder 3. Tag. Zerlegung (je ein Baustein 
 Streuung über die 16 Störungen: 6.50 Ertrag 12,12 ± 0,54 Auszahlungen und 2510 ± 148 $ (GFT-nah), 11,66 ± 0,73 und
 2319 ± 191 $ (breit); 6.40: 12,06 ± 0,62 / 2232 ± 146 $ und 11,25 ± 0,73 / 2051 ± 150 $.
 
+Paarweise je Störung (dieselben ausgelassenen Signale und Schlupf für beide Builds):
+
+| | Netto höher | Differenz Netto | Auszahlungen höher oder gleich | Differenz Auszahlungen |
+|---|---:|---:|---:|---:|
+| GFT-nah | **16 von 16** | +277 $ (SD 110) | 9 von 16 | +0,07 (SD 0,39) |
+| breit | **16 von 16** | +268 $ (SD 135) | 13 von 16 | +0,41 (SD 0,54) |
+
+Das Netto-Plus ist also in jeder Störung da. Bei den Auszahlungen ist GFT-nah ein Gleichstand (+0,07 ± 0,10 im Mittel),
+mit breiten Spreads ein Plus.
+
 **Fremddaten 2006–2021** (anderes Regime; jeder dritte Tag):
 
 | Variante | Ausz./J | Busts/J | Bust im 1. Jahr | Netto | Serien ≥ 6 | Treffer | kleinster Abstand Ø | < 100 $ |
@@ -416,7 +427,7 @@ Inbetriebnahme:
 - Motor: `eng9.py`, Bewertung: `evl9.py`
 - Screening: `x48.py` (Varianten in `VAR`, `X48_SEED0` für einen zweiten Störungs-Satz), Endbewertung: `x49.py`
 - Diagnosen: `pv_ana.py` (Trades nach gültigem Tag), `r21_hour.py` (RSI21 nach Einstiegsstunde), `bust_ana.py` (Busts der
-  Fremddaten nach Monat)
+  Fremddaten nach Monat), `perseed.py` (6.40 gegen 6.50 paarweise je Störung)
 - Prüfungen: `t_eng9.py`, `t_port_650.py`, `t_set.py`, `t_mq5.py`
 - Ergebnisse: `ergebnisse/x48_*.json`, `x49_*.json` (GFT-nah: `x48_gft_spread06.json`, `x49_gft_spread06.json`),
   `t_port_650.txt`

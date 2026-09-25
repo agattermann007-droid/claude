@@ -80,7 +80,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `t_eng9.py` | Pruefung: eng9 mit Voreinstellungen = eng8 (alle Zaehler, Trades, Ereignisse; auch Sperre je Modul mit allen Bits) |
 | `evl9.py` | Bewertung v9 = evl8 plus Ergebnis der Trades nach gueltigem Tag je Modul (`pv`) |
 | `x48.py` | **Konto-Screening 6.50**: Schutz je Modul, Schutzformen, freie Fade-Module, Fade-/RSI21-/Noise-Risiko, RSI21-Uhrzeit, Rueckgangs- und Regime-Schalter, Zerlegung, Sicher; `r21_regime` (Portfolio-Waechter zur RSI21-Einstiegszeit); `X48_SEED0` = anderer Stoerungs-Satz -> `ergebnisse/x48_*.json` |
-| `pv_ana.py`, `r21_hour.py`, `bust_ana.py` | Diagnosen: Trades nach gueltigem Tag (gleicher Tag / spaeter geschlossen, Tag gekippt), alle RSI21-Trades nach Einstiegsstunde, Busts der Fremddaten nach Monat |
+| `pv_ana.py`, `r21_hour.py`, `bust_ana.py`, `perseed.py` | Diagnosen: Trades nach gueltigem Tag (gleicher Tag / spaeter geschlossen, Tag gekippt), alle RSI21-Trades nach Einstiegsstunde, Busts der Fremddaten nach Monat, 6.40 gegen 6.50 paarweise je Stoerung |
 | `x49.py` | **Endbewertung 6.50** gegen 6.40 (16 Stoerungen, Startjahre, Streuung, Abstand zum Boden, Zerlegung, Sicher) -> `ergebnisse/x49_*.json`, GFT-nah `x49_gft_spread06.json` |
 | `t_port_650.py` | **Abgleich EA <-> Replikat** fuer 6.50: Voreinstellungen, Quelltext-Stellen, Entscheidung je Modul, Fade-Regime fuer RSI21 (FadeRegimeLive gegen `r21_regime`) -> `ergebnisse/t_port_650.txt` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |

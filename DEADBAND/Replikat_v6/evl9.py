@@ -121,7 +121,7 @@ def evaluate(Pv, GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)), sk
             per.append([np.mean([x[k] for x in hsr]) for k in ("pay", "bust", "net", "s5", "s6", "mx", "wr")])
         per = np.array(per)
         mean["streuung"] = dict(mean=per.mean(0).tolist(), sd=per.std(0, ddof=1).tolist() if len(seeds) > 1 else [0.0] * 7,
-                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr"])
+                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr"], per=per.tolist())
     if by_year:
         by = {}
         for (h, s, a), o in zip(tags, outs):
