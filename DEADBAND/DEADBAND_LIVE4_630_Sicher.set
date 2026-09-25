@@ -5,10 +5,10 @@
 ; Replikat GFT-Ersatz 2022-25 (Fremddaten, breitere Spreads als GFT; 16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 %,
 ;   Waechter wie im EA): Trefferquote, Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
 ;   6.20 Ertrag:              63,1 % / 7,34 / 0,032 / 2152 $ / 1,45 / 7,6/13
-;   6.30 Ertrag (Echtbetrieb): 65,0 % / 7,33 / 0,000 / 2171 $ / 0,96 / 7,0/11
+;   6.30 Ertrag (Echtbetrieb): 65,0 % / 7,35 / 0,000 / 2174 $ / 0,99 / 7,0/11
 ;   6.20 Sicher:              68,5 % / 4,12 / 0,000 / 1162 $ / 0,24 / 5,5/10
 ;   6.30 Sicher:              70,4 % / 4,13 / 0,000 / 1123 $ / 0,05 / 4,8/9
-; Fremddaten 2006-21 (anderes Marktregime), Treffer/Ausz/Busts: Ertrag 6.20 48,9 %/1,97/0,395, 6.30 51,1 %/1,83/0,347;
+; Fremddaten 2006-21 (anderes Marktregime), Treffer/Ausz/Busts: Ertrag 6.20 48,9 %/1,97/0,395, 6.30 51,1 %/1,84/0,346;
 ;   Sicher 6.20 57,2 %/0,43/0,246, 6.30 59,2 %/0,48/0,228.
 ; Trefferquote = Trades mit Gewinn (Noise-Teile eines Signals = 1 Trade, Teilschliessungen gehoeren zur Position).
 ; Mit den GFT-Exporten nachrechnen: Replikat_v6/x43.py gft (die GFT-Daten fehlten in dieser Sitzung).

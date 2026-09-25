@@ -1,6 +1,7 @@
 """DEADBAND Replikat v7 (Build 6.30, Trefferquote) - eng6 plus Teilgewinn/Einstand/Ziel fuer Noise (nz_tp1r, nz_tp1f,
 nz_be, nz_tp), T1 fuer RSI21 und Noise erst ab der Kerze nach dem Einstieg (130-s-Regel), Fade-T1 wahlweise als Anteil
-des Wegs zum Ziel (GP tp1r < 0). Mit den Voreinstellungen rechnet eng7 wie eng6 (t_eng7.py).
+des Wegs zum Ziel (GP tp1r < 0); eine Teilschliessung durch Ernte/Banking gilt als erledigter Fade-T1 (wie im EA).
+Mit den Voreinstellungen rechnet eng7 wie eng6 (t_eng7.py).
 
 DEADBAND Replikat v6 - numba-Kern wie eng5, zusaetzlich generische Signalstroeme (Plaetze ab G0).
 
@@ -1580,6 +1581,8 @@ def run_path(Pv, d0, d1, seed,
                             p_acc[k] += pnl
                             p_swap[k] *= (1.0 - frac)
                             p_lots[k] = np.round(p_lots[k] - lots, 2)
+                            if k >= G0:
+                                p_t1[k] = True; p_v1[k] = 0.0      # 6.30: Teilschliessung = Teilgewinn erledigt (wie der EA)
                         if day_real >= need:
                             break
 
@@ -1671,6 +1674,8 @@ def run_path(Pv, d0, d1, seed,
                         p_acc[k] += pnl
                         p_swap[k] *= (1.0 - frac)
                         p_lots[k] = np.round(p_lots[k] - lots, 2)
+                        if k >= G0:
+                            p_t1[k] = True; p_v1[k] = 0.0          # 6.30: Teilschliessung = Teilgewinn erledigt (wie der EA)
                     if day_real >= need:
                         break
 

@@ -56,7 +56,7 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `t_mq5.py` | statische Prüfung des EA (Klammern, Format-Argumente, Makros/Globale vor Verwendung, unbekannte Funktionen) |
 | `t_window.py` | Reicht die Wächter-Historie des EA (600 Tage) mit Grid für die Mindestzahl 30? (nur N1800 nicht → `GridOhne`) |
 | **Build 6.30 (Trefferquote)** | |
-| `eng7.py` | Kontomotor v7 = eng6 plus Teilgewinn/Einstand/Ziel je Noise-Teil (`nz_tp1r`, `nz_tp1f`, `nz_be`, `nz_tp`), T1 für RSI21 und Noise erst ab der Kerze nach dem Einstieg, Fade-T1 wahlweise als Anteil des Zielwegs (`tp1r` < 0); Noise-Teilernte zählt zum Trade (wie der Serien-Stopp im EA) |
+| `eng7.py` | Kontomotor v7 = eng6 plus Teilgewinn/Einstand/Ziel je Noise-Teil (`nz_tp1r`, `nz_tp1f`, `nz_be`, `nz_tp`), T1 für RSI21 und Noise erst ab der Kerze nach dem Einstieg, Fade-T1 wahlweise als Anteil des Zielwegs (`tp1r` < 0); Noise-Teilernte zählt zum Trade (wie der Serien-Stopp im EA), eine Teilschließung durch die Ernte erledigt den Fade-T1 (wie im EA) |
 | `t_eng7.py` | Prüfung: eng7 mit Voreinstellungen = eng6 (bis auf die Noise-Teilernte) |
 | `pg_wr.py` | Signal-Ebene der Fades: Trefferquote und R je Signal mit Teilgewinn, Einstand, näherem Ziel (Perioden 2006–2025) |
 | `x42.py` | **Konto-Screening 6.30**: Einstand/Teilgewinn/Ziel für Fades, RSI21, Noise und Kombinationen → `ergebnisse/x42_gft.json` |

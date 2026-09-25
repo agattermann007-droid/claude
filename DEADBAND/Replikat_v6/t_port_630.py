@@ -3,6 +3,9 @@ FadeTeilgewinn, EinstandSetzen und NzEinstand (DEADBAND_LIVE4.mq5) gegen die Rep
 auf Signal-Ebene) auf echten Signalen: Fades (10 Module, Teilgewinn 50 % ab 0,6 R), RSI21-Folgesignale und Noise-Teile
 (Stop auf Einstand + 0,05 R ab 1 R). Kurse je M5-Kerze (Hoch/Tief = Kursverlauf, Stop vor Ziel vor T1 in derselben Kerze).
 Geprueft: gleiche Ausloesekerze, gleiches Ergebnis je Signal (R), gleiche Teilmenge (Lots).
+Der EA loest den Einstand ueber das Kerzen-Hoch/-Tief seit der Kerze nach dem Einstieg aus (BeBesterKurs) - auf
+Kerzen-Ebene ist das der hier uebertragene Vergleich "Hoch >= Niveau". Der Zweig "Kurs schon unter dem Einstand-Stop ->
+schliessen" greift nur nach verpassten Kursen (Verbindung, Neustart) und kommt auf Kerzen-Ebene nicht vor.
 Aufruf: python t_port_630.py"""
 import numpy as np, pickle, os
 import gsig as G, prep5 as P, pg_blocks as PB, x40, nz2

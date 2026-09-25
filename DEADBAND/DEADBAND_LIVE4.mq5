@@ -9,7 +9,10 @@
 //|     RSI21 nicht nach einer Wochenend-Wiederaufnahme.             |
 //|  3) Alles erst ab der M5-Kerze nach der Einstiegskerze und       |
 //|     nach MinHalteSek; Teilgewinn nach der Gewinn-/News-Regel.    |
-//|     Zustand aus Stop und Deal-Historie (auch nach Neustart).     |
+//|     Einstand-Ausloeser: Kerzen-Hoch/-Tief seit der Kerze nach    |
+//|     dem Einstieg (wie das Replikat); Kurs schon unter dem        |
+//|     Einstand-Stop -> schliessen. Zustand aus Stop bzw. Volumen   |
+//|     (Teilschliessung) - gilt auch nach einem Neustart.           |
 //|  Replikat GFT-Ersatz 2022-25: Trefferquote 65,0 statt 63,1 %,    |
 //|  Auszahlungen gleich, Busts 0, Serien >= 6 ein Drittel seltener; |
 //|  Zahlen im Bericht DEADBAND_LIVE4_630_Bericht.md.                |
@@ -952,6 +955,8 @@ int OnInit()
    if(FadeT1R < 0.0 || (FadeT1R > 0.0 && (FadeT1Anteil < 0.1 || FadeT1Anteil > 0.9)) || R21EinstandAbR < 0.0 || NzEinstandAbR < 0.0
       || EinstandPlusR < 0.0 || ((R21EinstandAbR > 0.0 || NzEinstandAbR > 0.0) && EinstandPlusR >= MathMin(R21EinstandAbR > 0.0 ? R21EinstandAbR : 99.0, NzEinstandAbR > 0.0 ? NzEinstandAbR : 99.0)))   // 6.30
      { Print("DEADBAND4: 6.30-Eingaben ungueltig (FadeT1R >= 0, FadeT1Anteil 0,1-0,9, R21EinstandAbR/NzEinstandAbR >= 0, 0 <= EinstandPlusR < EinstandAbR)"); return(INIT_PARAMETERS_INCORRECT); }
+   if((FadeT1R > 0.0 || R21EinstandAbR > 0.0 || NzEinstandAbR > 0.0) && MinHalteSek < 120)   // 6.30: GFT streicht Gewinne aus Trades < 120 s
+     { Print("DEADBAND4: 6.30 Teilgewinn/Einstand brauchen MinHalteSek >= 120 (GFT: Gewinne aus Trades unter 120 s werden gestrichen)"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && (StringLen(FloorOverrideZeit) < 10 || StringToTime(FloorOverrideZeit) < D'2020.01.01'))   // 6.10: ohne Ablesezeit ginge die Spitze bis zum Neustart verloren
      { Print("DEADBAND4: FloorOverride braucht FloorOverrideZeit = Serverzeit der Ablesung im GFT-Dashboard (\"JJJJ.MM.TT HH:MI\")"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && TimeCurrent() > D'2020.01.01' && StringToTime(FloorOverrideZeit) > TimeCurrent() + 3600)
@@ -1097,7 +1102,15 @@ void UebernehmePosition(int k)
       {                                                                      // 6.30: Stop schon auf Einstand -> R aus der Eroeffnungs-Order
        int dd = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
        bool imPlus = (S[k].slPx > 0.0 && (S[k].slPx - S[k].entryPx)*dd >= 0.0);
-       if(imPlus) { double ur = UrStopAbstand(tk); if(ur > 0.0) S[k].rDist = ur; }
+       if(imPlus)
+         {
+          double ur = UrStopAbstand(tk);
+          PositionSelectByTicket(tk);
+          double ptp = PositionGetDouble(POSITION_TP);
+          if(ur <= 0.0 && ptp > 0.0 && S[k].rr > 0.0) ur = MathAbs(ptp - S[k].entryPx)/S[k].rr;   // Ziel = Einstieg +- rr x R
+          if(ur > 0.0) S[k].rDist = ur;
+          else PrintFormat("DEADBAND4: WARNUNG %s RSI21 - Stop steht auf Einstand, R nicht rekonstruierbar (Abschluss-Ernte/Wochenend-Pause rechnen mit dem Einstand-Abstand)", s);
+         }
        S[k].r21Be = imPlus || (R21EinstandAbR <= 0.0);
        PositionSelectByTicket(tk);
       }
@@ -3298,7 +3311,7 @@ double PosMfe(const ulong tk)
    if(i < 0)
      {
       double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
-      if(sl > 0.0 && (sl - op)*d >= 0.0) { rd = UrStopAbstand(tk); if(!PositionSelectByTicket(tk)) return 0.0; }   // 6.30: Stop auf Einstand -> R der Eroeffnung
+      if(sl > 0.0 && (sl - op)*d >= 0.0) { double ur = UrStopAbstand(tk); if(!PositionSelectByTicket(tk)) return 0.0; if(ur > 0.0) rd = ur; }   // 6.30: Stop auf Einstand -> R der Eroeffnung
       if(rd <= 0.0) return 0.0;
       if(gMfeN >= MFEMAX) MfeAufraeumen();
       if(gMfeN >= MFEMAX) return 0.0;
@@ -3458,7 +3471,6 @@ void ZyklusPanel()
    txt += "\n  NAS-Noise-Modul   " + NzStatusText();                     // 5.00
    txt += "\n  Fade-Module       " + FadeStatusText();                   // 6.00
    txt += "\n  Probability Grid  " + GridStatusText();                   // 6.20
-   txt += "\n  Trefferquote      " + TrefferStatusText();                // 6.30
    txt += "\n  DEADBAND          " + (DbAktiv ? "Einstiege an" : "Einstiege AUS (DbAktiv=false, offene werden verwaltet)");
    txt += "\n  GFT-Schutz        " + SchutzStatusText();                    // 4.90
    txt += StringFormat("\n  5.10              Verlierer %.2f (Bremse %s) | Idee max %s | Swap-Vorsorge %s | %s | Abschluss-Ernte %s",
@@ -3466,6 +3478,7 @@ void ZyklusPanel()
                        (IdeeMaxRisikoPct > 0.0 ? StringFormat("%.2f %%", IdeeMaxRisikoPct) : "aus"),
                        (SwapVorsorgePct > 0.0 && SwapVorsorgeMin > 0 ? StringFormat("-%.2f %%", SwapVorsorgePct) : "aus"), SerienText(),
                        (AbschlussLetzte <= 0 ? "aus" : (kCycleStart > 0 && GueltigeTageMitHeute() >= NeedValidDays - AbschlussLetzte && vHeute == 0 && bal >= kStart ? "BEREIT" : "wartet")));
+   txt += "\n  6.30 Treffer      " + TrefferStatusText();                // 6.30
    if(ShowLeiter)
      {
       double stufen[6] = {10000,15000,25000,50000,100000,150000};
@@ -3946,7 +3959,7 @@ void WochenendePruefen(bool dayLocked)
       S[k].entryBarTime = W[k].entryBar; S[k].mfeR = W[k].mfe; S[k].closeFails = 0;
       if(S[k].r21) S[k].entryTime = W[k].entryBar;                           // 4.40: Zeit-Exit zaehlt ab der ersten Eroeffnung
       S[k].r21Be = true;                                                     // 6.30: kein Einstand nach der Wiederaufnahme (wie das Replikat)
-      ulong ntk = 0; if(HavePosition(k, ntk)) WeAktivSpeichern(k, ntk);
+      ulong ntk = 0; if(HavePosition(k, ntk)) WeAktivSpeichern(k, ntk); else if(S[k].posTk > 0) WeAktivSpeichern(k, S[k].posTk);   // 6.30: Hedging: Ticket = Order
       Meldung(StringFormat("WIEDERAUFNAHME %s%s: %s %.2f Lot zu %.*f (Bezug %.*f, Stop %.*f, Ziel %.*f, %.1f R Vorlauf)",
               s, (S[k].r21 ? " RSI21" : ""), (d > 0 ? "LONG" : "SHORT"), nlots, dg, S[k].entryPx, dg, S[k].refPx, dg, nsl, dg, ntp, W[k].mfe));
       WeLoeschen(k, "");
@@ -4211,12 +4224,10 @@ void HandleR21(int k, long today, bool dayLocked)
          double favR = (type==POSITION_TYPE_BUY) ? (bid - ref)/S[k].rDist : (ref - ask)/S[k].rDist;
          if(favR > S[k].mfeR) S[k].mfeR = favR;
         }
-      if(!S[k].r21Be && R21EinstandAbR > 0.0 && now - S[k].lastBeTry >= 5)    // 6.30: Stop auf Einstand ab R21EinstandAbR
+      if(!S[k].r21Be && R21EinstandAbR > 0.0)                                 // 6.30: Stop auf Einstand ab R21EinstandAbR (Pause nach Ablehnung in EinstandSetzen)
         {
          double ref = (S[k].refPx > 0.0 ? S[k].refPx : S[k].entryPx);
-         int e = EinstandSetzen(ticket, ref, S[k].rDist, R21EinstandAbR, "RSI21" + (S[k].zweit ? " (2)" : ""));
-         if(e != 0) S[k].lastBeTry = now;
-         if(e == 1) S[k].r21Be = true;
+         if(EinstandSetzen(ticket, ref, S[k].rDist, R21EinstandAbR, "RSI21" + (S[k].zweit ? " (2)" : "")) == 1) S[k].r21Be = true;
          if(!PositionSelectByTicket(ticket)) return;
         }
       datetime t0 = (S[k].entryTime > 0 ? S[k].entryTime : (datetime)PositionGetInteger(POSITION_TIME));
@@ -4406,7 +4417,7 @@ void HandleR21(int k, long today, bool dayLocked)
          S[ke].refPx = S[ke].entryPx; S[ke].slPx = sl; S[ke].rDist = MathAbs(S[ke].entryPx - sl);
          S[ke].entryTime = now; S[ke].entryBarTime = now; S[ke].tfMin = R21TfMin(t);
          S[ke].mfeR = 0.0; S[ke].t1Done = true; S[ke].beDone = true; S[ke].vol0 = vol; S[ke].vol1 = 0.0; S[ke].vol2 = 0.0; S[ke].closeFails = 0;
-         S[ke].r21Be = (R21EinstandAbR <= 0.0); S[ke].lastBeTry = 0;                   // 6.30
+         S[ke].r21Be = (R21EinstandAbR <= 0.0);                                        // 6.30
          if(kCycleStart <= 0) kCycleStart = now;
          PrintFormat("DEADBAND4 %s RSI21: Einstieg %s M%d%s (RSI %.1f, Divergenz %d, Regime %d), %.2f Lot, Risiko %.2f (Puffer %.2f %%), Stop %.*f, Ziel %.*f (%.2f R)",
                      s, (dir > 0 ? "LONG" : "SHORT"), R21TfMin(t), (ke == k ? "" : " [2. Platz]"), sigRsi[t], div, reg, vol, vol*rd*mpp, buf, dg, sl, dg, tp, S[ke].rr);
@@ -5042,7 +5053,8 @@ struct FadeDef
    int      nGrid;           // 6.20: vom Probability Grid ausgelassene Signale (Historie + live)
    bool     gridAus;         // 6.20: Modul steht in GridOhne (kein Grid-Filter)
    ulong    t1Tk;            // 6.30: Position, deren Teilgewinn erledigt (oder nicht moeglich) ist
-   ulong    t1Chk;           // 6.30: Position, deren Deal-Historie schon geprueft wurde
+   ulong    t1Chk;           // 6.30: Position, deren Einstiegsvolumen gelesen ist
+   double   t1VolIn;         // 6.30: Einstiegsvolumen dieser Position (Teilschliessung = weniger Volumen)
    datetime t1Versuch;       // 6.30: letzter Versuch des Teilgewinns
    int      nT1;             // 6.30: Teilgewinne seit dem Start (Panel)
   };
@@ -5135,7 +5147,7 @@ bool FadeListeLesen()
       F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = false; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;
       F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
       F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
-      F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;                  // 6.30
+      F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1VolIn = 0.0; F[m].t1Versuch = 0; F[m].nT1 = 0;   // 6.30
       nFade++;
      }
    return true;
@@ -5997,49 +6009,120 @@ string GridStatusText()
 //+------------------------------------------------------------------+
 //| 6.30 Trefferquote (Replikat eng7, x42/x43)                        |
 //|  Fades: ab FadeT1R (R = Stop-Abstand beim Einstieg) wird          |
-//|  FadeT1Anteil geschlossen, Stop und Ziel bleiben.                 |
+//|  FadeT1Anteil geschlossen, Stop und Ziel bleiben. Jede Teil-      |
+//|  schliessung (auch die Abschluss-Ernte) zaehlt als erledigt.      |
 //|  RSI21 und jeder Noise-Teil: Stop auf Einstand + EinstandPlusR,   |
-//|  sobald der Kurs R21/NzEinstandAbR im Plus ist.                   |
-//|  Erst ab der M5-Kerze nach der Einstiegskerze (wie das Replikat)  |
-//|  und nach MinHalteSek; Teilgewinn nach der Gewinn-/News-Regel.    |
-//|  Der Zustand steckt im Stop (Einstand) bzw. in der Deal-Historie  |
-//|  (Teilschliessung) - er gilt auch nach einem Neustart.            |
+//|  sobald der Kurs seit der M5-Kerze nach der Einstiegskerze        |
+//|  R21/NzEinstandAbR im Plus war (Kerzen-Hoch/-Tief wie im          |
+//|  Replikat, dazu der laufende Kurs). Liegt der Kurs dann schon     |
+//|  unter dem Einstand-Stop, wird geschlossen (wie ein ausgeloester  |
+//|  Stop im Replikat). Erst nach MinHalteSek; Teilgewinn nach der    |
+//|  Gewinn-/News-Regel; nach einer Ablehnung 60 s Pause.             |
+//|  Zustand: Stop (Einstand) bzw. Volumen < Einstiegsvolumen         |
+//|  (Teilschliessung) - gilt auch nach einem Neustart.               |
 //+------------------------------------------------------------------+
+#define BEMAX 32
+ulong    gBeTk[BEMAX];               // Positionen mit Einstand-Pruefung
+double   gBeBest[BEMAX];             // bester Kurs (Bid long / Ask short) ab der Kerze nach der Einstiegskerze
+datetime gBeBar[BEMAX];              // Beginn der zuletzt gelesenen M5-Kerze
+datetime gBeNext[BEMAX];             // naechster Versuch nach einer Ablehnung
+int      gBeN = 0;
+
+// Beginn der M5-Kerze nach der Einstiegskerze
+datetime NaechsteKerze(const datetime tOpen)
+  {
+   int ps = PeriodSeconds(PERIOD_M5);
+   return (datetime)((long)tOpen - (long)tOpen % ps + ps);
+  }
+
 // true, wenn die M5-Kerze nach der Einstiegskerze begonnen hat
 bool NachEinstiegsKerze(const string s, const datetime tOpen)
   {
-   int ps = PeriodSeconds(PERIOD_M5);
    datetime b0 = iTime(s, PERIOD_M5, 0);
-   datetime naechste = (datetime)((long)tOpen - (long)tOpen % ps + ps);
-   return (b0 > 0 && b0 >= naechste);
+   return (b0 > 0 && b0 >= NaechsteKerze(tOpen));
   }
 
-// urspruenglicher Stop-Abstand einer Position aus der Eroeffnungs-Order (der Stop kann auf Einstand stehen)
+// urspruenglicher Stop-Abstand einer Position aus der Eroeffnungs-Order (der Stop kann auf Einstand stehen). 0 = unbekannt
 double UrStopAbstand(const ulong tk)
   {
    if(!PositionSelectByTicket(tk)) return 0.0;
    double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
    long pid = PositionGetInteger(POSITION_IDENTIFIER);
-   double rd = (sl > 0.0 ? MathAbs(op - sl) : 0.0);
+   double rd = 0.0;
    if(HistorySelectByPosition(pid))
      {
       for(int i=0;i<HistoryDealsTotal();i++)
         {
          ulong dt = HistoryDealGetTicket(i);
          if(dt == 0 || HistoryDealGetInteger(dt, DEAL_ENTRY) != DEAL_ENTRY_IN) continue;
-         ulong ot = (ulong)HistoryDealGetInteger(dt, DEAL_ORDER);
-         double osl = (ot > 0 && HistoryOrderSelect(ot)) ? HistoryOrderGetDouble(ot, ORDER_SL) : 0.0;
          double px = HistoryDealGetDouble(dt, DEAL_PRICE);
+         ulong ot = (ulong)HistoryDealGetInteger(dt, DEAL_ORDER);
+         double osl = (ot > 0 ? HistoryOrderGetDouble(ot, ORDER_SL) : 0.0);    // Orders der Position sind mit ausgewaehlt
          if(osl > 0.0 && px > 0.0) rd = MathAbs(px - osl);
          break;
         }
      }
    PositionSelectByTicket(tk);
+   if(rd > 0.0 && sl > 0.0 && rd < MathAbs(op - sl) - SymbolInfoDouble(PositionGetString(POSITION_SYMBOL), SYMBOL_POINT)) rd = 0.0;   // unplausibel
    return rd;
   }
 
-// Stop auf ref + EinstandPlusR*rd, sobald der Kurs abR*rd im Plus ist.
-// 1 = gesetzt oder schon dort (bzw. ohne R nicht moeglich), 0 = noch nicht, -1 = abgelehnt (spaeter erneut)
+// Einstiegsvolumen einer Position aus der Deal-Historie (0 = Historie noch nicht da)
+double PosEinVolumen(const ulong tk)
+  {
+   if(!PositionSelectByTicket(tk)) return 0.0;
+   long pid = PositionGetInteger(POSITION_IDENTIFIER);
+   double v = 0.0;
+   if(HistorySelectByPosition(pid))
+      for(int i=0;i<HistoryDealsTotal();i++)
+        {
+         ulong dt = HistoryDealGetTicket(i);
+         if(dt > 0 && HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_IN) v += HistoryDealGetDouble(dt, DEAL_VOLUME);
+        }
+   PositionSelectByTicket(tk);
+   return v;
+  }
+
+// Platz im Einstand-Speicher (neu = anlegen; geschlossene Positionen werden bei Bedarf entfernt)
+int BeIndex(const ulong tk, const bool neu)
+  {
+   for(int i=0;i<gBeN;i++) if(gBeTk[i] == tk) return i;
+   if(!neu) return -1;
+   if(gBeN >= BEMAX)
+     {
+      int w = 0;
+      for(int i=0;i<gBeN;i++)
+         if(PositionSelectByTicket(gBeTk[i])) { gBeTk[w] = gBeTk[i]; gBeBest[w] = gBeBest[i]; gBeBar[w] = gBeBar[i]; gBeNext[w] = gBeNext[i]; w++; }
+      gBeN = w;
+      PositionSelectByTicket(tk);
+     }
+   if(gBeN >= BEMAX) return -1;
+   gBeTk[gBeN] = tk; gBeBest[gBeN] = 0.0; gBeBar[gBeN] = 0; gBeNext[gBeN] = 0;
+   gBeN++;
+   return gBeN - 1;
+  }
+
+// bester Kurs seit der M5-Kerze nach der Einstiegskerze: Kerzen-Hoch (long) bzw. Tief + Spread (short), dazu der laufende Kurs
+double BeBesterKurs(const int i, const string s, const int d, const datetime naechste)
+  {
+   datetime von = (gBeBar[i] > 0 ? gBeBar[i] : naechste);
+   MqlRates r[];
+   int n = CopyRates(s, PERIOD_M5, von, TimeCurrent(), r);
+   double pt = SymbolInfoDouble(s, SYMBOL_POINT);
+   for(int j=0;j<n;j++)
+     {
+      if(r[j].time < naechste) continue;
+      double x = (d > 0) ? r[j].high : r[j].low + r[j].spread*pt;
+      if(gBeBest[i] <= 0.0 || (x - gBeBest[i])*d > 0.0) gBeBest[i] = x;
+      if(r[j].time > gBeBar[i]) gBeBar[i] = r[j].time;                         // die laufende Kerze wird beim naechsten Mal erneut gelesen
+     }
+   double px = (d > 0) ? SymbolInfoDouble(s, SYMBOL_BID) : SymbolInfoDouble(s, SYMBOL_ASK);
+   if(px > 0.0 && (gBeBest[i] <= 0.0 || (px - gBeBest[i])*d > 0.0)) gBeBest[i] = px;
+   return gBeBest[i];
+  }
+
+// Stop auf ref + EinstandPlusR*rd, sobald der Kurs abR*rd im Plus war.
+// 1 = gesetzt, schon dort oder geschlossen (bzw. ohne R nicht moeglich), 0 = noch nicht, -1 = abgelehnt (60 s Pause)
 int EinstandSetzen(const ulong tk, const double ref, const double rd, const double abR, const string wer)
   {
    if(!PositionSelectByTicket(tk)) return -1;
@@ -6052,62 +6135,64 @@ int EinstandSetzen(const ulong tk, const double ref, const double rd, const doub
    double nsl = NormalizeDouble(ref + d*EinstandPlusR*rd, dg);
    if(sl > 0.0 && (sl - nsl)*d >= -0.5*pt) return 1;                         // Stop steht schon auf Einstand oder besser
    datetime tOpen = (datetime)PositionGetInteger(POSITION_TIME);
+   datetime now = TimeCurrent();
    if(!NachEinstiegsKerze(s, tOpen)) return 0;
-   if(MinHalteSek > 0 && TimeCurrent() - tOpen < MinHalteSek) return 0;      // kein Gewinnschluss am Einstand-Stop vor der Haltezeit
+   if(MinHalteSek > 0 && now - tOpen < MinHalteSek) return 0;                // kein Gewinnschluss am Einstand-Stop vor der Haltezeit
+   if(!gHandelOk || SymbolInfoInteger(s, SYMBOL_TRADE_MODE) == SYMBOL_TRADE_MODE_DISABLED) return 0;
+   int i = BeIndex(tk, true);
+   if(i < 0 || now < gBeNext[i]) return 0;
+   double best = BeBesterKurs(i, s, d, NaechsteKerze(tOpen));
+   if(!PositionSelectByTicket(tk)) return -1;
+   double lvl = ref + d*abR*rd;
+   if(best <= 0.0 || (best - lvl)*d < 0.0) return 0;                        // Niveau seit der Kerze nach dem Einstieg nicht erreicht
    double bid = SymbolInfoDouble(s, SYMBOL_BID), ask = SymbolInfoDouble(s, SYMBOL_ASK);
    if(bid <= 0.0 || ask <= 0.0) return 0;
-   double lvl = ref + d*abR*rd;
-   if(!((d > 0) ? (bid >= lvl) : (ask <= lvl))) return 0;
+   trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
+   if((d > 0 && bid <= nsl) || (d < 0 && ask >= nsl))                        // Niveau verpasst (Verbindung, Neustart) und Kurs schon unter dem Einstand-Stop
+     {
+      double p = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
+      if(!GewinnSchlussOk(tk, p)) return 0;
+      if(Schliesse(tk))
+        {
+         PrintFormat("DEADBAND4 %s %s: Kurs war %.2f R im Plus und liegt unter dem Einstand-Stop %.*f - geschlossen (wie ein ausgeloester Einstand-Stop), Ergebnis %.2f",
+                     s, wer, abR, dg, nsl, p);
+         return 1;
+        }
+      gBeNext[i] = now + 60;
+      PrintFormat("DEADBAND4 %s %s: Schliessen am Einstand abgelehnt (%d %s) - neuer Versuch in 60 s", s, wer, trade.ResultRetcode(), trade.ResultRetcodeDescription());
+      return -1;
+     }
    long stl = SymbolInfoInteger(s, SYMBOL_TRADE_STOPS_LEVEL);
    double minD = (stl > 0 ? stl*pt : 0.0);
-   if((d > 0 && bid - nsl < minD) || (d < 0 && nsl - ask < minD)) return 0;
-   trade.SetExpertMagicNumber((ulong)PositionGetInteger(POSITION_MAGIC));
+   if((d > 0 && bid - nsl < minD) || (d < 0 && nsl - ask < minD)) return 0;   // zu nah am Kurs (Stops-Level): spaeter
    if(trade.PositionModify(tk, nsl, tp))
      {
       PrintFormat("DEADBAND4 %s %s: Stop auf Einstand %.*f (Einstieg + %.2f R) - Kurs war %.2f R im Plus", s, wer, dg, nsl, EinstandPlusR, abR);
       return 1;
      }
-   PrintFormat("DEADBAND4 %s %s: Stop auf Einstand abgelehnt (%d %s) - neuer Versuch", s, wer, trade.ResultRetcode(), trade.ResultRetcodeDescription());
+   gBeNext[i] = now + 60;
+   PrintFormat("DEADBAND4 %s %s: Stop auf Einstand abgelehnt (%d %s) - neuer Versuch in 60 s", s, wer, trade.ResultRetcode(), trade.ResultRetcodeDescription());
    return -1;
   }
 
 // Noise: je Teil Stop auf Einstand ab NzEinstandAbR (R = Abstand zum Stop der Eroeffnung; steht der Stop im Plus, ist es erledigt)
 void NzEinstand()
   {
-   static datetime letzter = 0;
-   datetime now = TimeCurrent();
-   for(int i=PositionsTotal()-1;i>=0;i--)
+   ulong tks[]; int n = 0;
+   for(int i=PositionsTotal()-1;i>=0;i--)                                     // erst sammeln: EinstandSetzen waehlt Positionen neu aus
      {
       ulong tk = PositionGetTicket(i); if(tk == 0) continue;
       if(!IsNzMagic(PositionGetInteger(POSITION_MAGIC))) continue;
+      ArrayResize(tks, n + 1); tks[n++] = tk;
+     }
+   for(int q=0;q<n;q++)
+     {
+      if(!PositionSelectByTicket(tks[q])) continue;
       double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
       int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
       if(sl <= 0.0 || (sl - op)*d >= 0.0) continue;                           // ohne Stop oder schon auf Einstand
-      double rd = (op - sl)*d;
-      double lvl = op + d*NzEinstandAbR*rd;
-      string sy = PositionGetString(POSITION_SYMBOL);
-      double px = (d > 0) ? SymbolInfoDouble(sy, SYMBOL_BID) : SymbolInfoDouble(sy, SYMBOL_ASK);
-      if(px <= 0.0 || (px - lvl)*d < 0.0) continue;
-      if(now - letzter < 3) return;                                             // Aenderungen gedrosselt (alle 3 s)
-      letzter = now;
-      EinstandSetzen(tk, op, rd, NzEinstandAbR, StringFormat("NOISE Teil #%I64u", tk));
+      EinstandSetzen(tks[q], op, (op - sl)*d, NzEinstandAbR, StringFormat("NOISE Teil #%I64u", tks[q]));
      }
-  }
-
-// Fade-Teilschliessung schon erfolgt? (Ausstiegs-Deal dieser Position in der Historie - auch nach einem Neustart)
-bool FadeTeilSchonZu(const ulong tk)
-  {
-   if(!PositionSelectByTicket(tk)) return false;
-   long pid = PositionGetInteger(POSITION_IDENTIFIER);
-   bool ja = false;
-   if(HistorySelectByPosition(pid))
-      for(int i=HistoryDealsTotal()-1;i>=0;i--)
-        {
-         ulong dt = HistoryDealGetTicket(i);
-         if(dt > 0 && HistoryDealGetInteger(dt, DEAL_ENTRY) == DEAL_ENTRY_OUT) { ja = true; break; }
-        }
-   PositionSelectByTicket(tk);
-   return ja;
   }
 
 // Fade: FadeT1Anteil der Position schliessen, sobald der Kurs FadeT1R im Plus ist. true = Teilschliessung gesendet
@@ -6117,14 +6202,21 @@ bool FadeTeilgewinn(const int m, const ulong tk)
    if(!PositionSelectByTicket(tk)) return false;
    string s = S[F[m].k].sym;
    datetime now = TimeCurrent();
-   if(F[m].t1Chk != tk)                                                        // einmal je Position: schon teilweise geschlossen?
+   double stp = SymbolInfoDouble(s, SYMBOL_VOLUME_STEP); if(stp <= 0.0) stp = 0.01;
+   if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_HEDGING)
+     { F[m].t1Tk = tk; Print("DEADBAND4 FADE: Teilgewinn nur auf Hedging-Konten (GFT) - hier aus"); return false; }
+   if(F[m].t1Chk != tk)                                                        // Einstiegsvolumen aus der Deal-Historie (auch nach Neustart)
      {
-      F[m].t1Chk = tk;
-      if(FadeTeilSchonZu(tk)) { F[m].t1Tk = tk; return false; }
+      if(now - F[m].t1Versuch < 10) return false;
+      F[m].t1Versuch = now;
+      double vin = PosEinVolumen(tk);
+      if(vin <= 0.0) return false;                                             // Historie noch nicht da: spaeter
+      F[m].t1Chk = tk; F[m].t1VolIn = vin;
       if(!PositionSelectByTicket(tk)) return false;
      }
-   double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
    double vol = PositionGetDouble(POSITION_VOLUME);
+   if(vol < F[m].t1VolIn - 0.5*stp) { F[m].t1Tk = tk; return false; }         // schon teilweise geschlossen (Teilgewinn oder Ernte)
+   double op = PositionGetDouble(POSITION_PRICE_OPEN), sl = PositionGetDouble(POSITION_SL);
    int d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY ? 1 : -1);
    datetime tOpen = (datetime)PositionGetInteger(POSITION_TIME);
    double rd = (op - sl)*d;
@@ -6134,22 +6226,25 @@ bool FadeTeilgewinn(const int m, const ulong tk)
    if(bid <= 0.0 || ask <= 0.0) return false;
    double lvl = op + d*FadeT1R*rd;
    if(!((d > 0) ? (bid >= lvl) : (ask <= lvl))) return false;
-   double stp = SymbolInfoDouble(s, SYMBOL_VOLUME_STEP); if(stp <= 0.0) stp = 0.01;
    double mnv = SymbolInfoDouble(s, SYMBOL_VOLUME_MIN);
-   double v1 = NormalizeDouble(MathFloor(vol*FadeT1Anteil/stp + 1e-9)*stp, 2);
+   int vdg = (int)MathMax(0.0, MathCeil(-MathLog10(stp) - 1e-9));
+   double v1 = NormalizeDouble(MathFloor(vol*FadeT1Anteil/stp + 1e-9)*stp, vdg);
    if(v1 < mnv - 1e-9 || vol - v1 < mnv - 1e-9) { F[m].t1Tk = tk; return false; }   // zu klein fuer eine Teilschliessung (Replikat ebenso)
    double p = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
    if(!GewinnSchlussOk(tk, p)) return false;                                   // 130-s-/News-Regel
-   if(now - F[m].t1Versuch < 10) return false;
+   if(!gHandelOk || now - F[m].t1Versuch < 10) return false;
    F[m].t1Versuch = now;
    if(SchliesseTeil(tk, v1))
      {
       F[m].t1Tk = tk; F[m].nT1++;
+      double real = MathMax(kTodayReal, kTodayRealSchaetz) + p*(v1/vol);      // wie die Ernte: zaehlt sofort fuer den gueltigen Tag
+      kTodayRealSchaetz = real; kSchaetzZeit = now;
       fadeLetzte = StringFormat("%s Teilgewinn %.2f von %.2f Lot bei %.2f R", FadeName(m), v1, vol, FadeT1R);
       PrintFormat("DEADBAND4 %s FADE %s (Stop und Ziel bleiben)", s, fadeLetzte);
       return true;
      }
-   if(now - F[m].logZeit >= 60) { F[m].logZeit = now; PrintFormat("DEADBAND4 %s FADE %s: Teilgewinn abgelehnt (%d %s) - neuer Versuch alle 10 s", s, FadeName(m), trade.ResultRetcode(), trade.ResultRetcodeDescription()); }
+   F[m].t1Chk = 0;                                                             // Volumen neu pruefen (vielleicht doch ausgefuehrt)
+   if(now - F[m].logZeit >= 60) { F[m].logZeit = now; PrintFormat("DEADBAND4 %s FADE %s: Teilgewinn abgelehnt (%d %s) - neuer Versuch", s, FadeName(m), trade.ResultRetcode(), trade.ResultRetcodeDescription()); }
    return false;
   }
 
@@ -6157,8 +6252,8 @@ string TrefferStatusText()
   {
    int n = 0;
    for(int m=0;m<nFade;m++) n += F[m].nT1;
-   return StringFormat("Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s (+%.2f R) | Teilgewinne seit Start %d",
+   return StringFormat("Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s | Teilgewinne %d",
                        (FadeT1R > 0.0 ? StringFormat("%.0f %% ab %.2f R", FadeT1Anteil*100.0, FadeT1R) : "aus"),
                        (R21EinstandAbR > 0.0 ? StringFormat("ab %.2f R", R21EinstandAbR) : "aus"),
-                       (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R", NzEinstandAbR) : "aus"), EinstandPlusR, n);
+                       (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R", NzEinstandAbR) : "aus"), n);
   }
