@@ -30,6 +30,7 @@ Gegenprobe: 6.10 Ertrag auf „ext“ neu gerechnet 1,99 Ausz / 0,34 Busts / 511
 | `s1_ablation.py` … `s18_volumen.py` | Screenings ohne Konto (Regeln, Ausstiege, Filter, Kreuz, Zeitfenster, Rückzug, Wächter, Zeitebenen, RSI-Länge, Volumen) |
 | `a1_konto.py`, `a3_konto.py`, `a4_raster.py`, `a5_fein.py` | Screenings im Kontomotor (beide Datensätze) |
 | `t_bust.py`, `t_bustpfad.py`, `t_skip.py` | Diagnose: Bust-Ursache (immer der Boden), Bust-Episoden, ausgelassene RSI21-Signale |
+| `t_volsegment.py`, `t_volfeed.py`, `t_volmt5.py` | Gegenprobe Volumen-Filter je Datenquelle und auf zweiten Gold-Feeds (MT5-Broker 2018–24, OANDA 2006–20) |
 | `e1_final.py` | **Endbewertung 6.10 gegen 6.20** (gft 16 Störungen mit Startjahren, ext 8 Störungen, RSI21 allein) |
 | `e3_jahre.py` | 6.10 gegen 6.20 je Startjahr auf den Fremddaten 2006–2021 |
 | `e2_tabellen.py` | Tabellen „RSI21 allein“ für den Bericht |

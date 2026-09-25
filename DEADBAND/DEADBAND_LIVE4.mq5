@@ -18,6 +18,9 @@
 //|  RSI21 allein 2006-25: Sharpe 1,23 -> 1,36, laengste Verlust-    |
 //|  serie 21 -> 16 Trades. Die Kreuz-Bestaetigung bleibt: ohne sie  |
 //|  mehr RSI21-Gewinn, aber im Konto viel mehr Busts.               |
+//|  Vorbehalt: auf einem Gold-Feed mit echtem MT5-Tickvolumen       |
+//|  (2018-24) bestaetigt sich der Volumen-Filter nicht. Abschalten: |
+//|  R21VolFaktor 0 (die Umschichtung allein: 8,20/0,014, 2,02/0,322)|
 //|  Bericht DEADBAND_LIVE4_620_Bericht.md. Zurueck: rollback_6.10/. |
 //|                                                                  |
 //|  Build 6.10 FADE, 24.09.2026                                     |
@@ -2627,7 +2630,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND LIVE 6.10 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND LIVE 6.20 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3389,7 +3392,7 @@ void ZyklusPanel()
       txt += StringFormat("=== AUSZAHLUNG BEANTRAGEN: Konto flach, Gewinn %.2f, auszahlbar %.2f, Anteil %.2f ===\n", bal-kStart, AuszahlbarJetzt(), AuszahlbarJetzt()*ProfitSplit);
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    txt += StringFormat(
-      "DEADBAND LIVE 6.10 FADE   %s\n"
+      "DEADBAND LIVE 6.20 FADE   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -4309,15 +4312,13 @@ void HandleR21(int k, long today, bool dayLocked)
         }
       if(ke < 0) continue;
       if(!HedgeFrei(ke, dir)) continue;                            // 4.90: GFT-Hedging-Verbot
-        {                                                          // 6.20: Volumen-Bestaetigung
-         double vq = 0.0;
-         int vok = R21Volumen(s, t, vq);
-         if(vok <= 0)
-           {
-            if(vok == 0) PrintFormat("DEADBAND4 %s RSI21: %s-Signal M%d ohne Volumen-Bestaetigung (%.2f x Mittel < %.2f) - kein Einstieg", s, (dir > 0 ? "LONG" : "SHORT"), R21TfMin(t), vq, R21VolFaktor);
-            else         PrintFormat("DEADBAND4 %s RSI21: Tick-Volumen M%d nicht verfuegbar - kein Einstieg", s, R21TfMin(t));
-            continue;
-           }
+      double vq = 0.0;                                             // 6.20: Volumen-Bestaetigung (Signal-Gedaechtnis ist oben schon gesetzt)
+      int vok = R21Volumen(s, t, vq);
+      if(vok <= 0)
+        {
+         if(vok == 0) PrintFormat("DEADBAND4 %s RSI21: %s-Signal M%d ohne Volumen-Bestaetigung (%.2f x Mittel < %.2f) - kein Einstieg", s, (dir > 0 ? "LONG" : "SHORT"), R21TfMin(t), vq, R21VolFaktor);
+         else         PrintFormat("DEADBAND4 %s RSI21: Tick-Volumen M%d nicht verfuegbar (weniger als %d Kerzen) - kein Einstieg", s, R21TfMin(t), R21VolKerzen);
+         continue;
         }
       double unsicht = 0.0;                                        // 4.90: Risiko eben eroeffneter, noch nicht sichtbarer Positionen
       { ulong tx = 0; if(neuK && !HavePosition(k, tx)) unsicht += neuRiskK; if(neuK2 && k2 >= 0 && !HavePosition(k2, tx)) unsicht += neuRiskK2; }

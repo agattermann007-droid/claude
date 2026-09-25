@@ -36,7 +36,10 @@ längste Verlustserie 21 → 16 Trades, größter Rückgang 24,4 → 20,9 R.
 
 **Ehrlich bewertet:** Der Hauptgewinn ist **weniger Busts** bei gleichen bis etwas mehr Auszahlungen – nicht mehr
 Ertrag. Die Regeln von RSI21 v3.4 sind im Konto nahe an ihrem Optimum. Die Variante mit dem höchsten RSI21-Ertrag
-(Abschnitt 3.5) steigert die Busts im Konto stark und wurde deshalb **nicht** übernommen.
+(Abschnitt 3.5) steigert die Busts im Konto stark und wurde deshalb **nicht** übernommen. Der Volumen-Filter hat
+einen Schwachpunkt: Auf einem zweiten Gold-Feed mit echtem MT5-Tickvolumen (2018–2024) bestätigt er sich nicht
+(Abschnitt 3.7). Er lässt sich mit `R21VolFaktor=0` abschalten; die Risiko-Umschichtung allein ist ebenfalls besser
+als 6.10.
 
 ## 2. Daten und Werkzeug
 
@@ -157,7 +160,26 @@ Feinbewertung (Ersatz-GFT 16 Störungen, Fremddaten 8; Ausz / Busts / Netto / mi
 | … Risiko 0,7 | 8,01 / 0,021 / 2443 / 408 | 2,18 / 0,328 / 562 / 507 |
 
 Alle Nachbarn liegen bei den Busts deutlich unter 6.10 und bei den Auszahlungen gleich oder darüber: ein Plateau,
-kein Einzeltreffer. „Max. 1 Verlust je Tag“ bringt nichts Messbares und bleibt bei 2.
+kein Einzeltreffer. „Max. 1 Verlust je Tag“ bringt nichts Messbares und bleibt bei 2. Beide Teile tragen: nur Gold 0,5 +
+Risiko 0,6 ergibt 8,20 / 0,014 bzw. 2,02 / 0,322, nur der Volumen-Filter 8,09 / 0,021 bzw. 2,08 / 0,306.
+
+### 3.7 Gegenprobe: Volumen je Datenquelle
+
+Das Tick-Volumen stammt je nach Zeitraum aus verschiedenen Quellen. Ø R der 6.10-Trades (RSI21 allein) mit
+Volumen ≥ 1,5 × Mittel gegen < 1,5 × Mittel:
+
+| Symbol, Quelle | ≥ 1,5 × Mittel | < 1,5 × Mittel |
+|---|---|---|
+| Gold, OANDA-Tickanzahl 2006–2011 | +0,16 R (105 Trades) | −0,38 R (38) |
+| Gold, Dukascopy-Ticks 2011–2016 | +0,27 R (163) | −0,33 R (41) |
+| Gold, Dukascopy-Proxy 2016–2025 | +0,61 R (234) | +0,14 R (71) |
+| NAS, OANDA-Tickanzahl 2006–2020 | +0,42 R (184) | +0,71 R (17) |
+| NAS, MT5-Broker 2021–2025 | +0,77 R (125) | −0,13 R (14) |
+| **Gold, MT5-Broker 2018–2024** (zweiter Feed, `t_volmt5.py`) | +0,43 R (173) | +0,62 R (53) |
+
+In drei Gold-Quellen über 20 Jahre trägt der Filter deutlich. Auf dem MT5-Broker-Feed 2018–2024 – dessen Tickvolumen
+dem von GFT am nächsten kommt – bestätigt er sich für Gold **nicht** (dort waren die Trades mit wenig Volumen sogar
+besser; kleine Zahl, aber ein Warnzeichen). Für NAS gibt es zu wenige Trades mit wenig Volumen für ein Urteil.
 
 ## 4. Was 6.20 ändert
 
@@ -191,13 +213,20 @@ Presets: `DEADBAND_LIVE4_Echtbetrieb.set` = Voreinstellungen 6.20. `DEADBAND_LIV
    Zahlen für 2022–25 sind daher mit den Berichten 6.00/6.10 **nicht direkt vergleichbar**. Vergleichbar sind
    6.10 und 6.20 unter gleichen Annahmen.
 2. **Tick-Volumen:** Im Replikat ist Gold ab 2016 ein Proxy aus dem Dukascopy-Volumen, NAS stammt von OANDA bzw.
-   einem anderen MT5-Broker, NAS 2020-05…12 hat kein Volumen. Der Filter arbeitet mit dem Verhältnis zum eigenen
-   Mittel. Das sollte auf GFT-Tickvolumen übertragbar sein, geprüft ist es nicht.
+   einem anderen MT5-Broker, NAS 2020-05…12 hat kein Volumen. Auf einem zweiten Gold-Feed mit echtem
+   MT5-Tickvolumen (2018–2024) bestätigt sich der Filter nicht (3.7). Mit GFT-Tickvolumen ist er ungeprüft. Wer ihm
+   nicht traut, setzt `R21VolFaktor=0`: Übrig bleibt die Umschichtung (Gold 0,5, Risiko 0,6), im Replikat allein
+   schon besser als 6.10 (8,20 / 0,014 bzw. 2,02 / 0,322 Auszahlungen / Busts).
+   Kleiner Unterschied zum Replikat: Hat das Terminal weniger als `R21VolKerzen` Kerzen der Zeitebene, lässt die EA
+   das Signal aus (Meldung „Tick-Volumen … nicht verfuegbar“); das Replikat ließ die ersten 50 Kerzen der Daten durch.
+   Mit „Max. Balken im Chart = Unbegrenzt“ tritt das nicht auf.
 3. **Busts sind seltene Ereignisse.** Auf den Ersatzdaten stammen sie überwiegend aus einer Phase (Juni 2025, Fades
    im Verlust). Die Senkung von 0,028 auf 0,004 je Jahr ist deshalb weniger sicher als die Richtung, die beide
    Datensätze zeigen.
 4. **Nicht kompiliert, nicht im Tester** (kein MetaEditor in dieser Umgebung). Geprüft: Klammern, Format-Aufrufe,
-   Eingaben gegen die Presets (206 von 206). `CopyTickVolume` wird wie in der bestehenden `VolRel` genutzt.
+   Eingaben gegen die Presets (206 von 206), zusätzlich ein unabhängiges Code-Review der Änderung (keine Kompilier-
+   oder Logikfehler gefunden; die Build-Kennung in Kontobericht und Panel wurde danach auf 6.20 gesetzt).
+   `CopyTickVolume` wird wie in der bestehenden `VolRel` genutzt.
 5. Die Ausprägung „NAS ohne Kreuz“ (3.5) ist **nicht** als Eingabe eingebaut. Wer RSI21 **allein** auf einem Konto
    handelt (ohne Fades und Noise), findet sie im Labor (`r7kand.k1gn`); im Kombi-Konto erhöht sie die Busts.
 
