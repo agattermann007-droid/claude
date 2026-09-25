@@ -1,0 +1,10 @@
+1. Voreinstellungen EA = Replikat-Variante 6.50 Ertrag
+  EA: FadeRiskPct 0.70, GueltigSchutzR21BisNY 13.0, GueltigSchutzR21Regime true, GueltigSchutzFrei ['N1330', 'N1300'] | Replikat: Fade-Risiko 0.7, vp_r21_to 13.0, vp_r21_reg 1, vp_mods 12, frei ['N1330', 'N1300'] -> GLEICH
+2. Quelltext-Stellen des Schutzes je Modul
+  11 EA-Stellen, 4 Replikat-Stellen: VORHANDEN
+3. Schutz gueltiger Tage je Modul
+  Entscheidung je Modul: 18816 Zustaende (gueltige Tage, Tagesergebnis, Zyklus, NY-Stunde, Fade-Regime, Modul), EA = Replikat: IDENTISCH
+4. Fade-Regime fuer RSI21 (FadeRegimeLive gegen x48.r21_regime)
+  gft: 1036 RSI21-Signale, Fade-Regime live nach Replikat 1002, nach EA 1002 -> IDENTISCH
+  ext: 3550 RSI21-Signale, Fade-Regime live nach Replikat 182, nach EA 182 -> IDENTISCH
+GESAMT IDENTISCH
