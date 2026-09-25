@@ -473,6 +473,7 @@ alle 170 Tage aus (Fremddaten), und das sollte man wissen. 6.60 meldet deshalb p
 | `FadeRiskPct` | 0,75 | 0,70 | **0,75** | Risiko je Fade-Trade in % vom Startsaldo (× Pufferkurve) |
 | `FadeFruehwarnPF` (neu) | – | – | **1,25** | Vorwarnung, solange die Fades live sind und der PF unter X liegt. 0 = keine Vorwarnung; die Meldungen bei jedem Wechsel bleiben |
 | Sicher-Set: `FadeRiskPct` | 0,75 | 0,70 | 0,70 | unverändert wie 6.50 Sicher |
+| `WeSonderTage` | … | … | **+ 18.06.2027 12:30 NY** | Sondertage wie Freitag. Ergänzt ist Juneteenth 2027, ein Freitag. 2026 endete der Handel an so einem Freitag für NAS und Gold um 13:00 NY, der normale Freitagsschluss um 16:45 NY käme zu spät. Die Liste endet im Dezember 2027 und muss danach verlängert werden |
 
 - **Handelslogik:** wie 6.50, nur mit 0,75 % Fade-Risiko. Der Schutz gültiger Tage (N1330/N1300 frei, RSI21 ab 13:00 NY
   im Fade-Regime), der Portfolio-Wächter, die Pufferkurve und die Auszahlungsregeln bleiben unverändert.

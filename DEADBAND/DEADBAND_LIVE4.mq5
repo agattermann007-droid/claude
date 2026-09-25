@@ -23,6 +23,9 @@
 //|     der PF unter 1,25 liegt (2022-25 rund 4 % der Zeit, 2026 bis |
 //|     August nie). Nur Meldungen, kein Einfluss auf den Handel.    |
 //|     Stand ueberlebt einen Neustart (Terminal-Globalvariablen).   |
+//|  3) WeSonderTage: 18.06.2027 ergaenzt (Juneteenth an einem       |
+//|     Freitag; 2026 endete der Handel an so einem Freitag fuer     |
+//|     NAS und Gold um 13:00 NY - Freitagsschluss sonst zu spaet).  |
 //|  Sicher-Set: unveraendert wie 6.50 Sicher (Fade-Risiko 0,70 %;   |
 //|  dort 2022-25 gleichauf und 2026 besser als 0,75 %), dazu 2).    |
 //|  Geprueft und verworfen (Bericht, Abschnitt 4): Groesse fuer den |
@@ -703,7 +706,7 @@ input bool   HedgeSperre      = true;   // kein Einstieg/keine Wiederaufnahme ge
 input int    NewsSperreMin    = 6;      // +-X min um rote USD-Termine: keine Einstiege, keine eigenen Gewinnschliessungen > 1 % (0 = aus; nur live)
 input int    MinHalteSek      = 130;    // eigene Gewinnschliessungen erst nach X s Haltedauer (GFT: Gewinne aus Trades < 120 s werden gestrichen)
 input int    SchlussVorlaufMin= 5;      // keine Einstiege in den letzten X min vor der Freitags-/Sondertag-Schliessung
-input string WeSonderTage     = "2026.11.27 12.5;2026.12.24 12.5;2026.12.31 16.0;2027.03.25 16.5;2027.11.26 12.5;2027.12.23 16.5"; // Tage mit fruehem Schluss oder Feiertag danach: "JJJJ.MM.TT NY-Stunde" (wie Freitag behandeln)
+input string WeSonderTage     = "2026.11.27 12.5;2026.12.24 12.5;2026.12.31 16.0;2027.03.25 16.5;2027.06.18 12.5;2027.11.26 12.5;2027.12.23 16.5"; // Tage mit fruehem Schluss oder Feiertag danach: "JJJJ.MM.TT NY-Stunde" (wie Freitag behandeln)
 input double MaxIdeeMarginPct = 70.0;   // Margin je Handelsidee (Symbol + Richtung) hoechstens X % der Equity (GFT: > 80 % = Gambling), 0 = aus
 input double WeSpreadMaxR     = 0.15;   // Wiederaufnahme erst bei Spread <= X x R-Abstand, wenn WeSpreadMaxList 0 ist (0 = aus)
 input bool   VpsSperre        = true;   // auf einem VPS nicht starten (GFT Instant Premium: VPS verboten)
