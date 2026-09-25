@@ -359,3 +359,46 @@ cd ../scripts && ./run_all.sh     # prepare_sources -> build_xauusd -> build_mt5
 - XAUUSD_ext `8532e33b…b462`
 - XAUUSD_ext_mt5 `ab243548…23bb`
 - XAUUSD_ext_oanda `dd403ce3…196a`
+
+---
+
+## 10. Ergänzung Build 6.60 (25.09.2026): US500 und NAS100 2025–2026
+
+Zwei weitere Dateien, beide im MT5-Format wie oben (M5, GFT-Serverzeit = NY + 7 h, ohne Serverstunde 00 und Wochenende).
+Wie alle CSV-Dateien liegen sie nicht im Repository. Die Skripte bauen sie aus den Rohdaten neu, das Ergebnis ist byte-identisch.
+
+| Datei | Zeitraum (Server) | Zeilen | Quelle | Verwendung |
+|---|---|---:|---|---|
+| `US500_ext_M5.csv` | 2020-01-02 → 2025-12-31 | 419 812 | MT5-Broker-Export US500 (`ts4blader/market_data`, gleicher Broker wie US100) | Build 6.60, Kandidat K2: NAS-Fades auf dem S&P 500 (Signal-Ebene) |
+| `NAS100_duka_M5.csv` | 2025-01-02 → 2026-08-28 | 111 490 | Dukascopy-Ticks USATECHIDXUSD (Bid/Ask) | Build 6.60: Zukunftstest 2026 (NAS100 ab 2025 im GFT-Ersatz, `Replikat_v6/mk_proxy2026.py`) |
+
+**US500** (`scripts/build_us500.py`):
+- Quelle: `US500/M1_seed.csv` aus `github.com/ts4blader/market_data`, Commit `5246088b258b9e94cf43300e5bd8769695c49526` (Git-LFS),
+  SHA-256 `3951499477feef3c9ebadcd90300b19843410e2ce5b7f4bb06c9339522093407`. Download:
+  `curl -L -o raw/ts4blader_market_data/US500/M1_seed.csv https://media.githubusercontent.com/media/ts4blader/market_data/5246088b258b9e94cf43300e5bd8769695c49526/US500/M1_seed.csv`.
+- Aufbereitung wie US100 (`build_mt5_sources.py`): M1 → M5, TICKVOL Summe, SPREAD Minimum der M1-Spreads (0,1 → 0,01 Punkte).
+- Zeitbasis geprüft: Tickvolumen springt um 16:30 Server (Kassa-Eröffnung 09:30 NY) von 145 auf 453 (Median je Kerze).
+  Korrelation der M5-Renditen mit US100 vom selben Broker: 0,931 ohne Versatz, −0,004 / −0,003 bei ±1 Kerze.
+- Spread (Median je Jahr, 0,01 Punkte): 2020 0 (fehlt), 2021 40, 2022 20, ab 2023 50.
+- SHA-256 der Ergebnisdatei: `fca24d0b1a1eb5149e4471bd14d9943ef6bb2c58cf1c5b73b81ac5c6f60f3e92`.
+
+**NAS100 aus Dukascopy-Ticks** (`scripts/build_nas_dukascopy.py`):
+- Quelle: `github.com/esmaeil999/dukascopy-tick-data`, Release `usatechidxusd-ticks-2025-01-01-to-2026-08-29`, Datei
+  `usatechidxusd-ticks-2025-01-01-to-2026-08-29.zip`, SHA-256 `65634bfea670fe49cfab32221e9047574571a4bf73a4eb2bd36f641cb3b3de46`.
+  127,2 Mio. Ticks (Bid/Ask, UTC), 2025-01-01 23:00 → 2026-08-28 20:14 UTC. Keine Lizenzdatei. Es gelten die
+  Nutzungsbedingungen von Dukascopy.
+- Aufbereitung wie Gold-Segment A/B: Ticks → M1 Bid-OHLC → M5. Spread je M1 = min(Open-, Close-Spread), je M5 das Minimum.
+- Dukascopy notiert USATECHIDXUSD nur bis 16:15 NY. GFT handelt bis 17:00 NY. `mk_proxy2026.py` ergänzt deshalb die Kerzen
+  16:15–16:55 NY flach zum letzten Kurs (3 654 Kerzen an 406 Tagen). So finden Zeit-Ausstiege um 16:40 NY am selben Tag statt.
+- Spread laut Dukascopy (Median): Januar–August 2025 3,2 Punkte, ab September 2025 0,9 Punkte. Beides ist nicht GFT-typisch.
+  Im Zukunftstest gilt deshalb nur der relative GFT-Spread (wie im Broker-Teil, wo er fast immer greift).
+- Abgleich mit dem MT5-Broker-Export US100 im gemeinsamen Jahr 2025 (66 393 M5-Kerzen):
+  - Korrelation der M5-Renditen 0,935 ohne Versatz (±1 Kerze: 0,018 / 0,007). Die Zeitbasis stimmt also.
+  - Während der NY-Kassazeit 09:30–16:00: 0,979 (Streuungs-Verhältnis 1,01). Außerhalb: 0,873, Dukascopy streut dort 11 % mehr.
+  - Auf M15-Renditen: 0,958.
+  - Wochen-Median 0,978. 13 von 53 Wochen liegen unter 0,95, die schwächste ist 17.–23.08.2025 mit 0,706.
+  - Kursniveau: Dukascopy liegt im Median 17 Punkte unter dem Broker (p5/p95 −40 / −1).
+  - Diese Reihe ist also deutlich verrauschter als die übrigen Quellen (dort 0,995–0,999). Sie taugt für den Vergleich von
+    Varianten auf denselben Daten. Absolute Zahlen für 2026 sind unsicherer als für 2022–2025.
+- SHA-256 der Ergebnisdatei: `d90cf10ceeb966c56a30909b6094e718c5587df1492ae63213db647fac7dcb67`.
+- Download: `curl -L -o raw/dukascopy_usatech/usatechidxusd-ticks-2025-01-01-to-2026-08-29.zip https://github.com/esmaeil999/dukascopy-tick-data/releases/download/usatechidxusd-ticks-2025-01-01-to-2026-08-29/usatechidxusd-ticks-2025-01-01-to-2026-08-29.zip`

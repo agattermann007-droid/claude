@@ -84,6 +84,18 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `x49.py` | **Endbewertung 6.50** gegen 6.40 (16 Stoerungen, Startjahre, Streuung, Abstand zum Boden, Zerlegung, Sicher) -> `ergebnisse/x49_*.json`, GFT-nah `x49_gft_spread06.json` |
 | `x50.py` | 6.40/6.50 auf einem **400k-Konto** (Startsaldo 400 000 $, Mindestauszahlung fest in $, Varianten Mindestgewinn 1,3125 %, Fade-Risiko 0,75 %, RSI21 geschuetzt; Netto ohne Neukauf; `evl9.NEAR_SCALE` fuer die Schwellen 1 %/2 %) -> `ergebnisse/x50_*.json` |
 | `t_port_650.py` | **Abgleich EA <-> Replikat** fuer 6.50: Voreinstellungen, Quelltext-Stellen, Entscheidung je Modul, Fade-Regime fuer RSI21 (FadeRegimeLive gegen `r21_regime`) -> `ergebnisse/t_port_650.txt` |
+| **Build 6.60 (Zukunft)** | |
+| `PROTOKOLL_660.md` | **Pruefprotokoll, vor den Tests festgelegt** (Annahmekriterien K-a bis K-g: Walk-Forward 2022-23 -> 2024-25, Sicherheit, paarweise, Plateau, Stress) |
+| `eng10.py` | Kontomotor v10 = eng9 plus Groesse fuer den gueltigen Tag (`sv_on`, `sv_cap`), Noise short (`nz_short`, `nz_s_risk`), 24 Stroeme, Trade-Protokoll mit 10 Spalten |
+| `t_eng10.py` | Pruefung: eng10 mit Voreinstellungen = eng9 (45 Konten, Trades und Ereignisse identisch) |
+| `evl10.py` | Bewertung v10 (rollierende Konten, Stoerungen, Startjahre, Werte je Stoerung fuer den paarweisen Vergleich, Abstand zum Boden) |
+| `x60.py` | **Konto-Screening 6.60** (Basis 6.50): Groesse fuer den gueltigen Tag, Pufferkurven, Noise short, N1330/N1300-Risiko, DEADBAND, Boden zum Tagesschluss, Zerlegung von 6.50, Kandidaten 6.60a/6.60b, Sicher -> `ergebnisse/x60_gft.json` (GFT-nah `x60_gft_spread06.json`) |
+| `x61.py` | **Endbewertung 6.60** (6.40, 6.50, 6.60a, 6.60b; 16 Stoerungen, jeder Handelstag bzw. jeder 3. Tag auf den Fremddaten); `ABSCHLAG=0.2` = Stresstest (20 % der Fade-Gewinner entfernt, auch fuer Waechter und RSI21-Regime) -> `ergebnisse/x61_*.json` |
+| `mk_proxy2026.py`, `x60f.py` | **Zukunftstest 2026**: GFT-Ersatz bis 08/2026 (NAS100 ab 2025 aus Dukascopy-Ticks, Gold bis 02.09.2026; nur in einer Ordnerkopie), Konten ab 02.01.2026 mit 100 bzw. 60 Handelstagen und durchgehendes Konto ab 2025 -> `ergebnisse/x60f_2026.json` (GFT-nah `x60f_2026_spread06.json`) |
+| `a60_sig.py`, `a60_jahr.py`, `a60_drag.py`, `a60_stufen.py`, `a60_stufen2.py`, `a60_fak.py` | Diagnosen: Fade-Signale je Periode / Trend / gespiegelt / Zielweite, Konto je Startjahr und Modul, Konto gegen virtuelles Signal, Signal -> Filter -> Waechter -> Konto, ausgelassene Signale, Anteil verkleinerter Trades |
+| `a60_spx.py`, `a60_schock.py`, `a60_nzs.py` | Kandidaten auf Signal-Ebene: NAS-Fades auf US500 (K2), Schocktag-Filter (K3), Noise short und Gold-Noise (K6) -> `ergebnisse/a60_*.txt` |
+| `a60_warn.py` | Regime-Meldungen des EA rueckwirkend (Fruehwarnung, Abschaltung, wieder live) 2006-2025 bzw. bis 08/2026 in der Ordnerkopie -> `ergebnisse/a60_warn.txt` |
+| `t_port_660.py` | **Abgleich EA <-> Replikat** fuer 6.60: Voreinstellungen = `6.60b`, Pruefungen 2-4 aus `t_port_650`, Regime-Meldungen ohne Einfluss auf den Handel -> `ergebnisse/t_port_660.txt` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
@@ -127,6 +139,18 @@ python pv_ana.py "C50"                     # Trades nach gueltigem Tag je Modul
 python x48.py ext "6.40 Ertrag|C50 R21 frei ab 13.0" 16 3   # Fremddaten (Bust-Risiko), bust_ana.py fuer die Episoden
 python x49.py gft && python x49.py ext     # Endbewertung 6.50 gegen 6.40 (GFT-nah: in der Kopie mit X49_OUT=.)
 python t_port_650.py && python t_set.py && python t_set.py ../DEADBAND_LIVE4_650_Sicher.set --diff
+# Build 6.60 (Zukunft) - Kriterien vorab in PROTOKOLL_660.md
+python t_eng10.py                          # eng10 = eng9
+python x60.py gft all 8 2                  # Screening (Varianten siehe VAR in x60.py), GFT-nah in der Kopie mit X60_OUT=.
+python a60_sig.py && python a60_spx.py && python a60_schock.py && python a60_nzs.py   # Signal-Ebene (braucht ../extdata/US500_ext_M5.csv)
+python x61.py gft && python x61.py ext     # Endbewertung (GFT-nah: in der Kopie mit X61_OUT=.)
+ABSCHLAG=0.2 python x61.py gft             # Stresstest
+# Zukunftstest 2026: Ordner DEADBAND kopieren, in der Kopie (Replikat_v6):
+#   pg_data.py: data_all(until="2026-09-03"); [SPREAD_FAKTOR=0.6] python mk_proxy2026.py   (-> ../data/, NAS ab 2025 Dukascopy)
+#   ../extdata/NAS100_ext2026_M5.csv = NAS100_ext_M5.csv bis 31.12.2024 + ../data/NAS100.x_M5.csv ab 2025; gext.FILES["NAS"] darauf
+#   python prep5.py && python sig5.py && python sig_ext.py && python x60f.py "6.40 Ertrag|6.50 Ertrag|6.60b" 100   (bzw. 60)
+python a60_warn.py                         # Regime-Meldungen rueckwirkend (Vorgabe 1,25 wie der EA)
+python t_port_660.py && python t_set.py && python t_set.py ../DEADBAND_LIVE4_660_Sicher.set --diff && python t_mq5.py
 ```
 
 ## Konventionen
@@ -142,4 +166,6 @@ Gold 5 $/Lot. Fremddaten: Spread proportional zum Kurs (Stand 2022–26).
   positiv, aber auf 2006–2021 verlieren dieselben Regeln. Der Regime-Wächter begrenzt diese Verluste, er
   beseitigt sie nicht.
 - Kein Tick-Replay, keine News-Sperre im Nachbau, NAS-Datenloch 2024.
+- Der Zukunftstest 2026 (Build 6.60) hat die Wahl des Fade-Risikos mitbestimmt und ist damit fuer kuenftige Builds nicht
+  mehr unberuehrt. Die NAS-Reihe 2025-26 (Dukascopy) ist verrauschter als die Broker-Daten (Datenbericht, Abschnitt 10).
 - Absolute Zahlen sind Schätzungen. Belastbar ist der Vergleich der Varianten unter gleichen Annahmen.

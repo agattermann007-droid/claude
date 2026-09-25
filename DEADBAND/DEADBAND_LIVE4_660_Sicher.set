@@ -1,34 +1,13 @@
-; DEADBAND LIVE 6.60 ZUKUNFT - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: Handelslogik wie 6.50 (Auszahlung ab dem GFT-Minimum, Abschluss-Ernte immer, Schutz
-;   gueltiger Tage je Modul mit N1330/N1300 frei und RSI21 ab 13:00 NY im Fade-Regime, Portfolio-Waechter PF200 > 1,15,
-;   Pufferkurve 5 / 2,5 / x0,2), aber Fade-Risiko wieder 0,75 % (6.50: 0,70) und Regime-Meldungen (FadeFruehwarnPF 1,25).
-; Replikat, 16 Stoerungen, jeder Handelstag ein neues Konto; Auszahlungen/J (Tage je Auszahlung) / Netto/J / Busts/J:
-;   ZUKUNFTSTEST 2026 (Jan-Aug, von keiner Entscheidung gesehen; 100-Tage-Konten), breite / GFT-nahe Spreads:
-;     6.50 Ertrag 11,20 (32,6 T) / 1993 $ / 0   -  11,57 (31,6 T) / 2188 $ / 0
-;     6.60 Ertrag 12,54 (29,1 T) / 2229 $ / 0   -  12,38 (29,5 T) / 2319 $ / 0
-;   GFT-Ersatz 2022-25 (1/2/3-Jahres-Konten), breite / GFT-nahe Spreads:
-;     6.50 Ertrag 11,66 (31,3 T) / 2319 $ / 0   -  12,12 (30,1 T) / 2510 $ / 0
-;     6.60 Ertrag 11,53 (31,7 T) / 2244 $ / 0   -  12,05 (30,3 T) / 2493 $ / 0
-;     (6.40 Ertrag 11,25 (32,5 T) / 2051 $ / 0   -  12,06 (30,3 T) / 2232 $ / 0)
-;   Fremddaten 2006-21 (altes Regime, Fades meist aus): 6.60 2,15 Ausz/J / 363 $ / 0,038 Busts/J (6.50: 2,14 / 361 $ / 0,034).
-; Warum 0,75 %: 90 % der gueltigen Tage liegen knapp ueber der Schwelle (50-106 $, meist ein einzelner Fade-Treffer); mit
-;   0,70 % rutschen mehr Tage darunter. In schwachen Phasen (2024-25) half 0,70 etwas, in guten (2022-23, 2026) kostete es
-;   mehr. Ein Walk-Forward (Auswahl nur mit 2022-23) haette 0,70 nicht gewaehlt (Bericht 6.60, Abschnitt 5).
-; Pufferkurve NICHT lockern (Bericht 6.40, Abschnitt 3.4). FadeRiskPct nicht ueber 0,75 (Floating-Bremse bei -0,8 %).
-; Die ~30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet,
-;   und GFT bucht binnen etwa eines Tages (GFT: bis zu 2 Werktage).
-; Regime-Meldungen: Push 'FADE-REGIME AUS' (PF der letzten 200 Fade-Signale <= 1,15) - dann zahlt der EA deutlich seltener
-;   aus (Fremddaten 2006-21: rund alle 170 Tage) -, 'FADE-REGIME WIEDER LIVE' und vorab 'FRUEHWARNUNG Fade-Regime' bei PF < 1,25
-;   (2022-25 rund 4 % der Zeit, 2026 bis August nie; im alten Regime folgte auf 3 von 5 Vorwarnungen aus einer Live-Phase
-;   binnen 8-18 Tagen die Abschaltung). Nur Meldungen, kein Einfluss auf den Handel.
-; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
-; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
-; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
-;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.60 Zukunft | Fade-Risiko 0.75 %'.
-; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
-; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
-; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.50: rollback_6.50/ (mq5 und beide Sets) oder FadeRiskPct=0.70. Bericht: DEADBAND_LIVE4_660_Bericht.md.
+; DEADBAND LIVE 6.60 ZUKUNFT - Auspraegung SICHER (nur die 10 Fehlausbruch-Fades), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Wie das Echtbetrieb-Set (6.60 Ertrag), aber R21Aktiv=false, NzAktiv=false, SerienStopp=4, GueltigSchutzFrei leer (alle Fades
+;   an gueltigen Tagen geschuetzt) und Fade-Risiko 0,70 % - also unveraendert wie 6.50 Sicher, dazu die Regime-Meldungen.
+; Warum hier 0,70 %: auf 2022-25 gleichauf mit 0,75 %, im Zukunftstest 2026 besser (100-Tage-Konten, 16 Stoerungen):
+;   breite Spreads: 0,75 % 9,42 Ausz/J (38,8 T) / 1601 $  -  0,70 % 9,75 (37,5 T) / 1704 $; GFT-nah: 9,98 / 1668 $ - 10,21 / 1757 $.
+; Replikat GFT-Ersatz 2022-25 (Bericht 6.50): 6.50 Sicher 51,4 T (7,11 Ausz/J) breit, 45,7 T (8,00) GFT-nah, 0 Busts.
+; Eine Auszahlung alle ~30 Tage erreicht nur 'Ertrag' (Echtbetrieb-Set). 'Sicher' hat die kuerzesten Verlustserien.
+; ACHTUNG Inaktivitaet: schaltet der Portfolio-Waechter die Fades ab (anderes Marktregime), handelt 'Sicher' womoeglich
+;   wochenlang nicht. GFT: 30 Tage ohne Trade = Konto weg. Kommt der Push nach 20 Tagen ohne Einstieg, von Hand einen
+;   kleinen Trade setzen (0,01 Lot, > 2 min halten). Die Push-Meldung 'FADE-REGIME AUS' kuendigt das an.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -143,7 +122,7 @@ WeAufnahmeReif=true
 WeStopMaxR=2.0
 WeGroesseBudget=false
 WeSpreadMaxList=0,0
-R21Aktiv=true
+R21Aktiv=false
 R21RiskPct=0.50
 R21GoldMult=0.70
 R21Gewichte=1.25,1.0,0.75
@@ -187,7 +166,7 @@ InaktivWarnTage=20
 TagesRefEquity=true
 PayoutErkennMinUSD=50.0
 R21ReifeModus=2
-NzAktiv=true
+NzAktiv=false
 NzSymbol=NAS100.x
 NzRiskPct=0.45
 NzStops=0.35,0.5,0.75
@@ -216,13 +195,13 @@ AbschlussMinR=0.3
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
 AbschlussModule=15
-SerienStopp=3
+SerienStopp=4
 SerienPauseTage=0
 DbAktiv=false
 FadeAktiv=true
 FadeListe=
 FadeAus=
-FadeRiskPct=0.75
+FadeRiskPct=0.70
 FadeWaechterN=30
 FadeWaechterPF=1.20
 FadeWaechterMin=30
@@ -250,7 +229,7 @@ FadeWaechterModus=1
 FadePortN=200
 FadePortPF=1.15
 GueltigSchutzR21BisNY=13.0
-GueltigSchutzFrei=N1330;N1300
+GueltigSchutzFrei=
 GueltigSchutzR21Regime=true
 FadeFruehwarnPF=1.25
 ShowPanel=true

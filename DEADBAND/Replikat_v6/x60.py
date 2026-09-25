@@ -1,5 +1,5 @@
 """Build 6.60 (Suche nach Takt und Netto, zukunftsfest): Konto-Screening mit eng10/evl10. Basis = 6.50 Ertrag (x48.VAR).
-Prueft jede Variante nach einem vorab festgelegten Protokoll (siehe DEADBAND_LIVE4_660_Bericht.md, Abschnitt 2):
+Prueft jede Variante nach einem vorab festgelegten Protokoll (PROTOKOLL_660.md; Bericht 6.60, Abschnitt 2):
 beide Spread-Lagen, Startjahre einzeln (vor allem 2024-25), Stoerungen paarweise gegen die Basis, Fremddaten 2006-21.
 
 Aufruf: python x60.py gft|ext ["Variante|..."|all] [Stoerungen] [Schritt] [Ausgabedatei]
@@ -42,12 +42,70 @@ for _c in (0.80, 0.85, 0.90):
     VAR[f"6.50 SV{_c}"] = (dict(E650, sv_on=1, sv_cap=_c), H, 0.70, "P200/1.15", _ex(FREI2), None)
 VAR["6.50 SV0.85 immer"] = (dict(E650, sv_on=2, sv_cap=0.85), H, 0.70, "P200/1.15", _ex(FREI2), None)
 
+# Pufferkurve (Diagnose: wie viel kostet die Verkleinerung im Rueckgang?)
+for _k, _dd in {"DD5-2.5-0.4": (5.0, 2.5, 0.4), "DD4-1.5-0.6 (6.30)": (4.0, 1.5, 0.6), "DD aus": (0.0, 0.0, 1.0),
+                "DD5-3-0.3": (5.0, 3.0, 0.3), "DD6-2.5-0.2": (6.0, 2.5, 0.2)}.items():
+    VAR[f"6.50 {_k}"] = (dict(E650, ddfull=_dd[0], ddmin=_dd[1], ddfmin=_dd[2]), H, 0.70, "P200/1.15", _ex(FREI2), None)
+
+# K6: Noise auch short (Originalstrategie zweiseitig; Ausgleich zur Long-Lastigkeit auf NAS100)
+for _r in (0.30, 0.45, 0.60):
+    VAR[f"6.50 NS{_r}"] = (dict(E650, nz_short=1, nz_s_risk=_r), H, 0.70, "P200/1.15", _ex(FREI2), None)
+
+# K7: Risiko nach Zielweite - N1330/N1300 (Ziel 0,3-0,5 R) machen einen Tag nie allein gueltig; ihr Verlust kippt aber einen Tag
+def _exr(names, risk):
+    d = _ex(FREI2)
+    for n in names:
+        d.setdefault(F10N.index(n), {}).update(risk=risk)
+    return d
+for _r in (0.35, 0.50):
+    VAR[f"6.50 N13xx R{_r}"] = (E650, H, 0.70, "P200/1.15", _exr(["N1330", "N1300"], _r), None)
+VAR["6.50 ohne N1330/N1300"] = (E650, H, 0.70, "P200/1.15", {**_ex(FREI2), F10N.index("N1330"): dict(on=0), F10N.index("N1300"): dict(on=0)}, None)
+
+# K9: DEADBAND-Ausbruch wieder an (Gegenstueck zu den Fades in Trendphasen), mit den 6.40/6.50-Schutzregeln
+VAR["6.50 + DEADBAND"] = (dict(E650, db_on=1), H, 0.70, "P200/1.15", _ex(FREI2), None)
+VAR["6.50 + DEADBAND x0.5"] = (dict(E650, db_on=1, db_mult=0.45), H, 0.70, "P200/1.15", _ex(FREI2), None)
+
+# Regel-Lesart: Boden trailt nur das Tagesschluss-Hoch (GFT-Artikel Instant Premium: "6% Trailing End-of-Day Maximum Drawdown")
+VAR["6.50 Boden EOD"] = (dict(E650, floor_eod=1), H, 0.70, "P200/1.15", _ex(FREI2), None)
+
+# Zerlegung 6.50 (je ein Baustein auf 6.40) fuer den Zukunftstest
+VAR["6.40 + F0.70"] = (E640, H, 0.70, "P200/1.15", None, None)
+VAR["6.40 + R21 ab 13 Regime"] = (dict(E640, vp_mods=12, vp_r21_to=13.0, vp_r21_reg=1), H, 0.75, "P200/1.15", None, None)
+VAR["6.40 + N1330/N1300 frei"] = (dict(E640, vp_mods=14), H, 0.75, "P200/1.15", _ex(FREI2), None)
+VAR["6.40 + F0.70 + R21 ab 13 Regime"] = (dict(E640, vp_mods=12, vp_r21_to=13.0, vp_r21_reg=1), H, 0.70, "P200/1.15", None, None)
+
+# Kandidaten 6.60 (nach Walk-Forward): Fade-Risiko zurueck auf 0,75 % (6.40), N1330/N1300 an gueltigen Tagen frei (6.50),
+# wahlweise RSI21 ab 13:00 NY frei, solange das Fade-Regime live ist (6.50)
+VAR["6.60a"] = VAR["6.40 + N1330/N1300 frei"]
+E660 = dict(E650)                                                     # = 6.50-Kontoregeln (Schutz je Modul, RSI21 ab 13 + Regime)
+VAR["6.60b"] = (E660, H, 0.75, "P200/1.15", _ex(FREI2), None)
+
+# K1 neu: Basis 0,75 % (6.60b) + Groesse fuer den gueltigen Tag bis 0,80 / 0,85 % (nur wenn damit erreichbar)
+for _c in (0.80, 0.85):
+    VAR[f"6.60b SV{_c}"] = (dict(E660, sv_on=1, sv_cap=_c), H, 0.75, "P200/1.15", _ex(FREI2), None)
+
+# Sicher (nur Fades): 6.40 Sicher (Fade-Risiko 0,75 %) gegen 6.50 Sicher (0,70 %)
+VAR["6.40 Sicher"] = tuple(x48.VAR["6.40 Sicher"]) + (None, None)
+VAR["6.50 Sicher"] = tuple(x48.VAR["6.50 Sicher"]) + (None, None)
+
 SEED0 = int(os.environ.get("X60_SEED0", "0"))
 _SET = {}
 
 
+def _nz_lb(target, mk):
+    """6.60: untere Noise-Bandgrenze LB in den Markt uebernehmen (sig5.nz_days liefert sie seit 6.60; gleiche Reihenfolge)."""
+    if "LB" in mk.nz:
+        return
+    import pickle, prep5 as P
+    S = pickle.load(open(os.path.join(P.OUT, "sig5_ext.pkl" if target == "ext" else "sig5.pkl"), "rb"))
+    z = S["nz"]
+    assert len(z["UB"]) == len(mk.nz["UB"]) and np.array_equal(z["UB"], mk.nz["UB"]), "Noise-Reihenfolge weicht ab"
+    mk.nz["LB"] = np.ascontiguousarray(z["LB"])
+
+
 def setup(target, rule, extra_key=None):
     blks, info, mk = x44.setup(target, rule)
+    _nz_lb(target, mk)
     blks = list(blks)
     if extra_key is not None:
         import a60_blocks as AB

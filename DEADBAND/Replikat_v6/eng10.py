@@ -2,7 +2,10 @@
 Groesse fuer den gueltigen Tag (sv_on): Ein Fade-Einstieg wird so weit vergroessert, dass sein Ziel-Treffer den Tag allein
 gueltig macht (Kopfraum bis zur Schwelle inkl. sv_margin), hoechstens bis sv_cap % vom Startsaldo x Pufferkurve und nur innerhalb
 der Budgets; nur solange dem Zyklus noch gueltige Tage fehlen und der Tag noch nicht gueltig ist. sv_on 1 = nur, wenn die
-Schwelle mit sv_cap erreichbar ist, 2 = immer bis sv_cap. Mit den Voreinstellungen rechnet eng10 wie eng9 (t_eng10.py).
+Schwelle mit sv_cap erreichbar ist, 2 = immer bis sv_cap. Noise auch short (nz_short, Risiko nz_s_risk): Short unter der unteren
+Bandgrenze LB = min(Eroeffnung, Vortagesschluss) x (1 - k sigma), Ausstieg ueber LB, Stops oberhalb; Hedging-Sperre gegen alle
+NAS-Longs. Trade-Protokoll Spalte 8 = Groessenfaktor beim Einstieg, 9 = Richtung.
+Mit den Voreinstellungen rechnet eng10 wie eng9 (t_eng10.py).
 
 DEADBAND Replikat v9 (Build 6.50, Netto) - eng8 plus: Schutz gueltiger Tage je Modul (vp_mods, GP vpx), weitere
 Schutzformen (vp_on 5: enger Stop fuer Einstiege nach gueltigem Tag, 6: Einstieg nur mit Kopfraum >= vp_k x Risiko),
@@ -87,6 +90,8 @@ PN = [
     "vp_mods", "vp_k", "vp_minfrac", "vp_r21_to", "vp_r21_dd", "vp_r21_reg",
     # --- 6.60: Groesse fuer den gueltigen Tag (Voreinstellung = wie eng9)
     "sv_on", "sv_cap", "sv_margin",
+    # --- 6.60: Noise auch short (Voreinstellung = aus)
+    "nz_short", "nz_s_risk",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -119,7 +124,7 @@ def params(**kw):
              nz_tp1r=0.0, nz_tp1f=0.0, nz_be=-99.0, nz_tp=0.0,
              vp_on=0, vp_margin=2.0, vp_from=0.0, bank_full=0, bank_be=0,
              vp_mods=15, vp_k=1.0, vp_minfrac=0.0, vp_r21_to=0.0, vp_r21_dd=0, vp_r21_reg=0,
-             sv_on=0, sv_cap=0.85, sv_margin=0.05)
+             sv_on=0, sv_cap=0.85, sv_margin=0.05, nz_short=0, nz_s_risk=0.45)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -347,7 +352,7 @@ def run_path(Pv, d0, d1, seed,
              o5, h5, l5, c5, sp5, grp15, gap5, hole5,
              db_ev, db_sym, db_dir, db_rd, db_f, db_m15, db_nyh, db_next,
              r_ev, r_sym, r_tf, r_dir, r_rd, r_first, r_next, r_reg,
-             z_ev, z_em, z_close, z_UB, z_vw, z_dist, z_entry, z_next, ev_nzeod,
+             z_ev, z_em, z_close, z_UB, z_LB, z_vw, z_dist, z_entry, z_next, ev_nzeod,
              skipmask_db, skipmask_r, skipmask_z,
              g_ev, g_str, g_sym, g_dir, g_rd, g_tp, g_xev, g_w, g_next, skipmask_g, GP,
              out_ev, out_tr, st):
@@ -395,6 +400,7 @@ def run_path(Pv, d0, d1, seed,
     vp_on = int(Pv[136]); vp_margin = Pv[137]; vp_from = Pv[138]; bank_full = Pv[139] > 0.5; bank_be = Pv[140] > 0.5
     vp_mods = int(Pv[141]); vp_k = Pv[142]; vp_minfrac = Pv[143]; vp_r21_to = Pv[144]; vp_r21_dd = int(Pv[145]); vp_r21_reg = int(Pv[146])
     sv_on = int(Pv[147]); sv_cap = Pv[148]; sv_margin = Pv[149]
+    nz_short = Pv[150] > 0.5; nz_s_risk = Pv[151]
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
@@ -418,6 +424,7 @@ def run_path(Pv, d0, d1, seed,
     p_xev = np.full(NSLOT, -1, np.int64)      # generisch: erzwungener Ausstieg (Ereignisindex, Kerzen-Open)
     p_pv = np.zeros(NSLOT); p_hd = np.zeros(NSLOT)   # 6.50: Einstieg nach gueltigem Tag (1/2), Kopfraum beim Einstieg
     p_r0 = np.zeros(NSLOT)                           # 6.50: Stop-Risiko beim Einstieg ($, Protokoll)
+    p_fk = np.zeros(NSLOT)                           # 6.60: Groessenfaktor (Pufferkurve) beim Einstieg (Protokoll)
     g_trades = np.zeros(2 * NG, np.int64)
     # Wochenend-Vormerkungen
     w_on = np.zeros(NSLOT, np.bool_); w_dir = np.zeros(NSLOT, np.int64); w_sl = np.zeros(NSLOT); w_tp = np.zeros(NSLOT)
@@ -588,7 +595,7 @@ def run_path(Pv, d0, d1, seed,
                 p_on[k] = False
                 # Trade-Protokoll (Wochenend-Schluss beendet den Trade)
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                     n_tr += 1
                 if pnl < 0.0:
                     losses[k] += 1
@@ -667,7 +674,7 @@ def run_path(Pv, d0, d1, seed,
                 p_on[k] = True; p_sym[k] = sy; p_dir[k] = d; p_entry[k] = ent; p_sl[k] = nsl; p_tp[k] = w_tp[k]
                 p_rd[k] = w_rd[k]; p_ref[k] = w_ref[k]; p_lots[k] = w_lots[k]; p_swap[k] = 0.0; p_mfe[k] = w_mfe[k]
                 p_be[k] = w_be[k]; p_t1[k] = True; p_i5[k] = w_i5[k]; p_m15[k] = w_m15[k]; p_tmin[k] = w_tmin[k]
-                p_pv[k] = 0.0; p_hd[k] = 0.0; p_r0[k] = 0.0
+                p_pv[k] = 0.0; p_hd[k] = 0.0; p_r0[k] = 0.0; p_fk[k] = -1.0
                 p_comm[k] = comm[sy] * p_lots[k]; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = bid
                 p_v1[k] = 0.0
                 w_on[k] = False
@@ -680,18 +687,26 @@ def run_path(Pv, d0, d1, seed,
         if zi < nzc and z_ev[zi] == p:
             zcur = zi
         nz_open = 0
+        nz_d = 0
         for k in range(NZ0, NZ0 + nz_parts):
             if p_on[k]:
                 nz_open += 1
+                nz_d = p_dir[k]
         eodnow = ev_nzeod[p] == 1
-        if nz_open > 0 and (eodnow or (zcur >= 0 and z_close[zcur] < z_UB[zcur]) or (we_now)):
+        nz_exit = False                     # 6.60: Long raus unter UB, Short raus ueber LB
+        if zcur >= 0:
+            if nz_d > 0 and z_close[zcur] < z_UB[zcur]:
+                nz_exit = True
+            if nz_d < 0 and z_close[zcur] > z_LB[zcur]:
+                nz_exit = True
+        if nz_open > 0 and (eodnow or nz_exit or (we_now)):
             ii = ev_i[1, p]
             if ii >= 0:
                 for k in range(NZ0, NZ0 + nz_parts):
                     if not p_on[k]:
                         continue
-                    px = o5[1, ii]
-                    pnl = (px - p_entry[k]) * p_lots[k] * 10.0 + p_swap[k]
+                    px = o5[1, ii] + (sp5[1, ii] if p_dir[k] < 0 else 0.0)
+                    pnl = (px - p_entry[k]) * p_dir[k] * p_lots[k] * 10.0 + p_swap[k]
                     bal += pnl; day_real += pnl; day_had = True
                     st[2] += pnl; st[16] += 1; st[17] += pnl
                     if pnl > 0:
@@ -700,7 +715,7 @@ def run_path(Pv, d0, d1, seed,
                         losses[k] += 1
                     tot = p_acc[k] + pnl
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                         n_tr += 1
                     if tot < 0.0:
                         cur_streak += 1
@@ -867,7 +882,7 @@ def run_path(Pv, d0, d1, seed,
             p_on[k] = True; p_sym[k] = k; p_dir[k] = d; p_entry[k] = ent; p_sl[k] = sl; p_tp[k] = ent + d * tpf * rd
             p_rd[k] = rd; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = False
             p_t1[k] = False; p_i5[k] = ii; p_m15[k] = grp15[k, ii]; p_tmin[k] = days[dayidx] * 1440 + nymin
-            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]
+            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]; p_fk[k] = fak
             p_comm[k] = comm[k] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op
             v1 = np.floor(lots * db_tp1f / 0.01 + 1e-9) * 0.01
             if v1 < 0.01 or lots - v1 < 0.01:
@@ -1006,7 +1021,7 @@ def run_path(Pv, d0, d1, seed,
             p_on[k] = True; p_sym[k] = sy; p_dir[k] = d; p_entry[k] = ent; p_sl[k] = ent - d * sl_d; p_tp[k] = ent + d * rrr * rd
             p_rd[k] = rd; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = r21_tp1r <= 0.0
             p_t1[k] = r21_tp1r <= 0.0; p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin
-            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]
+            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]; p_fk[k] = fak
             p_comm[k] = comm[sy] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op; p_v1[k] = 0.0
             if r21_tp1r > 0.0 and r21_tp1f > 0.0:
                 v1r = np.floor(lots * r21_tp1f / 0.01 + 1e-9) * 0.01
@@ -1027,12 +1042,18 @@ def run_path(Pv, d0, d1, seed,
                 entries_ok = False
 
         # ---- Noise-Einstiege
-        if zcur >= 0 and nz_on and entries_ok and not (vp_blk and (vp_mods & 4)) and z_entry[zcur] == 1 and z_close[zcur] > z_UB[zcur] and not skipmask_z[zcur]:
+        nzd = 0
+        if zcur >= 0:
+            if z_close[zcur] > z_UB[zcur]:
+                nzd = 1
+            elif nz_short and z_close[zcur] < z_LB[zcur]:
+                nzd = -1                    # 6.60: Noise short
+        if zcur >= 0 and nz_on and entries_ok and not (vp_blk and (vp_mods & 4)) and z_entry[zcur] == 1 and nzd != 0 and not skipmask_z[zcur]:
             hed = False
             for q in range(NSLOT):
-                if p_on[q] and p_sym[q] == 1 and p_dir[q] < 0:
+                if p_on[q] and p_sym[q] == 1 and p_dir[q] != nzd:
                     hed = True
-                if w_on[q] and (q == 1 or q == 3 or q == 5) and w_dir[q] < 0:
+                if w_on[q] and (q == 1 or q == 3 or q == 5) and w_dir[q] != nzd:
                     hed = True
             ii = ev_i[1, p]
             if (not hed) and ii >= 0:
@@ -1051,10 +1072,10 @@ def run_path(Pv, d0, d1, seed,
                                 orisk_all += dd_ * p_lots[q2] * mpp[p_sym[q2]]
                     rest = start * gesamtbudget / 100.0 - orisk_all
                     if idea_cap > 0.0:
-                        rest3 = start * idea_cap / 100.0 - _idea_risk(p_on, p_sym, p_dir, p_entry, p_sl, p_lots, mpp, 1, 1)
+                        rest3 = start * idea_cap / 100.0 - _idea_risk(p_on, p_sym, p_dir, p_entry, p_sl, p_lots, mpp, 1, nzd)
                         if rest3 < rest:
                             rest = rest3
-                    r = start * nz_risk / 100.0 * z_vw[zcur] / nz_parts * fak
+                    r = start * (nz_risk if nzd > 0 else nz_s_risk) / 100.0 * z_vw[zcur] / nz_parts * fak
                     if vp_act:
                         rest4 = day_real - needday - vp_margin - orisk_all
                         if rest4 < r:
@@ -1082,12 +1103,12 @@ def run_path(Pv, d0, d1, seed,
                         if lots < 0.01 - 1e-12:
                             continue
                     lots = np.round(lots, 2)
-                    if not _margin_ok(p_on, p_sym, p_dir, p_lots, p_last, mpp, lev, idea_margin, 1, 1, lots, o5[1, ii], eq_now):
+                    if not _margin_ok(p_on, p_sym, p_dir, p_lots, p_last, mpp, lev, idea_margin, 1, nzd, lots, o5[1, ii], eq_now):
                         continue
                     spr = sp5[1, ii]
-                    ent = o5[1, ii] + spr
+                    ent = o5[1, ii] + (spr if nzd > 0 else 0.0)
                     if slip_frac > 0.0:
-                        ent += np.random.random() * slip_frac * spr
+                        ent += nzd * np.random.random() * slip_frac * spr
                     sl_d = dist
                     if vp_tight and vp_on == 5:
                         head = day_real - needday - vp_margin - orisk_all
@@ -1098,8 +1119,8 @@ def run_path(Pv, d0, d1, seed,
                                 st[64] += 1
                                 continue
                             sl_d = mx_d
-                    p_on[k] = True; p_sym[k] = 1; p_dir[k] = 1; p_entry[k] = ent; p_sl[k] = ent - sl_d
-                    p_tp[k] = ent + nz_tp * dist if nz_tp > 0.0 else 0.0
+                    p_on[k] = True; p_sym[k] = 1; p_dir[k] = nzd; p_entry[k] = ent; p_sl[k] = ent - nzd * sl_d
+                    p_tp[k] = ent + nzd * nz_tp * dist if nz_tp > 0.0 else 0.0
                     p_rd[k] = dist; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = True
                     p_t1[k] = nz_tp1r <= 0.0; p_i5[k] = ii; p_comm[k] = 0.0; p_acc[k] = 0.0; p_last[k] = o5[1, ii]; p_v1[k] = 0.0
                     if nz_tp1r > 0.0 and nz_tp1f > 0.0:
@@ -1107,7 +1128,7 @@ def run_path(Pv, d0, d1, seed,
                         if v1n >= 0.01 and lots - v1n >= 0.01:
                             p_v1[k] = np.round(v1n, 2)
                     p_tmin[k] = days[dayidx] * 1440 + nymin
-                    p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]
+                    p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]; p_fk[k] = fak
                     day_trades_all += 1
                     st[25] += 1
                     if cyc_start < 0:
@@ -1234,7 +1255,7 @@ def run_path(Pv, d0, d1, seed,
             p_t1l[k] = t1l
             p_be[k] = t1l <= 0.0; p_t1[k] = t1l <= 0.0
             p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin
-            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]
+            p_pv[k] = pv_now; p_hd[k] = hd_now; p_r0[k] = (p_entry[k] - p_sl[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]]; p_fk[k] = fak
             p_comm[k] = comm[sy] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op; p_v1[k] = 0.0
             p_xev[k] = g_xev[a]
             if t1l > 0.0 and GP[s_, 3] > 0.0:
@@ -1371,7 +1392,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                             n_tr += 1
                         if k < 2:
                             st[12] += 1; st[13] += tot
@@ -1397,7 +1418,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                                 n_tr += 1
                             losses[k] += 1
                             cur_streak += 1
@@ -1420,7 +1441,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                                 n_tr += 1
                             if pnl < 0:
                                 losses[k] += 1
@@ -1577,7 +1598,7 @@ def run_path(Pv, d0, d1, seed,
                 bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                 tot = p_acc[k] + pnl - p_comm[k]
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                     n_tr += 1
                 if k < 2:
                     st[12] += 1; st[13] += tot
@@ -1618,7 +1639,7 @@ def run_path(Pv, d0, d1, seed,
             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
             tot = p_acc[k] + pnl - p_comm[k]
             if n_tr < MAXTR:
-                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                 n_tr += 1
             p_on[k] = False
             w_on[k] = False
@@ -1664,7 +1685,7 @@ def run_path(Pv, d0, d1, seed,
                 bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                 tot = p_acc[k] + pnl - p_comm[k]
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                     n_tr += 1
                 if pnl < 0.0:
                     losses[k] += 1
@@ -1733,7 +1754,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                                 n_tr += 1
                             if k < 2:
                                 st[12] += 1; st[13] += tot
@@ -1820,7 +1841,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                             n_tr += 1
                         if k < 2:
                             st[12] += 1; st[13] += tot
@@ -1897,7 +1918,7 @@ def run_path(Pv, d0, d1, seed,
                     bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                     tot = p_acc[k] + pnl - p_comm[k]
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                         n_tr += 1
                     if k < 2:
                         st[12] += 1; st[13] += tot
@@ -1962,7 +1983,7 @@ def run_path(Pv, d0, d1, seed,
                     bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                     tot = p_acc[k] + pnl - p_comm[k]
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                         n_tr += 1
                     if k < NZ0:
                         st[14] += 1; st[15] += tot
@@ -2002,7 +2023,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = p_pv[k]; out_tr[n_tr, 5] = p_hd[k]; out_tr[n_tr, 6] = float(p_tfm[k]) if (k >= 2 and k < NZ0) else -1.0; out_tr[n_tr, 7] = p_r0[k]; out_tr[n_tr, 8] = p_fk[k]; out_tr[n_tr, 9] = float(p_dir[k])
                             n_tr += 1
                         st[12] += 1; st[13] += tot
                         if tot > 0:
@@ -2137,7 +2158,7 @@ def gparams(streams):
 
 
 def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None):
-    out = np.zeros((MAXEV, 6)); tr = np.zeros((MAXTR, 8)); st = np.zeros(len(ST))
+    out = np.zeros((MAXEV, 6)); tr = np.zeros((MAXTR, 10)); st = np.zeros(len(ST))
     if masks is None:
         masks = make_masks(mk, seed, skip)
     if GP is None:
@@ -2149,7 +2170,9 @@ def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None):
                       mk.db["ev"], mk.db["sym"], mk.db["dir"], mk.db["rd"], mk.db["f"], mk.db["m15"], mk.db["nyh"], mk.db["next"],
                       mk.r21["ev"], mk.r21["sym"], mk.r21["tf"], mk.r21["dir"], mk.r21["rd"], mk.r21["first"], mk.r21["next"],
                       mk.r21["reg"] if "reg" in mk.r21 else np.ones(len(mk.r21["ev"]), np.int64),
-                      mk.nz["ev"], mk.nz["em"], mk.nz["close"], mk.nz["UB"], mk.nz["vw"], mk.nz["dist"], mk.nz["entry_ok"],
+                      mk.nz["ev"], mk.nz["em"], mk.nz["close"], mk.nz["UB"],
+                      mk.nz["LB"] if "LB" in mk.nz else np.zeros(len(mk.nz["ev"])),
+                      mk.nz["vw"], mk.nz["dist"], mk.nz["entry_ok"],
                       mk.nz["next"], mk.ev_nzeod,
                       masks[0], masks[1], masks[2],
                       g["ev"], g["str"], g["sym"], g["dir"], g["rd"], g["tp"], g["xev"], g["w"], g["next"], masks[3], GP,

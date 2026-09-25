@@ -19,7 +19,7 @@ def run_pair(mk, kw, GP9, GP10, label):
                 P9s[eng9.PI["slip_frac"]] = 0.3; P10s[eng10.PI["slip_frac"]] = 0.3
             r9 = eng9.run(mk, P9s, a, b, seed=seed, masks=ms, GP=GP9)
             r10 = eng10.run(mk, P10s, a, b, seed=seed, masks=ms, GP=GP10)
-            same = (np.array_equal(r9["st"], r10["st"][:len(r9["st"])]) and np.array_equal(r9["tr"], r10["tr"])
+            same = (np.array_equal(r9["st"], r10["st"][:len(r9["st"])]) and np.array_equal(r9["tr"], r10["tr"][:, :8])
                     and np.array_equal(r9["ev"], r10["ev"]))
             ok &= same; n += 1
             if not same:

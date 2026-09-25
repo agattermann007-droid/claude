@@ -1,38 +1,5 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND LIVE 4  -  Build 6.60 ZUKUNFT, 25.09.2026              |
-//|  BUILD 6.60: TAKT UND NETTO AUF DATEN PRUEFEN, DIE KEINE         |
-//|  ENTSCHEIDUNG GESEHEN HAT. Handelslogik = 6.50, dazu:            |
-//|  1) Fade-Risiko wieder 0,75 % (FadeRiskPct, wie 6.00-6.40).      |
-//|     6.50 hatte 0,70 %. Das haette ein Walk-Forward (Auswahl nur  |
-//|     mit 2022-23) nicht gewaehlt, und im Zukunftstest 2026 (NAS   |
-//|     bis 28.08.2026 aus Dukascopy-Ticks, Gold bis 02.09.2026; von |
-//|     keiner Entscheidung seit 6.10 gesehen) kostete es Takt und   |
-//|     Netto: 90 % der gueltigen Tage liegen knapp ueber der        |
-//|     Schwelle (50-106 $, meist ein Fade-Treffer); mit 0,70 %      |
-//|     rutschen mehr Tage darunter. Zukunftstest 2026,              |
-//|     100-Tage-Konten, breite / GFT-nahe Spreads: 12,54 / 12,38    |
-//|     Auszahlungen je Jahr (29,1 / 29,5 Tage) und 2229 / 2319 $    |
-//|     Netto statt 11,20 / 11,57 und 1993 / 2188 $ mit 6.50; keine  |
-//|     Busts. 2022-25: knapp hinter 6.50 (breit 11,53 statt 11,66   |
-//|     Auszahlungen, -3 % Netto; GFT-nah gleich), vor 6.40 (Netto   |
-//|     +9 / +12 %). Fremddaten 2006-21: 0,038 Busts je Jahr (6.50:  |
-//|     0,034, 6.40: 0,035).                                         |
-//|  2) Regime-Meldungen (FadeFruehwarnPF 1,25): Push bei jedem      |
-//|     Wechsel der Fades LIVE <-> nur virtuell (Portfolio-Waechter: |
-//|     PF der letzten 200 Signale > 1,15) und eine Vorwarnung, wenn |
-//|     der PF unter 1,25 liegt (2022-25 rund 4 % der Zeit, 2026 bis |
-//|     August nie). Nur Meldungen, kein Einfluss auf den Handel.    |
-//|     Stand ueberlebt einen Neustart (Terminal-Globalvariablen).   |
-//|  Sicher-Set: unveraendert wie 6.50 Sicher (Fade-Risiko 0,70 %;   |
-//|  dort 2022-25 gleichauf und 2026 besser als 0,75 %), dazu 2).    |
-//|  Geprueft und verworfen (Bericht, Abschnitt 4): Groesse fuer den |
-//|  gueltigen Tag, NAS-Fades auf US500, Schocktag- und Trendfilter, |
-//|  gespiegelte Fades, Noise short, Gold-Noise, DEADBAND an, andere |
-//|  Pufferkurven, Boden nur zum Tagesschluss, kleineres Risiko fuer |
-//|  N1330/N1300, Handel waehrend der Auszahlung. Bericht            |
-//|  DEADBAND_LIVE4_660_Bericht.md. Zurueck: rollback_6.50/.         |
-//|                                                                  |
-//|  Build 6.50 NETTO, 25.09.2026                                    |
+//|  DEADBAND LIVE 4  -  Build 6.50 NETTO, 25.09.2026                |
 //|  BUILD 6.50: MEHR NETTO, NICHT WENIGER AUSZAHLUNGEN, NICHT MEHR  |
 //|  BUST-RISIKO. Handelslogik = 6.40, dazu (Replikat eng9, x48/x49):|
 //|  1) Schutz gueltiger Tage je Modul: Noise und Fades wie 6.40,    |
@@ -532,7 +499,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "6.60"
+#property version   "6.50"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -750,7 +717,7 @@ input bool   DbAktiv          = false;  // DEADBAND-Ausbruch: neue Einstiege (6.
 input bool   FadeAktiv        = true;   // Fade-Module: neue Einstiege (false = nur virtuell mitrechnen, offene verwalten)
 input string FadeListe        = "";     // leer = Standard-Liste (10 Module, siehe FADE_STANDARD im Code). Eigene Liste: je Modul "Symbol,r0,L,tlen,xoff,buf,tgt,dir,mx,Name" getrennt mit ; (r0 = Range-Beginn NY-Minute, negativ = Vortag; L/tlen/xoff Minuten; tgt 0 Mitte, 1 Gegenseite; dir 1 long, -1 short, 0 beide; mx = Range hoechstens mx x ATR14 D1)
 input string FadeAus          = "";     // Namen von Modulen, die nicht handeln sollen (rechnen virtuell weiter), getrennt mit ; z. B. "N1800;X0300S" (leer = alle handeln)
-input double FadeRiskPct      = 0.75;   // Risiko je Fade-Trade in % vom Startsaldo (x Pufferkurve), gedeckelt durch GesamtBudgetPct und IdeeMaxRisikoPct (6.60: 0,75 wie 6.00-6.40 - ein einzelner Fade-Treffer macht den Tag mit Kosten ab rund 0,71 R Zielweite gueltig, mit 0,70 erst ab rund 0,76 R; 6.50: 0,70, Sicher-Set weiter 0,70)
+input double FadeRiskPct      = 0.70;   // Risiko je Fade-Trade in % vom Startsaldo (x Pufferkurve), gedeckelt durch GesamtBudgetPct und IdeeMaxRisikoPct (6.50: 0,70 - mehr Luft zur Floating-Bremse; 6.00-6.40: 0,75)
 input int    FadeWaechterN    = 30;     // Regime-Waechter: Profitfaktor der letzten N virtuellen Signale je Modul ...
 input double FadeWaechterPF   = 1.20;   // ... muss ueber X liegen, sonst nur virtuell (0 = Waechter aus)
 input int    FadeWaechterMin  = 30;     // ... und mindestens so viele Signale vorliegen (Replikat: 30 = volles Fenster)
@@ -784,8 +751,6 @@ input group             "=== 6.50: Netto (Schutz gueltiger Tage je Modul) ==="
 input double GueltigSchutzR21BisNY = 13.0;  // RSI21: Schutz gueltiger Tage fuer Einstiege vor X NY, danach handelt RSI21 auch an einem schon gueltigen Tag, solange das Fade-Regime live ist (24 = immer geschuetzt wie 6.40; 0 = nach Uhrzeit nie, nur noch ohne Fade-Regime; 11 = mehr Netto, aber mehr Busts im alten Regime 2010)
 input string GueltigSchutzFrei     = "N1330;N1300"; // Fade-Module ohne Schutz gueltiger Tage (handeln auch an einem schon gueltigen Tag), getrennt mit ; (leer = alle Fades geschuetzt wie 6.40)
 input bool   GueltigSchutzR21Regime = true;  // RSI21 ab GueltigSchutzR21BisNY nur frei, solange der Portfolio-Waechter die Fades live handeln laesst (PF der letzten FadePortN > FadePortPF, gerechnet zur Signalzeit = Open der Einstiegskerze) - im alten Regime bleibt RSI21 geschuetzt wie 6.40 (false = ab GueltigSchutzR21BisNY immer frei)
-input group             "=== 6.60: Zukunft (Regime-Fruehwarnung) ==="
-input double FadeFruehwarnPF  = 1.25;       // Vorwarnung per Push, solange die Fades live sind und der PF des Portfolio-Waechters (letzte FadePortN virtuelle Fade-Signale) unter X liegt (hoechstens alle 7 Tage; Abschaltung erst bei FadePortPF). 0 = keine Vorwarnung - der Push bei jedem Wechsel LIVE <-> nur virtuell bleibt (nur Meldungen, kein Einfluss auf den Handel)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -1153,11 +1118,6 @@ int OnInit()
                (GueltigSchutz ? "AN (6.50: " + GueltigSchutzUmfang() + ")" : "aus"),
                (FadeWaechterModus == 1 ? StringFormat("Portfolio PF > %.2f aus %d", FadePortPF, FadePortN) : StringFormat("je Modul PF > %.2f aus %d", FadeWaechterPF, FadeWaechterN)),
                DDFullPct, DDMinFactor, DDMinPct, NzRiskPct);
-   PrintFormat("DEADBAND4: 6.60 Zukunft | Fade-Risiko %.2f %% je Trade (6.50: 0,70) | Regime-Meldungen %s",
-               FadeRiskPct, (FadePortPF <= 0.0 || FadeWaechterModus != 1 ? "aus (kein Portfolio-Waechter)"
-                             : (FadeFruehwarnPF > FadePortPF
-                                ? StringFormat("Push bei jedem Wechsel LIVE <-> nur virtuell (PF %.2f), Vorwarnung bei PF < %.2f", FadePortPF, FadeFruehwarnPF)
-                                : StringFormat("Push bei jedem Wechsel LIVE <-> nur virtuell (PF %.2f), keine Vorwarnung (FadeFruehwarnPF <= FadePortPF)", FadePortPF))));
    PrintFormat("DEADBAND4: 6.30 Trefferquote | Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s (neuer Stop Einstieg + %.2f R) | erst ab der M5-Kerze nach der Einstiegskerze und nach %d s",
                (FadeT1R > 0.0 ? StringFormat("%.0f %% ab %.2f R (Stop und Ziel bleiben)", FadeT1Anteil*100.0, FadeT1R) : "aus"),
                (R21EinstandAbR > 0.0 ? StringFormat("ab %.2f R", R21EinstandAbR) : "aus"), (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R je Teil", NzEinstandAbR) : "aus"),
@@ -2841,7 +2801,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND LIVE 6.60 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND LIVE 6.50 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3140,7 +3100,6 @@ void Durchlauf()
    PeakSichern(false);
    UebernahmeNachholen();                                                  // 4.90
    InaktivWaechter();                                                      // 4.90
-   RegimeWaechter();                                                       // 6.60: Regime-Fruehwarnung (nur Meldungen)
 
    double fltAll = FloatingPnl(CountForeignPositions);
    double fltRegel = FloatingRegel(CountForeignPositions);                 // 5.10: strenge Lesart - nur Verlustpositionen
@@ -3613,7 +3572,7 @@ void ZyklusPanel()
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    if(gGueltigSchutz) status += " | TAG GUELTIG - Schutz bis 17:00 NY (Umfang: Auszahlungstakt)";   // 6.40 (6.50: je Modul)
    txt += StringFormat(
-      "DEADBAND LIVE 6.60 ZUKUNFT   %s\n"
+      "DEADBAND LIVE 6.50 NETTO   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -5465,53 +5424,6 @@ string FadeRegimeText(const datetime t)
    return StringFormat("PF %.2f aus %d Signalen, live ab > %.2f aus %d", pf, n, FadePortPF, FadePortN);
   }
 
-// 6.60: Regime-Meldungen - alle 5 min den Portfolio-Waechter der Fades auswerten (nur Meldungen, kein Einfluss auf den
-//       Handel): Push bei jedem Wechsel LIVE <-> nur virtuell und eine Vorwarnung, solange die Fades live sind und der PF unter
-//       FadeFruehwarnPF liegt - hoechstens alle 7 Tage, nach Erholung ueber FadeFruehwarnPF + 0,05 sofort wieder moeglich.
-//       Der zuletzt gemeldete Zustand und die Zeit der letzten Vorwarnung ueberleben einen Neustart (Terminal-Globalvariablen
-//       je Konto): ein Wechsel waehrend der EA aus war wird beim ersten Durchlauf gemeldet, die 7 Tage gelten weiter.
-int      regMeldLive = -1;           // zuletzt gemeldeter Zustand (-1 = noch keiner, 0 = nur virtuell, 1 = live)
-datetime regWarnZeit = 0, regPruefZeit = 0;
-void RegimeWaechter()
-  {
-   if(!fadeOk || nFade == 0 || FadePortPF <= 0.0 || FadeWaechterModus != 1) return;   // nur mit dem Portfolio-Waechter (6.40)
-   datetime now = TimeCurrent();
-   if(regPruefZeit > 0 && now - regPruefZeit < 300) return;
-   regPruefZeit = now;
-   int n = 0; bool alle = true;
-   double pf = FadePortfolioPF(now, n, alle);
-   if(!alle || n < FadePortN) return;                                         // Historie noch nicht vollstaendig
-   if(regMeldLive < 0)                                                        // erster Durchlauf: Stand vor dem Neustart
-     {
-      if(GlobalVariableCheck(KontoGv("REGLIVE"))) regMeldLive = (GlobalVariableGet(KontoGv("REGLIVE")) > 0.5 ? 1 : 0);
-      if(GlobalVariableCheck(KontoGv("REGWARN"))) regWarnZeit = (datetime)(long)GlobalVariableGet(KontoGv("REGWARN"));
-     }
-   int live = (pf > FadePortPF ? 1 : 0);
-   bool warnBereich = (FadeFruehwarnPF > FadePortPF && live == 1 && pf < FadeFruehwarnPF);
-   datetime warnVorher = regWarnZeit;
-   if(regMeldLive >= 0 && live != regMeldLive)
-     {
-      if(live == 1)
-        {
-         Meldung(StringFormat("FADE-REGIME WIEDER LIVE: PF %.2f aus den letzten %d virtuellen Signalen > %.2f - Fades handeln wieder%s", pf, n, FadePortPF,
-                              (warnBereich ? StringFormat(" (FRUEHWARNUNG: PF noch unter %.2f)", FadeFruehwarnPF) : "")));
-         if(warnBereich) regWarnZeit = now;                                   // Vorwarnung steckt in dieser Meldung
-        }
-      else
-         Meldung(StringFormat("FADE-REGIME AUS: PF %.2f aus den letzten %d virtuellen Signalen <= %.2f - Fades nur noch virtuell%s. Auszahlungen werden seltener.", pf, n, FadePortPF,
-                              (R21Aktiv && GueltigSchutz && GueltigSchutzR21Regime ? ", RSI21 an gueltigen Tagen geschuetzt" : "")));
-     }
-   if(regMeldLive != live) GlobalVariableSet(KontoGv("REGLIVE"), (double)live);
-   regMeldLive = live;
-   if(warnBereich && regWarnZeit == warnVorher && (regWarnZeit == 0 || now - regWarnZeit >= 7*86400))
-     {
-      Meldung(StringFormat("FRUEHWARNUNG Fade-Regime: PF %.2f aus den letzten %d virtuellen Signalen (Abschaltung bei <= %.2f) - der Vorteil der Fades laesst nach", pf, n, FadePortPF));
-      regWarnZeit = now;
-     }
-   if(regWarnZeit > 0 && pf >= FadeFruehwarnPF + 0.05) regWarnZeit = 0;     // erholt: naechste Vorwarnung wieder sofort moeglich
-   if(regWarnZeit != warnVorher) GlobalVariableSet(KontoGv("REGWARN"), (double)(long)regWarnZeit);
-  }
-
 // Regime-Waechter: darf Modul m ein Signal mit Einstieg zur Zeit tSig live handeln?
 bool FadeWaechterOk(const int m, const datetime tSig)
   {
@@ -5980,7 +5892,6 @@ bool FadeAnlegen()
   {
    fadeOk = false; nFade = 0; fadeSperreTag = false; fadeWaisenVersuch = 0; fadeReifeVersuch = 0; fadeLetzte = "";
    fadeRegZeit = 0; fadeRegLive = false;                                 // 6.50
-   regMeldLive = -1; regWarnZeit = 0; regPruefZeit = 0;                    // 6.60 (Stand vor dem Neustart liest RegimeWaechter)
    gridOk = false; for(int k=0;k<MAXSYM;k++) GridReset(k);                   // 6.20: kein Grid-Zustand aus einem frueheren Lauf
    for(int i=0;i<NEUMAX;i++) { gNeuRisk[i] = 0.0; gNeuTk[i] = 0; gNeuMs[i] = 0; gNeuSym[i] = ""; gNeuDir[i] = 0; }
    gNeuPos = 0;
@@ -6037,10 +5948,8 @@ string FadeStatusText()
      {
       int np = 0; bool alle = true; double pfp = FadePortfolioPF(TimeCurrent(), np, alle);
       bool ok = (FadePortPF <= 0.0) || (alle && np >= FadePortN && pfp > FadePortPF);
-      t = StringFormat("%s | %.2f %% je Trade, Portfolio-Waechter %s: PF %.2f aus %d (live ab > %.2f aus %d)%s | PF%d je Modul (Info):",
-                       (FadeAktiv ? "an" : "aus (nur Verwaltung)"), FadeRiskPct, (!alle ? "laedt" : (ok ? "LIVE" : "nur virtuell")), pfp, np, FadePortPF, FadePortN,
-                       (alle && ok && FadePortPF > 0.0 && FadeFruehwarnPF > FadePortPF && pfp < FadeFruehwarnPF ? StringFormat(" FRUEHWARNUNG (< %.2f)", FadeFruehwarnPF) : ""),   // 6.60
-                       FadeWaechterN);
+      t = StringFormat("%s | %.2f %% je Trade, Portfolio-Waechter %s: PF %.2f aus %d (live ab > %.2f aus %d) | PF%d je Modul (Info):",
+                       (FadeAktiv ? "an" : "aus (nur Verwaltung)"), FadeRiskPct, (!alle ? "laedt" : (ok ? "LIVE" : "nur virtuell")), pfp, np, FadePortPF, FadePortN, FadeWaechterN);
      }
    for(int m=0;m<nFade;m++)
      {

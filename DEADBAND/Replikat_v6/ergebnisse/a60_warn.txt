@@ -1,0 +1,73 @@
+Fruehwarnung PF < 1.25, Abschaltung PF <= 1.15 (letzte 200 Signale, 600 Tage)
+Meldungen (W = Fruehwarnung, A = Fade-Regime AUS, L = wieder live, L+W = wieder live mit Vorwarnung; Wiederholungen nicht gelistet):
+  2007-09-10 L+W PF 1.16
+  2007-09-19 A PF 1.14
+  2007-10-15 L+W PF 1.18
+  2007-11-05 A PF 1.15
+  2007-11-16 L+W PF 1.15
+  2007-11-20 A PF 1.13
+  2007-12-05 L+W PF 1.17
+  2007-12-12 A PF 1.14
+  2009-08-12 L+W PF 1.19
+  2010-01-26 W PF 1.25
+  2010-02-09 W PF 1.25
+  2010-02-21 A PF 1.09
+  2011-03-22 L+W PF 1.17
+  2011-04-11 A PF 1.15
+  2011-04-12 L+W PF 1.16
+  2011-06-06 W PF 1.25
+  2011-06-17 W PF 1.24
+  2011-07-05 A PF 1.15
+  2013-05-02 L+W PF 1.15
+  2013-05-20 A PF 1.12
+  2013-11-04 L+W PF 1.15
+  2013-12-11 W PF 1.23
+  2013-12-19 A PF 1.14
+  2013-12-19 L+W PF 1.17
+  2013-12-20 A PF 1.13
+  2016-10-20 L+W PF 1.17
+  2016-10-21 A PF 1.14
+  2016-10-25 L+W PF 1.16
+  2016-10-27 A PF 1.14
+  2016-12-14 L+W PF 1.18
+  2016-12-16 A PF 1.13
+  2016-12-16 L+W PF 1.17
+  2016-12-21 A PF 1.14
+  2022-06-13 L+W PF 1.16
+  2022-06-14 A PF 1.13
+  2022-06-16 L+W PF 1.17
+  2022-08-01 W PF 1.25
+  2025-04-16 W PF 1.24
+  2025-06-25 W PF 1.24
+  2025-07-18 W PF 1.24
+  2025-07-24 W PF 1.23
+Warn-Episoden (Beginn -> Ende, mit/ohne Abschaltung, Vorlauf in Tagen, virtuelles R der Fades bis zum Ende):
+  2007-09-10 -> 2007-09-19  AUS      9 Tage  Fades   8 Signale   -0.6 R
+  2007-10-15 -> 2007-11-05  AUS     21 Tage  Fades  15 Signale   +1.3 R
+  2007-11-16 -> 2007-11-20  AUS      5 Tage  Fades   4 Signale   -0.5 R
+  2007-12-05 -> 2007-12-12  AUS      7 Tage  Fades   7 Signale   -4.9 R
+  2009-08-12 -> 2009-08-26  erholt     14 Tage  Fades  11 Signale   +5.4 R
+  2010-01-26 -> 2010-02-04  erholt      9 Tage  Fades   3 Signale   -0.3 R
+  2010-02-09 -> 2010-02-21  AUS     12 Tage  Fades   6 Signale   -5.3 R
+  2011-03-22 -> 2011-04-11  AUS     20 Tage  Fades  16 Signale   -1.6 R
+  2011-04-12 -> 2011-05-16  erholt     34 Tage  Fades  21 Signale   +7.5 R
+  2011-06-06 -> 2011-06-07  erholt      1 Tage  Fades   2 Signale   +2.4 R
+  2011-06-17 -> 2011-07-05  AUS     18 Tage  Fades  11 Signale   +1.2 R
+  2013-05-02 -> 2013-05-20  AUS     18 Tage  Fades  12 Signale   +1.5 R
+  2013-11-04 -> 2013-11-13  erholt      9 Tage  Fades   6 Signale   +3.7 R
+  2013-12-11 -> 2013-12-19  AUS      7 Tage  Fades   6 Signale   -3.2 R
+  2013-12-19 -> 2013-12-20  AUS      1 Tage  Fades   2 Signale   -0.2 R
+  2016-10-20 -> 2016-10-21  AUS      1 Tage  Fades   2 Signale   -0.4 R
+  2016-10-25 -> 2016-10-27  AUS      2 Tage  Fades   6 Signale   -2.8 R
+  2016-12-14 -> 2016-12-16  AUS      2 Tage  Fades   3 Signale   -1.3 R
+  2016-12-16 -> 2016-12-21  AUS      5 Tage  Fades   2 Signale   -1.0 R
+  2022-06-13 -> 2022-06-14  AUS      1 Tage  Fades   1 Signale   -1.0 R
+  2022-06-16 -> 2022-07-20  erholt     34 Tage  Fades  22 Signale   +2.1 R
+  2022-08-01 -> 2022-08-30  erholt     28 Tage  Fades  34 Signale   -0.1 R
+  2025-04-16 -> 2025-04-23  erholt      6 Tage  Fades   5 Signale   +2.7 R
+  2025-06-25 -> 2025-07-08  erholt     13 Tage  Fades  19 Signale   +3.0 R
+  2025-07-18 -> 2025-07-21  erholt      3 Tage  Fades   1 Signale   +0.6 R
+  2025-07-24 -> 2025-08-22  erholt     29 Tage  Fades  17 Signale   +6.8 R
+2006-13: PF Median 0.90 (p10 0.73), Anteil live 13 %, im Warnbereich 5 % | Warn-Episoden 15 (davon mit Abschaltung 10) | Abschaltungen 10, ohne Warnung vorher 0
+2014-21: PF Median 0.81 (p10 0.62), Anteil live 1 %, im Warnbereich 1 % | Warn-Episoden 4 (davon mit Abschaltung 4) | Abschaltungen 4, ohne Warnung vorher 0
+2022-25: PF Median 1.48 (p10 0.89), Anteil live 88 %, im Warnbereich 4 % | Warn-Episoden 7 (davon mit Abschaltung 1) | Abschaltungen 1, ohne Warnung vorher 0
