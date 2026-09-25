@@ -12,6 +12,7 @@ from concurrent.futures import ProcessPoolExecutor
 import eng9 as E, evl6 as V6
 
 V6.E = E
+NEAR_SCALE = 1.0          # 6.50: Schwellen 100/200 $ (1 %/2 % von 10k) fuer groessere Konten skalieren (Startsaldo / 10000)
 WARM = V6.WARM
 starts = V6.starts
 line6 = V6.line
@@ -79,8 +80,8 @@ def agg(rows):
     a["days_per_pay"] = 365.25 / max(a["pay"], 1e-9)
     mb = np.array([r["minbuf"] for r in rows])
     a["minbuf_mean"] = float(mb.mean()) if len(mb) else 0.0
-    a["near100"] = float(np.mean(mb < 100.0)) if len(mb) else 0.0       # Anteil Konten, die dem Boden auf < 1 % nahekamen
-    a["near200"] = float(np.mean(mb < 200.0)) if len(mb) else 0.0
+    a["near100"] = float(np.mean(mb < 100.0 * NEAR_SCALE)) if len(mb) else 0.0       # Anteil Konten, die dem Boden auf < 1 % nahekamen
+    a["near200"] = float(np.mean(mb < 200.0 * NEAR_SCALE)) if len(mb) else 0.0
     pv = {}
     for r in rows:
         for nm, (x, n, w) in r.get("pv", {}).items():

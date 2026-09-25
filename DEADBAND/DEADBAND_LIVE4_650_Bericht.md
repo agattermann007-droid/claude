@@ -449,16 +449,62 @@ Inbetriebnahme:
 9. **Nicht kompiliert, nicht im Tester** (Abschnitt 5).
 10. **Lizenz** des Grid-Konzepts unverändert (Bericht 6.20, Abschnitt 10).
 
+## Anhang A: 400k-Konto
+
+Der EA rechnet Größen, Budgets, Pufferkurve, gültigen Tag und alle GFT-Grenzen in % vom Startsaldo. Er passt sich einem
+400k-Konto also selbst an. Fest in Dollar sind nur die GFT-Mindestauszahlung (`MinPayoutUSD` 105 $ Anteil = 131,25 $ Gewinn)
+und die Reserve des gültigen Tags (0,50 $). Replikat `x50.py`: dieselben Regeln mit 400 000 $ Startsaldo, 16 Störungen,
+jeder Handelstag. Unterstellt sind dieselben GFT-Regeln wie auf 10k. Der Preis eines 400k-Kontos ist unbekannt, deshalb ist
+Netto hier **ohne Neukauf** gerechnet (0,8 × 0,97 × Auszahlungen). Auf dem GFT-Ersatz gab es ohnehin keinen Bust.
+
+Zellen: GFT-nah / breit.
+
+| Variante (400k) | Ausz./J | Ø Auszahlung (Gewinn) | Netto je Jahr | kleinster Abstand zum Boden Ø | Konten < 2 % (8000 $) |
+|---|---:|---:|---:|---:|---:|
+| 6.40 Ertrag | 12,97 / 12,57 | 8 607 / 8 188 $ | 86 628 / 79 844 $ | 2,53 / 2,59 % | 3,2 / 0,7 % |
+| **6.50 Ertrag** | **13,00 / 12,40** | 9 743 / 9 548 $ | **98 336 / 91 880 $** | 2,65 / 2,62 % | 0,1 / 0,0 % |
+| **6.50, Fade-Risiko 0,75 %** | **13,06 / 12,78** | 9 637 / 9 125 $ | **97 646 / 90 518 $** | 2,56 / 2,56 % | 3,9 / 0,0 % |
+| 6.50, RSI21 immer geschützt | 12,84 / 11,99 | 9 337 / 9 175 $ | 93 065 / 85 384 $ | 2,63 / 2,60 % | 0,8 / 0,0 % |
+| 6.40, Mindestgewinn 1,3125 % | 11,86 / 11,23 | 9 393 / 9 121 $ | 86 440 / 79 491 $ | 2,47 / 2,55 % | 11,5 / 0,3 % |
+| 6.50, Mindestgewinn 1,3125 % | 11,88 / 11,43 | 10 486 / 10 354 $ | 96 654 / 91 854 $ | 2,59 / 2,62 % | 6,3 / 0,0 % |
+| 6.50 Sicher | 9,03 / 8,14 | 8 580 / 7 982 $ | 60 146 / 50 389 $ | 2,77 / 2,59 % | 0,0 / 0,0 % |
+
+Fremddaten 2006–21 (400k; Auszahlungen je Jahr · Busts je Jahr · Bust im 1. Jahr · Netto ohne Neukauf):
+
+| 6.40 Ertrag | 6.50 Ertrag | 6.50, Fade-Risiko 0,75 % | 6.50, Mindestgewinn 1,3125 % |
+|---|---|---|---|
+| 2,46 · 0,031 · 0,8 % · 14 705 $ | 2,37 · 0,027 · 0,4 % · 14 092 $ | 2,40 · 0,035 · 1,1 % · 14 253 $ | 2,10 · 0,032 · 0,5 % · 14 327 $ |
+
+- **Netto skaliert fast linear:** Auf 400k verdient 6.50 das 39- bis 40-Fache des 10k-Kontos, rund 92 000–98 000 $ je Jahr
+  statt 80 000–87 000 $ mit 6.40 (+13 bis +15 %). Jede Auszahlung beträgt rund 9 500–9 700 $ Gewinn, davon gehen nach
+  80 % Anteil und 3 % Gebühr etwa 7 400–7 600 $ an den Trader.
+- **Mehr Auszahlungen als auf 10k:** Die feste Mindestauszahlung (131,25 $) spielt auf 400k keine Rolle mehr (0,03 % vom
+  Konto). Eine Auszahlung wartet dann nur noch auf 5 gültige Tage und 10 Tage. Mit `MinProfitPct=1.3125` rechnet 400k wie
+  10k: weniger, dafür größere Auszahlungen, gleiches Netto.
+- **Auszahlungen 6.50 gegen 6.40 auf 400k:** Mit der Voreinstellung GFT-nah gleich (13,00 / 12,97), breit etwas weniger
+  (12,40 / 12,57). Auf 10k kam ein Teil des Auszahlungs-Vorsprungs von 6.50 daher, dass der Mindestgewinn schneller erreicht
+  war; auf 400k fällt das weg. Mit **Fade-Risiko 0,75 %** (Wert von 6.40, sonst 6.50) liegen die Auszahlungen in beiden
+  Lagen über 6.40 (13,06 / 12,78). Das Netto-Plus bleibt (+13 %). Im alten Regime gibt es dann etwas mehr Busts: 0,035
+  statt 0,031 je Jahr, im Rahmen der Streuung dieser einen Episode (2010). Mit 0,70 % sind es weniger (0,027).
+- **Positionsgrößen auf 400k:** Fades meist 3–12 Lots NAS100 und 2,5–8 Lots Gold (Median je Modul), bei engen Stops bis rund
+  27 bzw. 15 Lots. Der EA begrenzt auf das Broker-Maximum (`SYMBOL_VOLUME_MAX`). Das Maximum des GFT-Symbols vorher prüfen.
+  Schlupf und Ausführung rechnet das Replikat wie auf 10k.
+- **Grenzen in Dollar:** trailender Maximalverlust 6 % = 24 000 $, Tagesverlust 3 % = 12 000 $, Floating −1 % = 4 000 $
+  (EA-Bremse bei −0,8 % = 3 200 $), gültiger Tag ab 2 000,50 $ realisiert.
+- **Offen:** Die GFT-Bedingungen für 400k (Preis, Mindestauszahlung, Deckel der ersten Auszahlungen, Anteil, Lot-Grenzen)
+  sind hier nicht geprüft. Gelten andere Regeln, ändern sich die Zahlen.
+
 ## Anhang: Replikat
 
 `Replikat_v6/README.md` (Abschnitt Build 6.50):
 
 - Motor: `eng9.py`, Bewertung: `evl9.py`
-- Screening: `x48.py` (Varianten in `VAR`, `X48_SEED0` für einen zweiten Störungs-Satz), Endbewertung: `x49.py`
+- Screening: `x48.py` (Varianten in `VAR`, `X48_SEED0` für einen zweiten Störungs-Satz), Endbewertung: `x49.py`, 400k-Konto: `x50.py`
 - Diagnosen: `pv_ana.py` (Trades nach gültigem Tag), `r21_hour.py` (RSI21 nach Einstiegsstunde), `bust_ana.py` (Busts der
   Fremddaten nach Monat), `perseed.py` (6.40 gegen 6.50 paarweise je Störung)
 - Prüfungen: `t_eng9.py`, `t_port_650.py`, `t_set.py`, `t_mq5.py`
-- Ergebnisse: `ergebnisse/x48_*.json`, `x49_*.json` (GFT-nah: `x48_gft_spread06.json`, `x49_gft_spread06.json`),
+- Ergebnisse: `ergebnisse/x48_*.json`, `x49_*.json`, `x50_*.json` (GFT-nah: `x48_gft_spread06.json`, `x49_gft_spread06.json`,
+  `x50_gft_spread06.json`),
   `t_port_650.txt`
 - Kursdaten: `extdata/scripts/run_all.sh` baut die Fremddaten neu, `Replikat_v6/mk_proxy.py` den GFT-Ersatz
   (`SPREAD_FAKTOR=0.6` für GFT-nahe Spreads, nur in einer Kopie des Ordners).
