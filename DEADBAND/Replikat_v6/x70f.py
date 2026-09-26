@@ -18,6 +18,7 @@ for lbl in which:
     blks, info, mk = x60.setup("gft", rule, extra)
     V._MK = mk
     mk.r21["reg"] = x48.r21_regime("gft", mk)
+    mk.nz["reg"] = x70.nz_regime("gft", mk)
     GP = x70.fade_gp(gpx, frisk, per, extra_gp)
     V.set_generic(blks, GP)
     Pv = E.params(**dict(r6.SAFE, **kw))

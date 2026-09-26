@@ -51,6 +51,41 @@ for _x in (0.5, 0.75, 1.0):
 for _n in (1, 2):
     VAR[f"Z6 Noise-Pause {_n}"] = v660(dict(nz_maxloss=_n))
 
+# Runde 2 (PROTOKOLL_670.md, Nachtrag 1): Regime-Groesse fuer RSI21 und Noise, Kombinationen
+for _f in (0.3, 0.5, 0.7):
+    VAR[f"Z9 Regime-Groesse {_f}"] = v660(dict(reg_mult=_f))
+VAR["Z10 Z9 + Z2"] = v660(dict(reg_mult=0.5, fsym_block=1))
+VAR["Z11 Z9 + RSI21 ab 11"] = v660(dict(reg_mult=0.5, vp_r21_to=11.0))
+VAR["RSI21 ab 11 (6.50-Option)"] = v660(dict(vp_r21_to=11.0))
+
+_NZREG = {}
+
+
+def nz_regime(target, mk, N=200, th=1.15, window_days=600):
+    """Je Noise-Pruefung des Markts: 1 = Portfolio-Waechter der Fades zur Signalzeit live (wie x48.r21_regime), sonst 0."""
+    key = (target, N, th, window_days, len(mk.nz["ev"]))
+    if key not in _NZREG:
+        import pg_guard as PGd, pg_blocks as PB, x41
+        rule = x41.S70_OHNE
+        exempt = set(rule.get("exempt", ()))
+        te_l, kt_l, mi_l, R_l = [], [], [], []
+        for i, nm in enumerate(PB.F10):
+            fk = {}
+            for ds in ("ext", "gft"):
+                f = PB.fi(ds, nm)
+                keep, live, tp, w = PB.apply_rule(f, rule if nm not in exempt else dict(kind="none"))
+                fk[ds] = (f, keep)
+            (f1, k1), (f2, k2) = fk["ext"], fk["gft"]
+            v1 = (f1["t_entry"] < PGd.LIM22) & k1
+            kt1 = PGd.known_time("ext", f1); kt2 = PGd.known_time("gft", f2)
+            te_l.append(np.r_[f1["t_entry"][v1], f2["t_entry"][k2]]); kt_l.append(np.r_[kt1[v1], kt2[k2]])
+            R_l.append(np.r_[f1["R"][v1], f2["R"][k2]]); mi_l.append(np.full(len(te_l[-1]), i))
+        kt_all = np.concatenate(kt_l); R_all = np.concatenate(R_l); mi_all = np.concatenate(mi_l)
+        q = mk.ev_t[mk.nz["ev"]]
+        _NZREG[key] = PGd.port_live_ea(q, kt_all, mi_all, R_all, N, th, window_days).astype(np.int64)
+    return _NZREG[key]
+
+
 SEED0 = int(os.environ.get("X70_SEED0", "0"))
 ABSCHLAG = float(os.environ.get("ABSCHLAG", "0"))
 
@@ -60,6 +95,7 @@ def evaluate(target, kw, gpx, seeds=8, step=2, per_seed=False, by_year=False, fa
     blks, info, mk = x60.setup(target, rule, extra_key)
     V._MK = mk
     mk.r21["reg"] = x48.r21_regime(target, mk)
+    mk.nz["reg"] = nz_regime(target, mk)
     GP = fade_gp(gpx, fade_risk, per, extra_gp)
     V.set_generic(blks, GP)
     Pv = E.params(**dict(r6.SAFE, **kw))

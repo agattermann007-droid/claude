@@ -1,6 +1,6 @@
 """Pruefung: eng11 mit Voreinstellungen rechnet exakt wie eng10 (alle Zaehler bis auf die neuen ext_n/ext_hit/fsym_blk/nz_blk,
 Trades, Ereignisse). Konten 6.60 (= 6.60b), 6.40 Ertrag und 6.50 Sicher auf dem GFT-Ersatz, mehrere Starts und Stoerungen
-(8 % ausgelassen, Schlupf). Zusaetzlich: mit ext_on/fsym_block/nz_maxloss wird tatsaechlich anders gerechnet (die Schalter wirken).
+(8 % ausgelassen, Schlupf). Zusaetzlich: mit ext_on/fsym_block/nz_maxloss/reg_mult wird tatsaechlich anders gerechnet (die Schalter wirken).
 Aufruf: python t_eng11.py"""
 import numpy as np
 import eng10, eng11, evl6 as V, r6, x40, x44, x48, x60
@@ -20,7 +20,7 @@ def run_pair(mk, kw, GP10, GP11, label, kw11=None):
                 P10s[eng10.PI["slip_frac"]] = 0.3; P11s[eng11.PI["slip_frac"]] = 0.3
             r10 = eng10.run(mk, P10s, a, b, seed=seed, masks=ms, GP=GP10)
             r11 = eng11.run(mk, P11s, a, b, seed=seed, masks=ms, GP=GP11)
-            same = (np.array_equal(r10["st"], r11["st"][:len(r10["st"])]) and np.array_equal(r10["tr"], r11["tr"])
+            same = (np.array_equal(r10["st"], r11["st"][:len(r10["st"])]) and np.array_equal(r10["tr"], r11["tr"][:, :10])
                     and np.array_equal(r10["ev"], r11["ev"]))
             ok &= same; n += 1; nd += int(not same)
     if kw11:
@@ -55,4 +55,5 @@ if __name__ == "__main__":
     w = check("6.60", x60.VAR["6.60b"], dict(ext_on=1))
     w &= check("6.60", x60.VAR["6.60b"], dict(fsym_block=1))
     w &= check("6.60", x60.VAR["6.60b"], dict(nz_maxloss=1))
+    w &= check("6.60", x60.VAR["6.60b"], dict(reg_mult=0.5))
     print("SCHALTER", "WIRKEN" if w else "WIRKEN NICHT")

@@ -65,3 +65,28 @@ Werden mehrere Kandidaten angenommen, muss auch ihre Kombination K-a bis K-g geg
 - Paarweise je Störung (gleiche ausgelassene Signale und gleicher Schlupf für Basis und Variante).
 - Anzahl der geprüften Varianten wird gezählt; bei der Endauswahl zusätzlich die Streuung über 16 Störungen.
 - Absolute Zahlen sind Replikat-Schätzungen; belastbar ist der Vergleich unter gleichen Annahmen.
+
+## Nachtrag 1 (Runde 2), festgelegt nach Runde 1 und vor den Tests von Z9–Z11
+
+**Stand nach Runde 1** (Screening beide Spread-Lagen, Endbewertung für Z2): Kein Kandidat erfüllt alle Kriterien.
+- Z1, Z3, Z6: Auszahlungen deutlich weniger (K-a). Z4: GFT-nah −0,21 Auszahlungen, −3,4 % Netto (K-a). Z5: breit Serien ≥ 6
+  nur −5 % (K-a), Nachbar 0,75 kostet −3,5 / −6 % Netto (K-e).
+- Z2 (Sperre nach 1 Verlust): 2022–25 in beiden Lagen besser (Auszahlungen +0,35 / +0,33, Netto +77 / +59 $, je 14 bzw. 12–14
+  von 16 Störungen), Stress besser. Aber: Fremddaten Busts +0,0062 ± 0,0013 je Jahr (Grenze +0,005) und Bust im 1. Jahr
+  +0,53 Prozentpunkte (Grenze +0,5); Nachbar 2 ohne deutliche Verbesserung (K-e); auf Signal-Ebene waren die gesperrten
+  Signale 2024–25 und 2026 nicht schlechter als die übrigen (`a70_sig.py`); Zukunftstest 2026 (nur berichtet) −0,07 / −0,16
+  Auszahlungen. **Nicht angenommen.**
+- Diagnose der Busts auf den Fremddaten: Sie liegen in der Episode Februar–Juni 2010 (Fades live von August 2009 bis Februar
+  2010, ab März 2010 nur virtuell) und im April 2011 (live). Rund 60 % der Busts fallen in die Monate **nach** dem Abschalten
+  der Fades (März–Juni 2010), wenn nur RSI21 und Noise handeln.
+
+**Kandidaten Runde 2** (Kriterien K-a bis K-g unverändert gegen 6.60; zusätzlich wird der Zukunftstest 2026 berichtet – ein
+paarweise um mehr als einen Standardfehler schlechteres Ergebnis gilt als Warnsignal und wird im Bericht genannt):
+
+| Nr | Idee | Begründung (ex ante) | Werte |
+|---|---|---|---|
+| Z9 | **Regime-Größe:** RSI21 und Noise mit Faktor F, solange der Portfolio-Wächter die Fades nicht live handeln lässt (Signalzeit) | Die Busts des alten Regimes entstehen nach dem Ende einer Fade-Phase; ohne Fade-Regime hat das System keine belegte Kante (2006–21). Im heutigen Regime fast ohne Wirkung (Fades 2022–25 zu 88 % live, 2026 immer) | F 0,5 (Nachbarn 0,3 / 0,7) |
+| Z10 | Z9 + Z2 | Z2 verbessert 2022–25 alle drei Ziele; Z9 soll den Sicherheitsverlust im alten Regime ausgleichen | F 0,5, Sperre 1 |
+| Z11 | Z9 + RSI21 an gültigen Tagen schon ab 11:00 NY (`GueltigSchutzR21BisNY=11`, vorhandene Eingabe) | Bericht 6.50: +Netto, +Auszahlungen 2022–25, aber mehr Busts 2010; Z9 soll das ausgleichen | F 0,5 |
+
+Z10 und Z11 werden nur angenommen, wenn auch Z9 allein die Sicherheitskriterien erfüllt.

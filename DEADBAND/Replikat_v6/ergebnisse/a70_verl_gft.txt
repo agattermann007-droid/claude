@@ -1,0 +1,10 @@
+Basis 6.60 (gft), 1-Jahres-Konten jeder 2. Tag, Seed 0, 352 Konto-Jahre (Naeherung ueber Ausstiegsreihenfolge)
+zwischendurch gueltige Tage je Jahr 71.4, davon am Ende verloren 3.51
+Verluste nach dem Gueltigwerden an verlorenen Tagen (je Jahr): Modul, davon Einstieg vorher / nachher:
+  Fade    3.30  vorher  0.87  nachher  2.43
+  RSI21   1.64  vorher  0.75  nachher  0.89
+  Noise   0.71  vorher  0.36  nachher  0.34
+Gewinne nach dem Gueltigwerden am selben Tag (je Jahr: Anzahl, Summe):
+  Fade    26.0      435 $
+  RSI21    6.6      323 $
+  Noise   10.5      161 $
