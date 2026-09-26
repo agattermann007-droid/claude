@@ -18,6 +18,7 @@ INHALT
   Presets/DEADBAND_LIVE4_670_Sicher.set         Auspraegung "Sicher" (nur die Fades, Fade-Risiko 0,70 %)
   Rueckweg_6.60/                                Build 6.60 mit beiden Sets
   Bericht/DEADBAND_LIVE4_670_Bericht.md         alle Zahlen, Pruefungen und Grenzen
+  LIESMICH.txt                                  diese Anleitung
 
 VORHER WICHTIG
 1. VPS/Server: GFT verbietet bei Instant Premium den Betrieb auf einem VPS oder Server. Betreibe den
