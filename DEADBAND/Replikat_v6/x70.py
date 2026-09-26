@@ -57,6 +57,10 @@ for _f in (0.3, 0.5, 0.7):
 VAR["Z10 Z9 + Z2"] = v660(dict(reg_mult=0.5, fsym_block=1))
 VAR["Z11 Z9 + RSI21 ab 11"] = v660(dict(reg_mult=0.5, vp_r21_to=11.0))
 VAR["RSI21 ab 11 (6.50-Option)"] = v660(dict(vp_r21_to=11.0))
+# Runde 3 (Nachtrag 2): Noise mit einer Position am 0,5-Sigma-Stop (EA: NzStops "0.5")
+VAR["Z12 Noise 1 Position"] = v660(dict(nz_parts=1, nz_q0=1))
+# Optionen fuer den Bericht (keine Kandidaten): 6.70 mit Serien-Stopp 2 (vorhandene Eingabe SerienStopp)
+VAR["6.70 + Serie 2"] = v660(dict(reg_mult=0.5, cool_n=2))
 
 _NZREG = {}
 

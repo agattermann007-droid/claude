@@ -54,6 +54,9 @@ def _job(args):
     for k in EXTRA:
         out["x_" + k] = float(st[S[k]])
     out["minbuf"] = float(st[S["minbuf"]])
+    # 6.70: Serien je Position (wie MT5/GFT-Dashboard zaehlen: jeder Noise-Teil einzeln), in Ausstiegsreihenfolge
+    n5p, n6p, n8p, mxp, worstp = V6.streaks(tr[:, 1]) if len(tr) else (0, 0, 0, 0, 0.0)
+    out["n5p"] = n5p; out["n6p"] = n6p; out["mxp"] = mxp
     pv = {}
     for row in tr:
         f = int(row[4])
@@ -87,6 +90,10 @@ def agg(rows):
     a["gap_mean"] = float(g.mean()) if len(g) else 0.0
     a["gap_p90"] = float(np.percentile(g, 90)) if len(g) else 0.0
     a["days_per_pay"] = 365.25 / max(a["pay"], 1e-9)
+    a["s5p"] = sum(r["n5p"] for r in rows) / Y                                   # 6.70: Serien je Position (MT5-Zaehlung)
+    a["s6p"] = sum(r["n6p"] for r in rows) / Y
+    a["mxp"] = float(np.mean([r["mxp"] for r in rows])) if rows else 0.0
+    a["mxpmax"] = float(np.max([r["mxp"] for r in rows])) if rows else 0.0
     mb = np.array([r["minbuf"] for r in rows])
     a["minbuf_mean"] = float(mb.mean()) if len(mb) else 0.0
     a["near100"] = float(np.mean(mb < 100.0 * NEAR_SCALE)) if len(mb) else 0.0       # Anteil Konten, die dem Boden auf < 1 % nahekamen
@@ -128,10 +135,10 @@ def evaluate(Pv, GP, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)), sk
         per = []
         for s in seeds:
             hsr = [agg([o for (h, s2, a), o in zip(tags, outs) if h == hh and s2 == s]) for hh in hs]
-            per.append([np.mean([x[k] for x in hsr]) for k in ("pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open")])
+            per.append([np.mean([x[k] for x in hsr]) for k in ("pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open", "s5p", "s6p", "mxp")])
         per = np.array(per)
-        mean["streuung"] = dict(mean=per.mean(0).tolist(), sd=per.std(0, ddof=1).tolist() if len(seeds) > 1 else [0.0] * 8,
-                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open"], per=per.tolist())
+        mean["streuung"] = dict(mean=per.mean(0).tolist(), sd=per.std(0, ddof=1).tolist() if len(seeds) > 1 else [0.0] * 11,
+                                keys=["pay", "bust", "net", "s5", "s6", "mx", "wr", "net_open", "s5p", "s6p", "mxp"], per=per.tolist())
     if by_year:
         by = {}
         for (h, s, a), o in zip(tags, outs):

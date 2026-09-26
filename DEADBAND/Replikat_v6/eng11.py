@@ -8,6 +8,8 @@ gilt erst ab der naechsten Kerze.
 Tagessperre der Fades je Symbol (fsym_block): nach N Fade-Verlusten im Symbol am selben Tag keine neuen Fade-Einstiege
 in diesem Symbol bis 17:00 NY (Trendtag).
 Noise-Tagespause (nz_maxloss): nach N Noise-Teilen mit Verlust am selben Tag keine neuen Noise-Einstiege bis 17:00 NY.
+Noise mit einer Position (nz_q0): Spalte der Stop-Distanz fuer Teil 0 (Voreinstellung 0 = 0,35 Sigma; mit nz_parts 1 und
+nz_q0 1 = eine Position am 0,5-Sigma-Stop wie NzStops "0.5" im EA).
 Regime-Groesse (reg_mult, Runde 2): RSI21 und Noise mit Faktor reg_mult, solange der Portfolio-Waechter die Fades nicht live
 handeln laesst (Signalzeit; RSI21: r21["reg"], Noise: nz["reg"] = 0).
 Trade-Protokoll Spalte 10 = Ausstiegszeit (NY-Minuten). Mit den Voreinstellungen rechnet eng11 wie eng10 (t_eng11.py).
@@ -109,7 +111,7 @@ PN = [
     # --- 6.70: Konsistenzregel (Instant GOAT: bester Tag < 15 % des Gewinns der Auszahlungsperiode; Voreinstellung = aus)
     "cons_pct", "cons_res", "cons_cap", "cons_capfrac",
     # --- 6.70: Ziel fuer den gueltigen Tag, Tagessperre je Symbol (Voreinstellung = aus)
-    "ext_on", "ext_lock", "ext_max", "ext_margin", "fsym_block", "nz_maxloss", "reg_mult",
+    "ext_on", "ext_lock", "ext_max", "ext_margin", "fsym_block", "nz_maxloss", "reg_mult", "nz_q0",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -144,7 +146,7 @@ def params(**kw):
              vp_mods=15, vp_k=1.0, vp_minfrac=0.0, vp_r21_to=0.0, vp_r21_dd=0, vp_r21_reg=0,
              sv_on=0, sv_cap=0.85, sv_margin=0.05, nz_short=0, nz_s_risk=0.45,
              cons_pct=0.0, cons_res=0.5, cons_cap=0, cons_capfrac=1.0,
-             ext_on=0, ext_lock=0.5, ext_max=1.2, ext_margin=0.05, fsym_block=0, nz_maxloss=0, reg_mult=1.0)
+             ext_on=0, ext_lock=0.5, ext_max=1.2, ext_margin=0.05, fsym_block=0, nz_maxloss=0, reg_mult=1.0, nz_q0=0)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -424,7 +426,7 @@ def run_path(Pv, d0, d1, seed,
     nz_short = Pv[150] > 0.5; nz_s_risk = Pv[151]
     cons_pct = Pv[152]; cons_res = Pv[153]; cons_cap = int(Pv[154]); cons_capfrac = Pv[155]
     ext_on = Pv[156] > 0.5; ext_lock = Pv[157]; ext_max = Pv[158]; ext_margin = Pv[159]; fsym_block = int(Pv[160])
-    nz_maxloss = int(Pv[161]); reg_mult = Pv[162]
+    nz_maxloss = int(Pv[161]); reg_mult = Pv[162]; nz_q0 = int(Pv[163])
     cons_thr = (cons_pct - cons_res) / 100.0          # 6.70: bester Tag < cons_thr x Gewinn der Periode
 
     floor_dist = start * maxlosspct / 100.0
@@ -1122,7 +1124,7 @@ def run_path(Pv, d0, d1, seed,
                     k = NZ0 + q
                     if p_on[k]:
                         continue
-                    dist = z_dist[zcur, q]
+                    dist = z_dist[zcur, q + nz_q0]
                     if dist <= 0.0 or dist < 1.5 * 1.2:
                         continue
                     orisk_all = 0.0

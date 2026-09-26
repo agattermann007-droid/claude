@@ -90,3 +90,24 @@ paarweise um mehr als einen Standardfehler schlechteres Ergebnis gilt als Warnsi
 | Z11 | Z9 + RSI21 an gültigen Tagen schon ab 11:00 NY (`GueltigSchutzR21BisNY=11`, vorhandene Eingabe) | Bericht 6.50: +Netto, +Auszahlungen 2022–25, aber mehr Busts 2010; Z9 soll das ausgleichen | F 0,5 |
 
 Z10 und Z11 werden nur angenommen, wenn auch Z9 allein die Sicherheitskriterien erfüllt.
+
+## Nachtrag 2 (Runde 3), festgelegt vor dem Test von Z12
+
+**Stand nach Runde 2:** Z9 senkt die Busts der Fremddaten auf 0,0065 je Jahr (Basis 0,0381), im heutigen Regime ohne Wirkung
+(2022–25 und 2026 gleich), kostet aber im alten Regime und im Stresstest Auszahlungen und Netto (Fremddaten 1,48 statt 2,15
+Auszahlungen, 248 statt 363 $; Stress breit 5,94 statt 6,29). Z9 verbessert kein Ziel im heutigen Regime (K-a nicht erfüllt).
+Z10 = Z9 + Z2: 2022–25 wie Z2 (Auszahlungen +0,36 / +0,33, 14 / 13 von 16 Störungen), Fremddaten-Busts 0,0100, Stress
+sicherer; aber K-e (Nachbar von Z2) nicht erfüllt, und der Zukunftstest 2026 ist ein **Warnsignal** (GFT-nah −0,16 ± 0,14
+Auszahlungen, −47 ± 31 $; breit −0,07 ± 0,12, −36 ± 35 $). Z11: K-b nicht erfüllt (Start 2024–25: breit −0,64, GFT-nah −0,27
+Auszahlungen). Serien-Stopp 2 (Option): 2026 breit −0,34 ± 0,13 Auszahlungen.
+
+**Diagnose Verlustserien je Position:** MT5-Bericht und GFT-Dashboard zählen jede Position einzeln. Dann zählt ein
+Noise-Verlust bis zu dreimal (drei Teilpositionen mit Stops 0,35 / 0,5 / 0,75 Sigma). Basis 6.60 (1-Jahres-Konten, Seed 0):
+je Position Serien ≥ 5 7,8 und ≥ 6 4,8 je Jahr, längste Serie im Mittel 9,0 (höchstens 11); je Idee 2,4 / 1,0 / 6,8 (10).
+
+| Nr | Idee | Begründung (ex ante) | Werte |
+|---|---|---|---|
+| Z12 | **Noise mit einer Position** (Stop 0,5 Sigma, volles Noise-Risiko; EA: `NzStops="0.5"`, vorhandene Eingabe) | Das Drei-Stop-Ensemble verdreifacht die sichtbaren Verlust-Positionen eines Noise-Fehlsignals; eine Position am mittleren Stop hat dieselbe Idee und dasselbe Risiko | 0,5 Sigma (Mitte des Ensembles) |
+
+Kriterien wie oben; für Z12 gelten als Verlustserien zusätzlich die Serien je Position (S5p, S6p, längste Serie je Position):
+deutlich besser, wenn S6p ≤ Basis − 20 % (und S5p ≤ Basis), bei A ≥ Basis − 0,1 und N ≥ Basis − 1 %.

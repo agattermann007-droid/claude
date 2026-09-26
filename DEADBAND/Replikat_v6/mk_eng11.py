@@ -23,6 +23,8 @@ gilt erst ab der naechsten Kerze.
 Tagessperre der Fades je Symbol (fsym_block): nach N Fade-Verlusten im Symbol am selben Tag keine neuen Fade-Einstiege
 in diesem Symbol bis 17:00 NY (Trendtag).
 Noise-Tagespause (nz_maxloss): nach N Noise-Teilen mit Verlust am selben Tag keine neuen Noise-Einstiege bis 17:00 NY.
+Noise mit einer Position (nz_q0): Spalte der Stop-Distanz fuer Teil 0 (Voreinstellung 0 = 0,35 Sigma; mit nz_parts 1 und
+nz_q0 1 = eine Position am 0,5-Sigma-Stop wie NzStops "0.5" im EA).
 Regime-Groesse (reg_mult, Runde 2): RSI21 und Noise mit Faktor reg_mult, solange der Portfolio-Waechter die Fades nicht live
 handeln laesst (Signalzeit; RSI21: r21["reg"], Noise: nz["reg"] = 0).
 Trade-Protokoll Spalte 10 = Ausstiegszeit (NY-Minuten). Mit den Voreinstellungen rechnet eng11 wie eng10 (t_eng11.py).
@@ -34,17 +36,17 @@ src = HEAD + src[3:]
 rep('''    "cons_pct", "cons_res", "cons_cap", "cons_capfrac",
 ]''', '''    "cons_pct", "cons_res", "cons_cap", "cons_capfrac",
     # --- 6.70: Ziel fuer den gueltigen Tag, Tagessperre je Symbol (Voreinstellung = aus)
-    "ext_on", "ext_lock", "ext_max", "ext_margin", "fsym_block", "nz_maxloss", "reg_mult",
+    "ext_on", "ext_lock", "ext_max", "ext_margin", "fsym_block", "nz_maxloss", "reg_mult", "nz_q0",
 ]''')
 rep('''             cons_pct=0.0, cons_res=0.5, cons_cap=0, cons_capfrac=1.0)''',
     '''             cons_pct=0.0, cons_res=0.5, cons_cap=0, cons_capfrac=1.0,
-             ext_on=0, ext_lock=0.5, ext_max=1.2, ext_margin=0.05, fsym_block=0, nz_maxloss=0, reg_mult=1.0)''')
+             ext_on=0, ext_lock=0.5, ext_max=1.2, ext_margin=0.05, fsym_block=0, nz_maxloss=0, reg_mult=1.0, nz_q0=0)''')
 rep('''      "cons_wait", "cons_block", "open_end", "lim_cons"]''',
     '''      "cons_wait", "cons_block", "open_end", "lim_cons", "ext_n", "ext_hit", "fsym_blk", "nz_blk"]''')
 rep('''    cons_pct = Pv[152]; cons_res = Pv[153]; cons_cap = int(Pv[154]); cons_capfrac = Pv[155]''',
     '''    cons_pct = Pv[152]; cons_res = Pv[153]; cons_cap = int(Pv[154]); cons_capfrac = Pv[155]
     ext_on = Pv[156] > 0.5; ext_lock = Pv[157]; ext_max = Pv[158]; ext_margin = Pv[159]; fsym_block = int(Pv[160])
-    nz_maxloss = int(Pv[161]); reg_mult = Pv[162]''')
+    nz_maxloss = int(Pv[161]); reg_mult = Pv[162]; nz_q0 = int(Pv[163])''')
 rep('''    p_fk = np.zeros(NSLOT)                           # 6.60: Groessenfaktor (Pufferkurve) beim Einstieg (Protokoll)''',
     '''    p_fk = np.zeros(NSLOT)                           # 6.60: Groessenfaktor (Pufferkurve) beim Einstieg (Protokoll)
     p_ext = np.zeros(NSLOT, np.bool_)                # 6.70: Ziel fuer den gueltigen Tag schon verlaengert''')
@@ -116,6 +118,8 @@ rep("            r = start * r21_risk / 100.0 * w * fak\n",
     "            r = start * r21_risk / 100.0 * w * fak\n            if reg_mult != 1.0 and r_reg[a] == 0:\n                r *= reg_mult\n")
 rep("                    r = start * (nz_risk if nzd > 0 else nz_s_risk) / 100.0 * z_vw[zcur] / nz_parts * fak\n",
     "                    r = start * (nz_risk if nzd > 0 else nz_s_risk) / 100.0 * z_vw[zcur] / nz_parts * fak\n                    if reg_mult != 1.0 and z_reg[zcur] == 0:\n                        r *= reg_mult\n")
+
+rep("                    dist = z_dist[zcur, q]\n", "                    dist = z_dist[zcur, q + nz_q0]\n")
 
 # Trade-Protokoll Spalte 10 = Ausstiegszeit (NY-Minuten, Kerze des Ausstiegs) fuer Diagnosen
 n9 = src.count("out_tr[n_tr, 9] = float(p_dir[k])")
