@@ -50,6 +50,8 @@ gilt zusätzlich: nicht mehr Bust-Risiko.
   (drei Teilpositionen). Je Position gibt es deshalb 7,8 Serien ≥ 5 im Jahr und eine längste Serie von 9,0 im Mittel (höchstens
   11–15), je Idee 2,4 und 6,8 (Abschnitt 3.4). Das ist kein Fehler des EA; die Zahlen in diesem Bericht zählen je Idee wie
   der Serien-Stopp.
+- **Empfehlung für das Live-Konto:** Echtbetrieb, also die Voreinstellungen ohne Set. Beim Netto nach Neukäufen liegt es in
+  keinem der sieben Szenarien mehr als 78 $ je Jahr hinter der besten Fassung (Abschnitt 12).
 - **Nicht geprüft:** Kompilieren in MetaEditor, Strategietester, Demo. Das bleibt Pflicht (Abschnitt 10).
 
 ## 2. Vorgehen
@@ -385,6 +387,44 @@ bestanden.
    wie 6.60. Die 6.70-Zeile steht deshalb ganz unten und nur bei aktiver Option; fällt sie selbst weg, steht der Stand der
    Optionen auch im Journal (Startzeile, Vermerk `Regime-Groesse x0.50` je Einstieg, Auslass-Grund der Sperre) und in den
    Push-Meldungen.
+
+## 12. Empfehlung für den Prop-Firm-Echtbetrieb (Nachtrag 26.09.2026)
+
+Frage: Welche Fassung ist für das Live-Konto (GFT Instant Premium 10k) die beste? Maßstab ist das, was beim Trader ankommt:
+**Netto je Jahr** = 80 % Gewinnanteil × 97 % (Auszahlungsgebühr) × Auszahlungen − 148,50 $ je Neukauf nach einem Bust. Busts
+sind darin also schon mit ihren Kosten enthalten (Neukauf, verlorener Puffer, neue Anlaufzeit). Verglichen über alle sieben
+Szenarien dieses Berichts (Auszahlungen je Jahr / Netto je Jahr, 16 Störungen):
+
+| Szenario | Echtbetrieb (= 6.60) | Regimeschutz | Tagessperre |
+|---|---|---|---|
+| GFT-Ersatz 2022–25, breit | 11,53 / 2244 $ | 11,53 / 2244 $ | 11,89 / 2322 $ |
+| GFT-Ersatz 2022–25, GFT-nah | 12,05 / 2493 $ | 12,05 / 2492 $ | 12,39 / 2552 $ |
+| Stress (−20 % Fade-Gewinner), breit | **6,29 / 1217 $** | 5,94 / 1159 $ | 6,11 / 1197 $ |
+| Stress, GFT-nah | 8,33 / 1654 $ | 8,14 / 1627 $ | 8,67 / 1705 $ |
+| 2026 (ungesehen), breit | **12,54 / 2229 $** | **12,54 / 2229 $** | 12,48 / 2194 $ |
+| 2026, GFT-nah | **12,38 / 2319 $** | **12,38 / 2319 $** | 12,21 / 2272 $ |
+| Fremddaten 2006–21 (altes Regime) | **2,15 / 363 $** | 1,48 / 248 $ | 1,46 / 242 $ |
+| größter Netto-Rückstand zum Besten | **78 $** | 115 $ | 121 $ |
+| Summe der Netto-Rückstände | **189 $** | 390 $ | 223 $ |
+| Busts je Konto-Jahr, Fremddaten (2022–26: überall 0) | 0,038 | 0,0065 | 0,010 |
+| Bust im 1. Jahr, Fremddaten | 1,0 % | 0,2 % | 0,2 % |
+
+**Empfehlung: Echtbetrieb, also die Voreinstellungen von `DEADBAND_LIVE4.mq5` (6.70) ohne Set.**
+
+- Echtbetrieb liegt nie mehr als 78 $ je Jahr hinter der jeweils besten Fassung und hat die kleinste Summe der Rückstände. Es
+  ist in 4 von 7 Szenarien vorn oder gleichauf, darunter alle ungesehenen (2026) und das ungünstigste (Fremddaten).
+- **Regimeschutz** ist eine Versicherung. Im heutigen Regime kostet er nichts, nach einem Regimewechsel aber gut 30 % Netto –
+  auch nach Abzug der Neukäufe, die er einspart. Er lohnt sich nur, wenn ein Bust mehr zählt als seine Kosten (etwa weil nach einem
+  Bust kein neues Konto gekauft würde). Umschalten geht jederzeit über die Eingabe `RegimeGroesse=0.5`, ohne neue Datei; der
+  Anlass ist die Push-Meldung `FADE-REGIME AUS`.
+- **Tagessperre** gewinnt nur auf den Daten, auf denen die Fades gefunden wurden (2022–25, Stress daraus), und verliert auf
+  2026 und den Fremddaten – nicht robust.
+- **Sicher** (nur Fades) bringt rund 40 % weniger Auszahlungen und Netto (Bericht 6.50, GFT-Ersatz breit: 7,11 Auszahlungen und
+  1234 $ je Jahr statt 11,53 und 2244 $) und kann bei abgeschalteten Fades wochenlang nicht handeln (GFT: 30 Tage ohne Trade =
+  Konto weg) – für den Ertrag die schlechteste Wahl.
+
+Die Datei ist auf GFT Instant Premium 10k abgestimmt (Regeln, Symbole `XAUUSD.x`/`NAS100.x`, `KontoAb20260902=true`). Für
+andere Prop-Firmen gelten andere Regeln – dort nicht ungeprüft einsetzen.
 
 ## Anhang: Replikat
 
