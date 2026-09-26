@@ -19,4 +19,6 @@
   Replikat mit Tagessperre: 14392 Fade-Trades, davon nach einem Fade-Verlust im Symbol am selben Prop-Tag eroeffnet: 0; gesperrte Signale 518 -> OK
 9. Laenge der Push-Texte
   laengste Regime-Meldung 198 Zeichen (Grenze 255) -> OK
+10. Zaehlung der Fade-Verluste im EA (je Position, letztes Schliessen) gegen die Replikat-Regel
+  FadeVerlusteHeute gegen die Replikat-Regel: 5 Faelle einzeln und zusammen (3 Verluste) -> GLEICH
 GESAMT IDENTISCH

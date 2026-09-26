@@ -818,8 +818,8 @@ input bool   GueltigSchutzR21Regime = true;  // RSI21 ab GueltigSchutzR21BisNY n
 input group             "=== 6.60: Zukunft (Regime-Fruehwarnung) ==="
 input double FadeFruehwarnPF  = 1.25;       // Vorwarnung per Push, solange die Fades live sind und der PF des Portfolio-Waechters (letzte FadePortN virtuelle Fade-Signale) unter X liegt (hoechstens alle 7 Tage; Abschaltung erst bei FadePortPF). 0 = keine Vorwarnung - der Push bei jedem Wechsel LIVE <-> nur virtuell bleibt (nur Meldungen, kein Einfluss auf den Handel)
 input group             "=== 6.70: Optionen (Voreinstellung aus = Handel wie 6.60) ==="
-input double RegimeGroesse    = 1.0;        // RSI21 und Noise mit Faktor X, solange der Portfolio-Waechter die Fades NICHT live handeln laesst (PF der letzten FadePortN <= FadePortPF, auch solange die Fade-Historie laedt; Signalzeit = Open der Einstiegskerze). 1 = aus (wie 6.60). Preset Regimeschutz 0,5: Fremddaten 2006-21 Busts 0,0065 statt 0,038 je Jahr, 2022-25 und 2026 unveraendert, ohne Fade-Regime aber weniger Auszahlungen und Netto
-input int    FadeTagessperre  = 0;          // nach X Fade-Verlusten im Symbol am selben Prop-Tag (ab 17:00 NY) keine neuen Fade-Einstiege in diesem Symbol bis 17:00 NY (0 = aus wie 6.60). Test-Option: 2022-25 mehr Auszahlungen und kuerzere Serien, Zukunftstest 2026 nicht bestaetigt (Bericht 6.70)
+input double RegimeGroesse    = 1.0;        // RSI21 und Noise mit Faktor X, solange der Portfolio-Waechter die Fades NICHT live handeln laesst (auch solange die Fade-Historie laedt). 1 = aus wie 6.60; Preset Regimeschutz 0,5: seltener Busts nach einem Regimewechsel, dann aber weniger Ertrag (Bericht 6.70)
+input int    FadeTagessperre  = 0;          // nach X Fade-Verlusten im Symbol seit 17:00 NY keine neuen Fade-Einstiege in diesem Symbol bis 17:00 NY. 0 = aus wie 6.60; Test-Option: 2022-25 besser, 2026 nicht bestaetigt (Bericht 6.70)
 input group             "=== Anzeige, Leiter, Test ==="
 input bool   ShowPanel     = true;
 input bool   ShowLeiter    = true;
@@ -1087,7 +1087,7 @@ int OnInit()
      { Print("DEADBAND4: 6.30-Eingaben ungueltig (FadeT1R >= 0, FadeT1Anteil 0,1-0,9, R21EinstandAbR/NzEinstandAbR >= 0, 0 <= EinstandPlusR < EinstandAbR)"); return(INIT_PARAMETERS_INCORRECT); }
    if(GueltigSchutzR21BisNY < 0.0 || GueltigSchutzR21BisNY > 24.0)                                       // 6.50
      { Print("DEADBAND4: GueltigSchutzR21BisNY muss zwischen 0 und 24 (NY-Stunde) liegen"); return(INIT_PARAMETERS_INCORRECT); }
-   if(RegimeGroesse <= 0.0 || RegimeGroesse > 1.0 || FadeTagessperre < 0)                                    // 6.70
+   if(RegimeGroesse <= 0.0 || RegimeGroesse > 1.0 + 1e-9 || FadeTagessperre < 0)                             // 6.70
      { Print("DEADBAND4: 6.70-Eingaben ungueltig (0 < RegimeGroesse <= 1, FadeTagessperre >= 0)"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && (StringLen(FloorOverrideZeit) < 10 || StringToTime(FloorOverrideZeit) < D'2020.01.01'))   // 6.10: ohne Ablesezeit ginge die Spitze bis zum Neustart verloren
      { Print("DEADBAND4: FloorOverride braucht FloorOverrideZeit = Serverzeit der Ablesung im GFT-Dashboard (\"JJJJ.MM.TT HH:MI\")"); return(INIT_PARAMETERS_INCORRECT); }
@@ -1199,6 +1199,7 @@ int OnInit()
                (RegimeGroesse < 1.0 ? StringFormat("RSI21/Noise x%.2f, solange die Fades nicht live sind%s", RegimeGroesse,
                                                    (FadePortPF <= 0.0 ? " - WIRKUNGSLOS: Portfolio-Waechter aus (FadePortPF 0)" : "")) : "aus"),
                (FadeTagessperre > 0 ? StringFormat("nach %d Fade-Verlust(en) im Symbol keine Fades mehr bis 17:00 NY", FadeTagessperre) : "aus"));
+   RegimeGroesseHinweise();                                              // 6.70 (nach FadeAnlegen)
    PrintFormat("DEADBAND4: 6.30 Trefferquote | Fade-Teilgewinn %s | Einstand RSI21 %s, Noise %s (neuer Stop Einstieg + %.2f R) | erst ab der M5-Kerze nach der Einstiegskerze und nach %d s",
                (FadeT1R > 0.0 ? StringFormat("%.0f %% ab %.2f R (Stop und Ziel bleiben)", FadeT1Anteil*100.0, FadeT1R) : "aus"),
                (R21EinstandAbR > 0.0 ? StringFormat("ab %.2f R", R21EinstandAbR) : "aus"), (NzEinstandAbR > 0.0 ? StringFormat("ab %.2f R je Teil", NzEinstandAbR) : "aus"),
@@ -3679,7 +3680,6 @@ void ZyklusPanel()
    txt += "\n  Probability Grid  " + GridStatusText();                   // 6.20
    txt += "\n  Trefferquote      " + TrefferStatusText();                // 6.30
    txt += "\n  Auszahlungstakt   " + TaktStatusText();                   // 6.40
-   txt += "\n  Optionen 6.70     " + OptionenStatusText();               // 6.70
    txt += "\n  DEADBAND          " + (DbAktiv ? "Einstiege an" : "Einstiege AUS (DbAktiv=false, offene werden verwaltet)");
    txt += "\n  GFT-Schutz        " + SchutzStatusText();                    // 4.90
    txt += StringFormat("\n  5.10              Verlierer %.2f (Bremse %s) | Idee max %s | Swap-Vorsorge %s | %s | Abschluss-Ernte %s",
@@ -3703,6 +3703,7 @@ void ZyklusPanel()
       else
          txt += "\nLeiter: groesste Einzelstufe erreicht.";
      }
+   if(RegimeGroesse < 1.0 || FadeTagessperre > 0) txt += "\n  Optionen 6.70     " + OptionenStatusText();   // 6.70 (nur mit aktiven Optionen, am Ende)
    Comment(txt);
   }
 
@@ -5749,19 +5750,45 @@ bool RegimeKlein(const datetime t)
    return !FadeRegimeLive(t5);
   }
 
-// 6.70 Fade-Tagessperre: geschlossene Fade-Positionen mit Verlust (Ergebnis + Swap < 0, wie losses[] im Replikat) im Symbol
-//      des Platzes k seit 17:00 NY (Prop-Tag) - aus der Deal-Historie (wird bei jeder Positionsaenderung neu geladen)
+// 6.70: Hinweise beim Start, wenn die Regime-Groesse nicht wie gedacht wirken kann
+void RegimeGroesseHinweise()
+  {
+   if(RegimeGroesse >= 1.0 || FadePortPF <= 0.0) return;
+   if(!fadeOk || nFade == 0)
+      PrintFormat("DEADBAND4: WARNUNG Regime-Groesse: Fade-Module nicht angelegt - RSI21 und Noise bleiben DAUERHAFT bei x%.2f", RegimeGroesse);
+   if(FadeWaechterModus != 1)
+      Print("DEADBAND4: Hinweis Regime-Groesse: folgt dem Portfolio-PF der Fades (FadePortN/FadePortPF), auch wenn die Fades je Modul bewacht werden (FadeWaechterModus 0)");
+  }
+
+// 6.70 Fade-Tagessperre: heute (Prop-Tag ab 17:00 NY) voll geschlossene Fade-Positionen im Symbol des Platzes k, deren letztes
+//      Schliessen (Ergebnis + Swap des Rests, Deals derselben Sekunde zusammen) im Verlust lag - wie losses[] im Replikat
+//      (Teilschliessungen der Abschluss-Ernte zaehlen nicht). Aus der Deal-Historie D[]: bei GueltigSchutz sofort nach jeder
+//      Positionsaenderung neu geladen, sonst spaetestens nach 5 s.
 int FadeVerlusteHeute(const int k)
   {
    long heute = PropDayIndex(TimeCurrent());
-   int n = 0;
-   for(int i=nD-1;i>=0;i--)
+   long ids[]; datetime tLetzt[]; double erg[], vIn[], vOut[]; int np = 0;
+   int i0 = nD;
+   while(i0 > 0 && PropDayIndex(D[i0-1].time) >= heute) i0--;                 // erster Deal des Tages
+   for(int i=i0;i<nD;i++)
      {
-      if(PropDayIndex(D[i].time) < heute) break;
-      if(!IsFadeMagic(D[i].magic) || D[i].sym != S[k].sym) continue;
+      if(!IsFadeMagic(D[i].magic) || D[i].sym != S[k].sym || !IstHandel(i)) continue;
+      int j = -1;
+      for(int q=0;q<np;q++) if(ids[q] == D[i].posid) { j = q; break; }
+      if(j < 0)
+        {
+         ArrayResize(ids, np+1); ArrayResize(tLetzt, np+1); ArrayResize(erg, np+1); ArrayResize(vIn, np+1); ArrayResize(vOut, np+1);
+         ids[np] = D[i].posid; tLetzt[np] = 0; erg[np] = 0.0; vIn[np] = 0.0; vOut[np] = 0.0; j = np; np++;
+        }
+      if(D[i].entry == DEAL_ENTRY_IN) { vIn[j] += D[i].volume; continue; }
       if(D[i].entry != DEAL_ENTRY_OUT && D[i].entry != DEAL_ENTRY_OUT_BY) continue;
-      if(D[i].profit + D[i].swap < 0.0) n++;
+      if(D[i].time != tLetzt[j]) { erg[j] = 0.0; tLetzt[j] = D[i].time; }    // neues Schliessen: nur der letzte Ausstieg zaehlt
+      erg[j] += D[i].profit + D[i].swap;
+      vOut[j] += D[i].volume;
      }
+   int n = 0;
+   for(int q=0;q<np;q++)
+      if(tLetzt[q] > 0 && (vIn[q] <= 0.0 || vOut[q] >= vIn[q] - 1e-8) && erg[q] < 0.0) n++;   // Einstieg vor dem Tag (N1800 ab 18:00 NY liegt im Tag): voll geschlossen angenommen
    return n;
   }
 
@@ -6635,13 +6662,23 @@ string GueltigSchutzUmfang()
    return (StringLen(teile) > 0 ? teile : "keine aktiven Module");
   }
 
-// 6.40: Auszahlungstakt (Panel)
-// 6.70: Stand der Optionen (Regime-Groesse, Fade-Tagessperre) fuer das Panel
+// 6.70: Stand der Optionen (Regime-Groesse, Fade-Tagessperre) fuer das Panel - rechnet den Portfolio-PF direkt, ohne den
+//       Zwischenspeicher von FadeRegimeLive (sonst koennte ein spaeteres Signal derselben M5-Kerze einen veralteten Wert lesen)
 string OptionenStatusText()
   {
    string t = "Regime-Groesse ";
    if(RegimeGroesse >= 1.0) t += "aus";
-   else t += StringFormat("x%.2f (jetzt %s)", RegimeGroesse, (RegimeKlein(TimeCurrent()) ? "KLEIN - Fades nicht live" : "volle Groesse - Fades live"));
+   else
+     {
+      bool live = true;
+      if(FadePortPF > 0.0)
+        {
+         int n = 0; bool alle = true; double pf = 0.0;
+         if(fadeOk && nFade > 0) pf = FadePortfolioPF(TimeCurrent(), n, alle);
+         live = (fadeOk && nFade > 0 && alle && n >= FadePortN && pf > FadePortPF);
+        }
+      t += StringFormat("x%.2f (jetzt %s)", RegimeGroesse, (live ? "volle Groesse - Fades live" : "KLEIN - Fades nicht live"));
+     }
    t += " | Fade-Tagessperre ";
    if(FadeTagessperre <= 0) return t + "aus";
    t += StringFormat("ab %d Verlust(en):", FadeTagessperre);
@@ -6649,6 +6686,7 @@ string OptionenStatusText()
    return t;
   }
 
+// 6.40: Auszahlungstakt (Panel)
 string TaktStatusText()
   {
    return StringFormat("Mindestgewinn %.2f $ | Abschluss-Ernte %s | Schutz gueltiger Tage %s | Fade-Waechter %s | Pufferkurve voll ab %.1f %%, x%.2f bei <= %.1f %%",

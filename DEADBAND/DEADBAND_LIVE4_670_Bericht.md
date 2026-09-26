@@ -267,17 +267,24 @@ Variante, die zufällig gut aussieht – deshalb die strengen Kriterien und der 
 | Eingabe | Voreinstellung | Bedeutung |
 |---|---:|---|
 | `RegimeGroesse` (neu) | **1,0 = aus** | RSI21 und Noise mit Faktor X, solange der Portfolio-Wächter die Fades nicht live handeln lässt (PF der letzten 200 virtuellen Fade-Signale ≤ 1,15). Zeitpunkt wie beim RSI21-Schutz seit 6.50: Open der Einstiegskerze (RSI21 `sigZeit`, Noise Ende der Prüfung `chkEnd`). Gilt auch, solange die Fade-Historie nach dem Start noch lädt. Wirkt nur auf neue Einstiege, nie vergrößernd. Erlaubt: 0 < X ≤ 1 |
-| `FadeTagessperre` (neu) | **0 = aus** | nach X Fade-Verlusten (Ergebnis + Swap < 0) im Symbol seit 17:00 NY keine neuen Fade-Einstiege in diesem Symbol bis 17:00 NY. Die virtuellen Signale für den Wächter laufen weiter |
+| `FadeTagessperre` (neu) | **0 = aus** | nach X Fade-Verlusten im Symbol seit 17:00 NY keine neuen Fade-Einstiege in diesem Symbol bis 17:00 NY. Als Verlust zählt eine voll geschlossene Fade-Position, deren letztes Schließen (der Rest nach Teilschließungen, Ergebnis + Swap) im Minus lag – wie im Replikat; Teilschließungen der Abschluss-Ernte zählen nie. Die virtuellen Signale für den Wächter laufen weiter |
 
 - **Mit den Voreinstellungen** rechnet der EA wie 6.60: `RegimeKlein()` kehrt sofort zurück, die Sperre wird nicht geprüft.
 - **Journal beim Start:** `DEADBAND4: 6.70 Regime | Handel wie 6.60 (Voreinstellungen) | Regime-Groesse aus | Fade-Tagessperre aus`
-  (mit Optionen: `, dazu Optionen | Regime-Groesse RSI21/Noise x0.50, solange die Fades nicht live sind | ...`).
+  (mit Optionen: `, dazu Optionen | Regime-Groesse RSI21/Noise x0.50, solange die Fades nicht live sind | ...`). Kann die
+  Regime-Größe nicht wie gedacht wirken, steht es gleich dabei: `WIRKUNGSLOS: Portfolio-Waechter aus (FadePortPF 0)` bzw.
+  `WARNUNG Regime-Groesse: Fade-Module nicht angelegt - RSI21 und Noise bleiben DAUERHAFT bei x0.50`; bei
+  `FadeWaechterModus=0` ein Hinweis, dass die Option trotzdem dem Portfolio-PF folgt.
 - **Einstiegs-Journal:** RSI21 und Noise vermerken `Regime-Groesse x0.50`, wenn sie verkleinert wurden; die Fade-Sperre erscheint
   als Auslass-Grund `Fade-Tagessperre: 1 Fade-Verlust(e) heute in NAS100.x`.
 - **Push-Meldungen des Regime-Wächters:** bei aktiver Regime-Größe mit dem Zusatz `RSI21/Noise x0.50` bzw.
   `RSI21/Noise wieder volle Groesse` (höchstens 198 Zeichen).
-- **Panel:** Titel „DEADBAND LIVE 6.70 REGIME“, neue Zeile `Optionen 6.70` (Regime-Größe jetzt klein oder voll, Fade-Verluste
-  heute je Symbol).
+- **Panel:** Titel „DEADBAND LIVE 6.70 REGIME“. Die Zeile `Optionen 6.70` (Regime-Größe jetzt klein oder voll, Fade-Verluste
+  heute je Symbol) erscheint nur, wenn eine Option an ist, und steht ganz unten: MT5 zeigt im Chart-Kommentar nur rund 2045
+  Zeichen, die Statuszeilen darüber sollen nicht weiter nach hinten rutschen.
+- **Nebenwirkung der Regime-Größe:** Die Mindestlot-Prüfung (`MinLotRiskTol`) vergleicht mit dem verkleinerten Risiko. Ist das
+  kleinste Lot dafür zu groß, lässt der EA einen Noise-Teil bzw. einen RSI21-Zeitrahmen aus, statt ihn größer zu handeln. Größer
+  als in 6.60 wird ein Trade nie.
 - **Presets:** `DEADBAND_LIVE4_Echtbetrieb.set` (= Voreinstellungen), `DEADBAND_LIVE4_670_Regimeschutz.set`,
   `DEADBAND_LIVE4_670_Tagessperre.set`, `DEADBAND_LIVE4_670_Sicher.set` (= 6.60 Sicher, Optionen aus).
 - **Rückweg:** `rollback_6.60/` (mq5 und beide 6.60-Sets). Mit dem Echtbetrieb-Set rechnet 6.70 ohnehin wie 6.60.
@@ -296,7 +303,10 @@ Variante, die zufällig gut aussieht – deshalb die strengen Kriterien und der 
      identisch.
   8. Tagessperre auf dem Trade-Protokoll des Replikats: kein Fade-Einstieg nach einem vorher am selben Prop-Tag geschlossenen
      Fade-Verlust im Symbol (14 392 Trades), 518 gesperrte Signale.
-  9. Längste Push-Meldung 198 Zeichen.
+  9. Längste Push-Meldung 198 Zeichen mit dem Vorsatz `DEADBAND4: ` (Grenze 255).
+  10. Zählung der Fade-Verluste im EA (`FadeVerlusteHeute`, Wort für Wort nachgebaut) gegen die Replikat-Regel: 5 Fälle
+      (Abschluss-Ernte mit Gewinn und Rest am Stop, Stop in zwei Teil-Ausführungen derselben Sekunde, Ziel erreicht, nur
+      Teilschließung bei offener Position, Zeit-Ausstieg durch Swap knapp im Minus) einzeln und zusammen: gleich (3 Verluste).
 - **Presets** (`t_set.py`): Echtbetrieb-Set = alle 230 Voreinstellungen; die anderen weichen nur in den genannten Eingaben ab.
 - **Statische Prüfung** (`t_mq5.py`): Klammern, Format-Argumente, Deklarationen vor der Verwendung, unbekannte Funktionen –
   bestanden.
@@ -305,7 +315,41 @@ Variante, die zufällig gut aussieht – deshalb die strengen Kriterien und der 
 
 ### 9.1 Gegenlesen
 
-(wird nach dem Gegenlesen ergänzt)
+Ein Sub-Agent hat die Änderungen 6.60 → 6.70 im EA unabhängig gelesen (Unterschied beider Dateien: genau die beabsichtigten
+108 Zeilen, sonst nichts geändert).
+
+- **Kompilierfehler: keine gefunden.** Format-Zeichenketten passen zu ihren Argumenten, keine neuen globalen Namen, keine
+  Namenskollisionen, `DEAL_ENTRY_OUT_BY` und die Felder von `D[]` werden wie im übrigen Code benutzt.
+- **Voreinstellungen (1,0 und 0): kein Unterschied zu 6.60.** `RegimeKlein()` kehrt zurück, bevor es den Zwischenspeicher von
+  `FadeRegimeLive` berührt; Sperre und Panel-Zeile werden gar nicht erst geprüft; Journal- und Push-Texte bleiben Zeichen für
+  Zeichen wie in 6.60.
+- **Als richtig bestätigt:** Zeitpunkt der Regime-Größe (RSI21 `sigZeit`, Noise `chkEnd`, beide auf M5 ausgerichtet), Faktor auf
+  jedem Noise-Teil, Verkleinerung vor allen Obergrenzen (nie vergrößernd, keine Division durch 0), der virtuelle Fade-Trade wird
+  vor der Sperre verbucht (der Wächter sieht die Sperre nicht), Prop-Tag-Grenze 17:00 NY (Fades sind um 16:40 NY aus dem Markt).
+
+| Befund | Gewicht | Umsetzung in 6.70 |
+|---|---|---|
+| `FadeVerlusteHeute` zählte verlustreiche **Ausstiegs-Deals** statt Positionen: Abschluss-Ernte mit Gewinn und Rest am Stop = ein Verlust, obwohl die Position im Plus lag; ein Stop in zwei Teil-Ausführungen zählte doppelt | beheben | Zählung **je Position**: nur das letzte Schließen einer voll geschlossenen Position (Deals derselben Sekunde zusammen, Ergebnis + Swap) – genau die Regel des Replikats (`losses[k]`), damit dessen Zahlen gelten. Der Vorschlag des Gegenlesens (Summe aller Ausstiege) wäre vom Replikat abgewichen. Prüfung 10 in `t_port_670.py` |
+| Die Regime-Größe kann **dauerhaft** klein bleiben (Fade-Module nicht angelegt), ohne Warnung | beheben (gering) | Warnung beim Start (Abschnitt 8); bei `FadeWaechterModus=0` ein Hinweis, dass die Option dem Portfolio-PF folgt |
+| Das Panel schrieb in den Ein-Platz-Zwischenspeicher von `FadeRegimeLive`; ein späteres Signal derselben M5-Kerze hätte selten einen veralteten Wert lesen können | Kleinigkeit | Panel rechnet den PF direkt, ohne Zwischenspeicher – der Speicher verhält sich wieder genau wie in 6.60 |
+| Die neue Panel-Zeile stand vor den GFT-Schutz-Zeilen und schob sie über die Grenze des Chart-Kommentars (~2045 Zeichen) | Kleinigkeit | Zeile nur bei aktiver Option, ganz unten |
+| Eingabe-Kommentar von `RegimeGroesse` 396 Zeichen (bisher höchstens 323) | Kleinigkeit | gekürzt auf 261 (`FadeTagessperre` 188) |
+| `RegimeGroesse > 1.0` hätte im Optimierer Werte wie 1,0000000000000002 abgelehnt | Kleinigkeit | Prüfung mit Toleranz (> 1 + 10⁻⁹) |
+| Überschrift `// 6.40: Auszahlungstakt (Panel)` war verrutscht | Kleinigkeit | wiederhergestellt |
+
+Bewusst **nicht** geändert:
+
+- `D[]` (Deal-Historie) wird mit `GueltigSchutz` (Voreinstellung) sofort nach jeder Positionsänderung neu geladen, ohne ihn
+  spätestens nach 5 s. Ohne Schutz gültiger Tage könnte die Sperre einen Fade-Verlust übersehen, der in den letzten 5 Sekunden
+  vor dem nächsten Fade-Einstieg im selben Symbol geschlossen wurde – selten, und nur mit ausgeschaltetem Schutz. Der Kommentar
+  im Code sagt das jetzt so.
+- Der Zwischenspeicher von `FadeRegimeLive` wird nicht geleert, wenn in derselben M5-Kerze neue virtuelle Fade-Ergebnisse
+  eintreffen. Das gab es schon in 6.60 (RSI21-Schutz), ist sehr selten und bleibt, damit der geprüfte 6.60-Handel unverändert
+  bleibt.
+- Push-Längen (höchstens 198 Zeichen) und Rechenzeit (`FadeVerlusteHeute` liest nur die Deals des Tages) sind unkritisch.
+
+Nach den Änderungen: `t_mq5.py` bestanden, `t_port_670.py` alle 10 Prüfungen identisch, `t_set.py` für alle vier Presets
+bestanden.
 
 ## 10. Echtbetrieb
 
@@ -336,6 +380,11 @@ Variante, die zufällig gut aussieht – deshalb die strengen Kriterien und der 
    (ein Noise-Signal = ein Trade).
 6. **Viele Versuche:** 28 Konto-Varianten, 4 Studien. Übernommen wurde keine neue Handelsregel als Voreinstellung.
 7. **Nicht kompiliert, nicht im Tester** (Abschnitt 9).
+8. **Panel-Länge:** Nach grober Schätzung des Gegenlesens ist das Panel schon in 6.60 länger als die rund 2045 Zeichen, die MT5
+   im Chart-Kommentar zeigt – die letzten Zeilen (GFT-Schutz, Leiter) können abgeschnitten sein. Nicht nachgemessen, unverändert
+   wie 6.60. Die 6.70-Zeile steht deshalb ganz unten und nur bei aktiver Option; fällt sie selbst weg, steht der Stand der
+   Optionen auch im Journal (Startzeile, Vermerk `Regime-Groesse x0.50` je Einstieg, Auslass-Grund der Sperre) und in den
+   Push-Meldungen.
 
 ## Anhang: Replikat
 

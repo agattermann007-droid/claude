@@ -11,6 +11,8 @@
 8. Fade-Tagessperre auf dem Trade-Protokoll des Replikats (fsym_block 1): kein ausgefuehrter Fade-Einstieg nach einem am selben
    Prop-Tag vorher geschlossenen Fade-Verlust im selben Symbol (EA-Regel FadeVerlusteHeute), und die Sperre greift.
 9. Push-Texte der Regime-Meldungen bleiben unter 255 Zeichen.
+10. FadeVerlusteHeute (woertlich uebertragen) zaehlt wie das Replikat: je Position das letzte Schliessen (Teilschliessungen der
+   Abschluss-Ernte zaehlen nicht, Teil-Ausfuehrungen derselben Sekunde zusammen).
 Aufruf: python t_port_670.py   (Protokoll: ergebnisse/t_port_670.txt)"""
 import re, os, numpy as np
 import x60, x70, x48, x44, r6, evl6 as V
@@ -80,8 +82,9 @@ def check_source670():
     ok &= ('else if(SerienPause()) grund = "Serien-Stopp (Verlustserie)";\n   else if(FadeTagessperre > 0 && FadeVerlusteHeute(k) >= FadeTagessperre)'
            in fl)
     fv = re.sub(r"//[^\n]*", "", body("int FadeVerlusteHeute(const int k)"))
-    ok &= all(s in fv for s in ("PropDayIndex(TimeCurrent())", "if(PropDayIndex(D[i].time) < heute) break;", "IsFadeMagic(D[i].magic)",
-                                 "D[i].sym != S[k].sym", "DEAL_ENTRY_OUT", "D[i].profit + D[i].swap < 0.0"))
+    ok &= all(s in fv for s in ("PropDayIndex(TimeCurrent())", "PropDayIndex(D[i0-1].time) >= heute", "IsFadeMagic(D[i].magic)",
+                                 "D[i].sym != S[k].sym", "DEAL_ENTRY_OUT", "if(D[i].time != tLetzt[j]) { erg[j] = 0.0; tLetzt[j] = D[i].time; }",
+                                 "erg[j] += D[i].profit + D[i].swap;", "vOut[q] >= vIn[q] - 1e-8", "erg[q] < 0.0"))
     # Replikat eng11: Regime-Groesse und Sperre an den entsprechenden Stellen
     ok &= "if reg_mult != 1.0 and r_reg[a] == 0:\n                r *= reg_mult" in ENG11
     ok &= "if reg_mult != 1.0 and z_reg[zcur] == 0:\n                        r *= reg_mult" in ENG11
@@ -170,6 +173,39 @@ def check_sperre_log():
     return ok
 
 
+def ea_fade_verluste(deals):
+    """FadeVerlusteHeute (MQL5) woertlich: deals = Liste (time, posid, entry 'IN'/'OUT', volume, profit, swap) des Tages, aufsteigend."""
+    pos = {}
+    for t, pid, ent, vol, prof, swp in deals:
+        p = pos.setdefault(pid, dict(t=0, erg=0.0, vin=0.0, vout=0.0))
+        if ent == "IN":
+            p["vin"] += vol; continue
+        if t != p["t"]:
+            p["erg"] = 0.0; p["t"] = t
+        p["erg"] += prof + swp; p["vout"] += vol
+    return sum(1 for p in pos.values() if p["t"] > 0 and (p["vin"] <= 0.0 or p["vout"] >= p["vin"] - 1e-8) and p["erg"] < 0.0)
+
+
+def check_verlust_regel():
+    """Faelle gegen die Replikat-Regel (losses[k] += 1, wenn das letzte Schliessen einer Position - der Rest nach Teilschliessungen,
+    inkl. Swap, ohne Kommission - im Verlust liegt; Teilschliessungen zaehlen nie)."""
+    faelle = [
+        ("Abschluss-Ernte mit Gewinn, Rest am Stop mit Verlust", [(1, 7, "IN", .5, 0, 0), (5, 7, "OUT", .2, 30, 0), (9, 7, "OUT", .3, -20, 0)], 1),
+        ("Stop in zwei Teil-Ausfuehrungen derselben Sekunde", [(1, 8, "IN", .5, 0, 0), (6, 8, "OUT", .25, -10, 0), (6, 8, "OUT", .25, -12, 0)], 1),
+        ("Ziel erreicht", [(1, 9, "IN", .5, 0, 0), (7, 9, "OUT", .5, 15, 0)], 0),
+        ("nur Teilschliessung, Position offen", [(1, 10, "IN", .5, 0, 0), (8, 10, "OUT", .2, 10, 0)], 0),
+        ("Zeit-Ausstieg knapp im Minus durch Swap", [(1, 11, "IN", .5, 0, 0), (9, 11, "OUT", .5, 1.0, -1.5)], 1),
+    ]
+    ok = True; tot = []; exp = 0
+    for name, d, e in faelle:
+        got = ea_fade_verluste(d)
+        ok &= got == e; tot += d; exp += e
+    tot.sort(key=lambda x: x[0])
+    ok &= ea_fade_verluste(tot) == exp
+    say(f"  FadeVerlusteHeute gegen die Replikat-Regel: {len(faelle)} Faelle einzeln und zusammen ({exp} Verluste) -> {'GLEICH' if ok else 'ABWEICHUNG'}")
+    return ok
+
+
 def check_push_len():
     """laengste moegliche Regime-Meldung (PF-Zahlen mit 5 Stellen, n = 256) gegen die MQL5-Grenze fuer Push-Texte (255)."""
     txts = [
@@ -200,6 +236,8 @@ if __name__ == "__main__":
     ok8 = check_sperre_log()
     say("9. Laenge der Push-Texte")
     ok9 = check_push_len()
-    say("GESAMT " + ("IDENTISCH" if all((ok1, ok2, ok3, ok4, ok5, ok6, ok7, ok8, ok9)) else "ABWEICHUNG"))
+    say("10. Zaehlung der Fade-Verluste im EA (je Position, letztes Schliessen) gegen die Replikat-Regel")
+    ok10 = check_verlust_regel()
+    say("GESAMT " + ("IDENTISCH" if all((ok1, ok2, ok3, ok4, ok5, ok6, ok7, ok8, ok9, ok10)) else "ABWEICHUNG"))
     os.makedirs("ergebnisse", exist_ok=True)
     open(os.path.join("ergebnisse", "t_port_670.txt"), "w").write("\n".join(LOG) + "\n")
