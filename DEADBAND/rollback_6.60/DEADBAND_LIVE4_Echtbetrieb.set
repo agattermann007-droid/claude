@@ -1,34 +1,34 @@
-; DEADBAND LIVE 6.70 REGIME - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA. Der Handel ist UNVERAENDERT wie 6.60: Fade-Risiko 0,75 %, Schutz gueltiger Tage je Modul
-;   (N1330/N1300 frei, RSI21 ab 13:00 NY im Fade-Regime), Portfolio-Waechter PF200 > 1,15, Pufferkurve 5 / 2,5 / x0,2,
-;   Regime-Meldungen. Neu in 6.70 sind nur zwei Optionen, hier AUS: RegimeGroesse=1.0, FadeTagessperre=0.
-; Warum keine neue Voreinstellung: Nach dem vorab festgelegten Pruefprotokoll (Replikat_v6/PROTOKOLL_670.md) hat keine der 10
-;   gepruften Ideen mehr Netto, mehr Auszahlungen und weniger Verlustserien robust geliefert (Bericht 6.70, Abschnitt 1).
-; Optionen als eigene Sets: DEADBAND_LIVE4_670_Regimeschutz.set (Kontoschutz bei einem Regimewechsel) und
-;   DEADBAND_LIVE4_670_Tagessperre.set (Test-Option, nur nach eigenem Strategietester-Lauf auf GFT-Kursen).
-; Replikat, 16 Stoerungen, jeder Handelstag ein neues Konto; Auszahlungen/J / Netto/J (breite / GFT-nahe Spreads):
-;   GFT-Ersatz 2022-25:   6.60 = 6.70 Echtbetrieb 11,53 / 2244 $  -  12,05 / 2493 $, 0 Busts
-;                         Regimeschutz            11,53 / 2244 $  -  12,05 / 2492 $, 0 Busts
-;                         Tagessperre             11,89 / 2322 $  -  12,39 / 2552 $, 0 Busts, laengste Serie 6,4 / 6,2 (6.60: 7,2 / 7,3)
-;   Zukunftstest 2026 (100-Tage-Konten; seit 6.60 verbraucht, nur berichtet):
-;                         6.60 = Regimeschutz     12,54 / 2229 $  -  12,38 / 2319 $
-;                         Tagessperre             12,48 / 2194 $  -  12,21 / 2272 $ (schlechter, 5-7 von 16 Stoerungen besser)
-;   Fremddaten 2006-21 (altes Regime, Fades meist nur virtuell): Auszahlungen/J / Netto/J / Busts je Jahr / Bust im 1. Jahr:
-;                         6.60 = 6.70 Echtbetrieb 2,15 / 363 $ / 0,038 / 1,0 %
-;                         Regimeschutz            1,48 / 248 $ / 0,0065 / 0,2 %
-;                         Tagessperre             1,46 / 242 $ / 0,0100 / 0,2 %
+; DEADBAND LIVE 6.60 ZUKUNFT - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Alle Werte = Voreinstellung des EA: Handelslogik wie 6.50 (Auszahlung ab dem GFT-Minimum, Abschluss-Ernte immer, Schutz
+;   gueltiger Tage je Modul mit N1330/N1300 frei und RSI21 ab 13:00 NY im Fade-Regime, Portfolio-Waechter PF200 > 1,15,
+;   Pufferkurve 5 / 2,5 / x0,2), aber Fade-Risiko wieder 0,75 % (6.50: 0,70) und Regime-Meldungen (FadeFruehwarnPF 1,25).
+; Replikat, 16 Stoerungen, jeder Handelstag ein neues Konto; Auszahlungen/J (Tage je Auszahlung) / Netto/J / Busts/J:
+;   ZUKUNFTSTEST 2026 (Jan-Aug, von keiner Entscheidung gesehen; 100-Tage-Konten), breite / GFT-nahe Spreads:
+;     6.50 Ertrag 11,20 (32,6 T) / 1993 $ / 0   -  11,57 (31,6 T) / 2188 $ / 0
+;     6.60 Ertrag 12,54 (29,1 T) / 2229 $ / 0   -  12,38 (29,5 T) / 2319 $ / 0
+;   GFT-Ersatz 2022-25 (1/2/3-Jahres-Konten), breite / GFT-nahe Spreads:
+;     6.50 Ertrag 11,66 (31,3 T) / 2319 $ / 0   -  12,12 (30,1 T) / 2510 $ / 0
+;     6.60 Ertrag 11,53 (31,7 T) / 2244 $ / 0   -  12,05 (30,3 T) / 2493 $ / 0
+;     (6.40 Ertrag 11,25 (32,5 T) / 2051 $ / 0   -  12,06 (30,3 T) / 2232 $ / 0)
+;   Fremddaten 2006-21 (altes Regime, Fades meist aus): 6.60 2,15 Ausz/J / 363 $ / 0,038 Busts/J (6.50: 2,14 / 361 $ / 0,034).
+; Warum 0,75 %: 90 % der gueltigen Tage liegen knapp ueber der Schwelle (50-106 $, meist ein einzelner Fade-Treffer); mit
+;   0,70 % rutschen mehr Tage darunter. In schwachen Phasen (2024-25) half 0,70 etwas, in guten (2022-23, 2026) kostete es
+;   mehr. Ein Walk-Forward (Auswahl nur mit 2022-23) haette 0,70 nicht gewaehlt (Bericht 6.60, Abschnitt 5).
 ; Pufferkurve NICHT lockern (Bericht 6.40, Abschnitt 3.4). FadeRiskPct nicht ueber 0,75 (Floating-Bremse bei -0,8 %).
-; Die ~30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet.
+; Die ~30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet,
+;   und GFT bucht binnen etwa eines Tages (GFT: bis zu 2 Werktage).
 ; Regime-Meldungen: Push 'FADE-REGIME AUS' (PF der letzten 200 Fade-Signale <= 1,15) - dann zahlt der EA deutlich seltener
-;   aus (Fremddaten 2006-21: rund alle 170 Tage). Wer dann das Konto schonen will: RegimeGroesse=0.5 (Regimeschutz-Set).
+;   aus (Fremddaten 2006-21: rund alle 170 Tage) -, 'FADE-REGIME WIEDER LIVE' und vorab 'FRUEHWARNUNG Fade-Regime' bei PF < 1,25
+;   (2022-25 rund 4 % der Zeit, 2026 bis August nie; im alten Regime folgte auf 3 von 5 Vorwarnungen aus einer Live-Phase
+;   binnen 8-18 Tagen die Abschaltung). Nur Meldungen, kein Einfluss auf den Handel.
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
-;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.70 Regime | Handel wie 6.60'.
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.60 Zukunft | Fade-Risiko 0.75 %'.
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.60: rollback_6.60/ (mq5 und beide Sets); mit diesem Set rechnet 6.70 genau wie 6.60. Bericht: DEADBAND_LIVE4_670_Bericht.md.
+; Zurueck auf 6.50: rollback_6.50/ (mq5 und beide Sets) oder FadeRiskPct=0.70. Bericht: DEADBAND_LIVE4_660_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -253,8 +253,6 @@ GueltigSchutzR21BisNY=13.0
 GueltigSchutzFrei=N1330;N1300
 GueltigSchutzR21Regime=true
 FadeFruehwarnPF=1.25
-RegimeGroesse=1.0
-FadeTagessperre=0
 ShowPanel=true
 ShowLeiter=true
 Barreserve=0.0

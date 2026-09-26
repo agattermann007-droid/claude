@@ -1,11 +1,9 @@
-; DEADBAND LIVE 6.70 REGIME - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA. Der Handel ist UNVERAENDERT wie 6.60: Fade-Risiko 0,75 %, Schutz gueltiger Tage je Modul
-;   (N1330/N1300 frei, RSI21 ab 13:00 NY im Fade-Regime), Portfolio-Waechter PF200 > 1,15, Pufferkurve 5 / 2,5 / x0,2,
-;   Regime-Meldungen. Neu in 6.70 sind nur zwei Optionen, hier AUS: RegimeGroesse=1.0, FadeTagessperre=0.
-; Warum keine neue Voreinstellung: Nach dem vorab festgelegten Pruefprotokoll (Replikat_v6/PROTOKOLL_670.md) hat keine der 10
-;   gepruften Ideen mehr Netto, mehr Auszahlungen und weniger Verlustserien robust geliefert (Bericht 6.70, Abschnitt 1).
-; Optionen als eigene Sets: DEADBAND_LIVE4_670_Regimeschutz.set (Kontoschutz bei einem Regimewechsel) und
-;   DEADBAND_LIVE4_670_Tagessperre.set (Test-Option, nur nach eigenem Strategietester-Lauf auf GFT-Kursen).
+; DEADBAND LIVE 6.70 REGIME - Auspraegung REGIMESCHUTZ (Option), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Wie das Echtbetrieb-Set, aber RegimeGroesse=0.5: RSI21 und Noise mit halber Groesse, solange der Portfolio-Waechter die
+;   Fades NICHT live handeln laesst (PF der letzten 200 virtuellen Fade-Signale <= 1,15, auch solange die Fade-Historie laedt).
+; Wirkung: im heutigen Regime (Fades live; 2022-25 zu 88 %, 2026 immer) keine. Nach einem Regimewechsel (Fremddaten 2006-21)
+;   6x seltener Busts, dafuer weniger Auszahlungen und Netto - eine Versicherung, kein Mehrertrag. Unter Stress (20 % der
+;   Fade-Gewinner entfernt, 2022-25): breit 5,94 statt 6,29 Auszahlungen, Konten < 100 $ am Boden 0,3 statt 3,2 %.
 ; Replikat, 16 Stoerungen, jeder Handelstag ein neues Konto; Auszahlungen/J / Netto/J (breite / GFT-nahe Spreads):
 ;   GFT-Ersatz 2022-25:   6.60 = 6.70 Echtbetrieb 11,53 / 2244 $  -  12,05 / 2493 $, 0 Busts
 ;                         Regimeschutz            11,53 / 2244 $  -  12,05 / 2492 $, 0 Busts
@@ -17,10 +15,6 @@
 ;                         6.60 = 6.70 Echtbetrieb 2,15 / 363 $ / 0,038 / 1,0 %
 ;                         Regimeschutz            1,48 / 248 $ / 0,0065 / 0,2 %
 ;                         Tagessperre             1,46 / 242 $ / 0,0100 / 0,2 %
-; Pufferkurve NICHT lockern (Bericht 6.40, Abschnitt 3.4). FadeRiskPct nicht ueber 0,75 (Floating-Bremse bei -0,8 %).
-; Die ~30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet.
-; Regime-Meldungen: Push 'FADE-REGIME AUS' (PF der letzten 200 Fade-Signale <= 1,15) - dann zahlt der EA deutlich seltener
-;   aus (Fremddaten 2006-21: rund alle 170 Tage). Wer dann das Konto schonen will: RegimeGroesse=0.5 (Regimeschutz-Set).
 ; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
 ; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
@@ -28,7 +22,7 @@
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.60: rollback_6.60/ (mq5 und beide Sets); mit diesem Set rechnet 6.70 genau wie 6.60. Bericht: DEADBAND_LIVE4_670_Bericht.md.
+; Bericht: DEADBAND_LIVE4_670_Bericht.md (Abschnitt 5).
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -253,7 +247,7 @@ GueltigSchutzR21BisNY=13.0
 GueltigSchutzFrei=N1330;N1300
 GueltigSchutzR21Regime=true
 FadeFruehwarnPF=1.25
-RegimeGroesse=1.0
+RegimeGroesse=0.5
 FadeTagessperre=0
 ShowPanel=true
 ShowLeiter=true

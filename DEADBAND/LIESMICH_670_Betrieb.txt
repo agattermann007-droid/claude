@@ -1,0 +1,62 @@
+DEADBAND LIVE 4 - Build 6.70 REGIME - Paket fuer den Betrieb
+Stand 26.09.2026 - fuer GFT Instant Premium 10k (Konto ab 02.09.2026)
+
+KURZ
+  6.70 handelt mit den Voreinstellungen GENAU WIE 6.60. Eine Aenderung, die mehr Netto, mehr
+  Auszahlungen UND weniger Verlustserien robust liefert, hat die Pruefung nicht gefunden (Bericht,
+  Abschnitt 1). Neu sind zwei abschaltbare Optionen (ab Werk aus), je mit eigenem Set:
+  - Regimeschutz: RSI21 und Noise mit halber Groesse, solange die Fades nicht live handeln.
+    Im heutigen Regime ohne Wirkung; nach einem Regimewechsel 6x seltener Busts, aber weniger Ertrag.
+  - Tagessperre (Test-Option): nach einem Fade-Verlust im Symbol keine weiteren Fades dort bis
+    17:00 NY. 2022-25 besser, 2026 nicht bestaetigt - nur nach eigenem Tester-Lauf verwenden.
+
+INHALT
+  DEADBAND_LIVE4.mq5                            der EA (Voreinstellungen = Echtbetrieb-Set)
+  Presets/DEADBAND_LIVE4_Echtbetrieb.set        Auspraegung "Ertrag" (empfohlen, = 6.60-Handel)
+  Presets/DEADBAND_LIVE4_670_Regimeschutz.set   Option: RegimeGroesse 0,5 (Kontoschutz bei Regimewechsel)
+  Presets/DEADBAND_LIVE4_670_Tagessperre.set    Option: Regimeschutz + FadeTagessperre 1 (nur zum Testen)
+  Presets/DEADBAND_LIVE4_670_Sicher.set         Auspraegung "Sicher" (nur die Fades, Fade-Risiko 0,70 %)
+  Rueckweg_6.60/                                Build 6.60 mit beiden Sets
+  Bericht/DEADBAND_LIVE4_670_Bericht.md         alle Zahlen, Pruefungen und Grenzen
+
+VORHER WICHTIG
+1. VPS/Server: GFT verbietet bei Instant Premium den Betrieb auf einem VPS oder Server. Betreibe den
+   EA auf deinem eigenen PC (Energiesparen aus, MT5 im Autostart). Trag in NurAufPcPfad einen Teil
+   deines Terminal-Datenpfads ein (z. B. deinen Windows-Benutzernamen).
+2. Nicht kompiliert: Dieser Stand wurde nicht in MetaEditor kompiliert und nicht im Strategietester
+   oder auf einem Demokonto geprueft, nur im Python-Nachbau (Bericht, Abschnitt 9). Schritte 2, 6
+   und 7 unten sind Pflicht.
+3. Konto-Datum: KontoAb20260902 = true fuer Konten ab 02.09.2026 (Floating-Grenze -1 %),
+   KontoAb20260730 = true fuer Konten ab 30.07.2026 (Mindestauszahlung 100 $).
+
+INSTALLATION
+1. MT5 -> Datei -> Dateiordner oeffnen: DEADBAND_LIVE4.mq5 nach MQL5\Experts, alle .set-Dateien
+   aus "Presets" nach MQL5\Presets.
+2. MetaEditor (F4) -> DEADBAND_LIVE4.mq5 -> Kompilieren (F7). Erwartet: 0 Fehler. Bei Fehlern die
+   Meldungen schicken.
+3. Extras -> Optionen -> Charts: "Max. Balken im Chart" = Unbegrenzt, MT5 neu starten.
+4. Algo-Trading erlauben; Push-Benachrichtigungen mit der MetaQuotes-ID der MT5-App einrichten.
+5. Genau EINEN Chart XAUUSD.x M15, EA darauf, "Eingaben" -> "Laden" -> DEADBAND_LIVE4_Echtbetrieb.set.
+6. Reiter "Experten" pruefen: "KONTO ERKANNT ..." (mit dem GFT-Dashboard vergleichen), je Symbol
+   "GRID ...: Historie ab ..." ohne WARNUNG, "FADE Portfolio-Waechter: PF ...", und
+   "6.70 Regime | Handel wie 6.60 (Voreinstellungen) | Regime-Groesse aus | Fade-Tagessperre aus".
+7. Erst testen: Strategietester "Jeder Tick anhand realer Ticks", XAUUSD.x M15, 2024-01 bis heute.
+   Wer die Optionen erwaegt: je ein Lauf mit Echtbetrieb-, Regimeschutz- und Tagessperre-Set und
+   Auszahlungsreifen, Netto und laengste Verlustserie vergleichen (Bericht, Abschnitt 10). Hinweis:
+   Der MT5-Bericht zaehlt jede Position; ein Noise-Signal besteht aus drei Positionen, ein
+   Noise-Verlust zaehlt dort bis zu dreimal. Danach eine Woche Demokonto, erst dann live.
+
+IM BETRIEB
+- Push "JETZT AUSZAHLUNG BEANTRAGEN": sofort beantragen, dann AuszahlungAngefordertAm auf den
+  Zeitpunkt setzen (Serverzeit, "JJJJ.MM.TT HH:MI"); nach der Buchung wieder leeren.
+- Push "FADE-REGIME AUS": Die Fades laufen nur noch virtuell, Auszahlungen werden seltener. Wer das
+  Konto in dieser Phase schonen will, laedt jetzt das Regimeschutz-Set (EA neu laden, der Zustand wird
+  aus der Historie rekonstruiert). Sonst nichts aendern.
+- Push nach 20 Tagen ohne Einstieg: kleinen Trade von Hand setzen (0,01 Lot, > 2 Minuten halten).
+- Freitags schliesst der EA ab 16:45 NY alle eigenen Positionen; der PC muss laufen. Sondertage in
+  WeSonderTage (bis Dezember 2027), danach verlaengern.
+- Pufferkurve und Fade-Risiko nicht erhoehen. Kein zweiter Chart, kein zweites Konto mit Gegenpositionen.
+
+ZURUECK ZU 6.60
+- Mit dem Echtbetrieb-Set rechnet 6.70 genau wie 6.60. Ganz: Rueckweg_6.60\DEADBAND_LIVE4.mq5 mit
+  dessen Sets.

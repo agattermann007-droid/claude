@@ -97,6 +97,16 @@ bewertet. Kursdaten und Zwischenstände liegen **nicht** im Repo.
 | `a60_warn.py` | Regime-Meldungen des EA rueckwirkend (Fruehwarnung, Abschaltung, wieder live) 2006-2025 bzw. bis 08/2026 in der Ordnerkopie -> `ergebnisse/a60_warn.txt` |
 | `x62.py`, `a67_kons.py` | **Konsistenzregel 15 %** (Instant GOAT/HERO, Bericht 6.60 Anhang B): eng10 `cons_pct` (Auszahlung erst bei bestem Tag < `cons_pct` - `cons_res` % des Gewinns der Periode), `cons_cap` 1/2 = Deckel ab bestem Tag bzw. nach gueltigem Tag, Kennzahl `net_open` (inkl. am Ende nicht ausgezahltem Gewinn); a67: bester Tag je Auszahlungsperiode heute -> `ergebnisse/x62_*.json`, `a67_kons.txt` |
 | `t_port_660.py` | **Abgleich EA <-> Replikat** fuer 6.60: Voreinstellungen = `6.60b`, Pruefungen 2-4 aus `t_port_650`, Regime-Meldungen ohne Einfluss auf den Handel -> `ergebnisse/t_port_660.txt` |
+| **Build 6.70 (Regime)** | |
+| `PROTOKOLL_670.md` | **Pruefprotokoll, vor den Tests festgelegt** (Kriterien K-a bis K-g, Kandidaten Z1-Z6; Nachtrag 1 vor Runde 2: Z9-Z11; Nachtrag 2 vor Runde 3: Z12) |
+| `mk_eng11.py`, `eng11.py` | Kontomotor v11 = eng10 plus Ziel fuer den gueltigen Tag mit Gewinnsicherung (`ext_on`, `ext_lock`, `ext_max`, `ext_margin`), Tagessperre der Fades je Symbol (`fsym_block`), Noise-Tagespause (`nz_maxloss`), Regime-Groesse fuer RSI21/Noise (`reg_mult` mit `r21["reg"]`/`nz["reg"]`), Noise mit einer Position (`nz_q0`), Trade-Protokoll Spalte 10 = Ausstiegszeit; `eng11.py` wird mit `mk_eng11.py` aus `eng10.py` erzeugt |
+| `t_eng11.py` | Pruefung: eng11 mit Voreinstellungen = eng10 (45 Konten, alle Zaehler, Trades, Ereignisse); jeder neue Schalter wirkt |
+| `evl11.py` | Bewertung v11 = evl10 plus Zaehler der neuen Schalter und Verlustserien je Position (MT5-Zaehlung: `s5p`, `s6p`, `mxp`) |
+| `x70.py` | **Screening und Endbewertung 6.70** (Basis 6.60; Varianten in `VAR`, `nz_regime` = Fade-Regime je Noise-Pruefung; `ABSCHLAG=0.2` = Stresstest) -> `ergebnisse/x70_*.json` (GFT-nah in der Ordnerkopie: `x70_gft_spread06.json`) |
+| `x70f.py` | Zukunftstest 2026 mit eng11 (Ordnerkopie wie x60f) -> `ergebnisse/x70f_2026.json`, `x70f_2026_spread06.json` |
+| `a70_diag.py`, `a70_verl.py`, `a70_sig.py`, `a70_bust.py`, `a70_bustmod.py` | Diagnosen: Verlustserien nach Modul und knapp verfehlte Tage, verlorene gueltige Tage und Gewinne an schon gueltigen Tagen, Z2 auf Signal-Ebene je Periode, Busts der Fremddaten nach Monat bzw. Modul |
+| `mk_ea670.py`, `mk_sets670.py` | Aenderungen am EA (6.60 -> 6.70) als Textersetzungen mit eindeutigen Ankern; Presets 6.70 aus den 6.60-Sets |
+| `t_port_670.py` | **Abgleich EA <-> Replikat** fuer 6.70: Voreinstellungen/Presets, Pruefungen aus 6.50/6.60, Quelltext-Stellen der Optionen, Fade-Regime zur Noise-Pruefzeit gegen `x70.nz_regime`, Tagessperre auf dem Trade-Protokoll, Laenge der Push-Texte -> `ergebnisse/t_port_670.txt` |
 | `ergebnisse/*.json` | Ergebnisse (große Scan-Raster nicht im Repo, mit `scan6_run*.py` neu erzeugbar) |
 
 ## Ablauf
@@ -155,6 +165,14 @@ python t_port_660.py && python t_set.py && python t_set.py ../DEADBAND_LIVE4_660
 # Konsistenzregel 15 % (Instant GOAT/HERO): Kosten der Regel, passiv und mit Deckel
 python x62.py gft "6.60|6.60 K15|6.60 K15 Tagesdeckel 1.0" 8 2 && python x62.py ext "6.60|6.60 K15|6.60 K15 Tagesdeckel 1.0" 16 3
 ABSCHLAG=0.2 python x61.py gft "6.60 K15|6.60 K15 Tagesdeckel 1.0" && python a67_kons.py
+# Build 6.70 (Regime) - Kriterien vorab in PROTOKOLL_670.md (Kursdaten: extdata/scripts/run_all.sh, mk_proxy.py, prep5/sig5/sig_ext)
+python mk_eng11.py && python t_eng11.py    # eng11 aus eng10 erzeugen, eng11 = eng10
+python a70_diag.py gft && python a70_verl.py gft   # Diagnosen der Basis
+python x70.py gft all 8 2 && python x70.py ext all 16 3   # Screening (GFT-nah: Ordnerkopie mit SPREAD_FAKTOR=0.6 python mk_proxy.py ...)
+python x70.py gft "6.60|Z2 Sperre 1|Z9 Regime-Groesse 0.5|Z10 Z9 + Z2" 16 1   # Endbewertung; ABSCHLAG=0.2 fuer den Stresstest
+python a70_sig.py && python a70_bust.py "6.60|Z2 Sperre 1" 16 3   # Signal-Ebene und Busts der Fremddaten
+# Zukunftstest 2026 in der Ordnerkopie (wie 6.60): python x70f.py "6.60|Z9 Regime-Groesse 0.5|Z10 Z9 + Z2" 100
+python t_port_670.py && python t_set.py && python t_mq5.py   # EA <-> Replikat, Presets, statische Pruefung
 ```
 
 ## Konventionen
@@ -172,4 +190,6 @@ Gold 5 $/Lot. Fremddaten: Spread proportional zum Kurs (Stand 2022–26).
 - Kein Tick-Replay, keine News-Sperre im Nachbau, NAS-Datenloch 2024.
 - Der Zukunftstest 2026 (Build 6.60) hat die Wahl des Fade-Risikos mitbestimmt und ist damit fuer kuenftige Builds nicht
   mehr unberuehrt. Die NAS-Reihe 2025-26 (Dukascopy) ist verrauschter als die Broker-Daten (Datenbericht, Abschnitt 10).
+- Build 6.70: Die Kandidaten, die an den Fades ansetzen, sind auf 2022-25 teilweise In-Sample (die Fades wurden auf 2022-26
+  gesucht). Deshalb zaehlten Signal-Ebene, Startjahre und der (verbrauchte) Zukunftstest 2026 mit.
 - Absolute Zahlen sind Schätzungen. Belastbar ist der Vergleich der Varianten unter gleichen Annahmen.

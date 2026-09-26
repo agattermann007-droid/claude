@@ -1,0 +1,22 @@
+1. Voreinstellungen EA = Replikat-Variante 6.60 (Optionen aus), Presets = Replikat-Varianten
+  EA: FadeRiskPct 0.75, GueltigSchutzR21BisNY 13.0, GueltigSchutzR21Regime true, GueltigSchutzFrei ['N1330', 'N1300'] | Replikat 6.60b: Fade-Risiko 0.75, vp_r21_to 13.0, vp_r21_reg 1, vp_mods 12, frei ['N1330', 'N1300'] -> GLEICH
+  neue Eingaben: RegimeGroesse 1.0 (reg_mult 1.0), FadeTagessperre 0 (fsym_block 0); Presets Regimeschutz 0.5/0 = Z9 (0.5/0), Tagessperre 0.5/1 = Z10 (0.5/1), Sicher 1.0/0 -> GLEICH
+2. Quelltext-Stellen des Schutzes je Modul (wie 6.50)
+  12 EA-Stellen, 4 Replikat-Stellen: VORHANDEN
+3. Schutz gueltiger Tage je Modul (wie 6.50)
+  Entscheidung je Modul: 164640 Zustaende (RSI21-Uhrzeit 0/11/13/24 und Regime an/aus, gueltige Tage, Tagesergebnis, Zyklus, NY-Stunde, Fade-Regime, Modul), EA = Replikat: IDENTISCH
+4. Fade-Regime fuer RSI21 (FadeRegimeLive gegen x48.r21_regime)
+  gft: 1036 RSI21-Signale, Fade-Regime live nach Replikat 1002, nach EA 1002 -> IDENTISCH
+  ext: 3550 RSI21-Signale, Fade-Regime live nach Replikat 182, nach EA 182 -> IDENTISCH
+5. Regime-Meldungen (RegimeWaechter): nur Meldungen, kein Einfluss auf den Handel
+  RegimeWaechter: Handelsaufrufe keine, Zuweisungen ausserhalb reg*/lokal keine, Aufrufe ['FadePortfolioPF', 'GlobalVariableCheck', 'GlobalVariableGet', 'GlobalVariableSet', 'KontoGv', 'Meldung', 'TimeCurrent'], eigene Terminal-Globalvariablen ['REGLIVE', 'REGWARN'] (sonst nirgends benutzt), Aufrufstellen 1, FadeFruehwarnPF 1.25 (a60_warn 1.25) -> OK
+6. Quelltext-Stellen 6.70 (Regime-Groesse, Fade-Tagessperre) in EA und Replikat
+  RegimeKlein = !FadeRegimeLive(M5-Open), Aufrufe ['chkEnd', 'sigZeit']; RSI21/Noise-Groesse, Fade-Tagessperre in FadeLive, FadeVerlusteHeute (Prop-Tag, Symbol, Ergebnis + Swap < 0); Replikat reg_mult/fsym_block -> OK
+7. Fade-Regime fuer Noise (FadeRegimeLive zur Pruefzeit gegen x70.nz_regime)
+  gft: 5838 Noise-Pruefungen, Fade-Regime live nach Replikat 5265, nach EA 5265 -> IDENTISCH
+  ext: 24761 Noise-Pruefungen, Fade-Regime live nach Replikat 1646, nach EA 1646 -> IDENTISCH
+8. Fade-Tagessperre auf dem Trade-Protokoll des Replikats
+  Replikat mit Tagessperre: 14392 Fade-Trades, davon nach einem Fade-Verlust im Symbol am selben Prop-Tag eroeffnet: 0; gesperrte Signale 518 -> OK
+9. Laenge der Push-Texte
+  laengste Regime-Meldung 198 Zeichen (Grenze 255) -> OK
+GESAMT IDENTISCH
