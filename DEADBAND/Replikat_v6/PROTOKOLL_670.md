@@ -1,0 +1,113 @@
+# Prüfprotokoll Build 6.70 (vorab festgelegt)
+
+Stand 26.09.2026, festgelegt **vor** den Konto-Tests der Kandidaten Z1–Z6. Vorher liefen nur die Reproduktion der Basis 6.60
+(Kursdaten byte-identisch neu aufgebaut, alle Basiszahlen der Berichte exakt getroffen) und eine Diagnose der Basis
+(`a70_diag.py`, `ergebnisse/a70_diag_gft.txt`):
+
+- **Verlustserien ≥ 5** (2,36 je Jahr, 1-Jahres-Konten): 33 % ihrer Verluste stammen von Noise (Anteil an allen Verlusten 24 %),
+  22 % von RSI21 (17 %). **65 %** der Verluste in einer Serie liegen am selben Tag wie der vorige Verlust.
+- **Knapp verfehlte Tage:** 55,8 Handelstage je Jahr enden mit 0–50,50 $ realisiert, **48,7 davon mit einem Fade-Gewinn**.
+  N1330 (46 Trades je Jahr, Treffer 80 %) und N1300 (33, 80 %) treffen ihr Ziel fast immer unter 0,71 R (Median 0,28 bzw.
+  0,45 R), X0630 und X1000S in 68 % der Treffer.
+
+Z5 und Z6 kamen nach dieser Diagnose hinzu (Tages-Cluster, Anteil Noise), ohne dass ihre Wirkung vorher gerechnet wurde.
+
+Auftrag: **mehr Nettogewinn, mehr Auszahlungen, weniger Verlustserien.** Wie bei allen Builds seit
+6.00 gilt zusätzlich: nicht mehr Bust-Risiko. Die Zahl der geprüften Varianten wird mitgezählt und im Bericht genannt.
+
+## Basis und Daten
+
+- Basis: **6.60** (Echtbetrieb, Branch-Stand `6af75df`, Replikat-Variante `x60` „6.60b“).
+- Daten: GFT-Ersatz 2022–2025 mit breiten Spreads (`mk_proxy.py`) und mit GFT-nahen Spreads (×0,6, Ordnerkopie);
+  Fremddaten 2006–2021 (anderes Regime, Sicherheit). Der Zukunftstest 2026 ist seit 6.60 **verbraucht**: Er wird nur
+  berichtet, entscheidet nichts.
+- Replikat: `eng11` (= `eng10` mit Voreinstellungen, geprüft mit `t_eng11.py`), Bewertung `evl11`, Screening `x70.py`, Zukunftstest `x70f.py`.
+
+## Kennzahlen
+
+Auszahlungen je Jahr (A), Netto je Jahr (N), Verlustserien: Serien ≥ 5 und ≥ 6 je Jahr (S5, S6) und längste Serie (Mittel,
+schlimmste); dazu Busts, kleinster Abstand zum Boden (Mittel, Anteil Konten < 100 $ / < 200 $), Trefferquote.
+Ein Trade ist wie bisher eine Idee (die drei Noise-Teile eines Signals zählen als ein Trade).
+
+## Annahmekriterien (alle müssen gelten)
+
+- **K-a Ziel:** Screening (8 Störungen, jeder 2. Handelstag), beide Spread-Lagen. Mindestens ein Ziel deutlich besser,
+  keines schlechter:
+  - deutlich besser: A ≥ Basis + 0,2 **oder** N ≥ Basis + 3 % **oder** S6 ≤ Basis − 20 % (und S5 ≤ Basis);
+  - nicht schlechter: A ≥ Basis − 0,1, N ≥ Basis − 1 %, S5 und S6 ≤ Basis + 5 % (mindestens + 0,05 je Jahr Toleranz).
+- **K-b Walk-Forward:** Parameterwerte werden mit den 1-Jahres-Konten gewählt, die 2022–2023 starten. Die Konten mit Start
+  2024–2025 dürfen bei A und N nicht schlechter sein als die Basis.
+- **K-c Sicherheit:** 0 Busts auf dem Ersatz; kleinster Abstand zum Boden im Mittel ≥ Basis − 10 $; Anteil Konten
+  < 100 $ höchstens Basis + 0,5 Prozentpunkte; Fremddaten 2006–21: Busts je Jahr ≤ Basis + 0,005 und Bust im 1. Jahr
+  ≤ Basis + 0,5 Prozentpunkte.
+- **K-d Rauschen:** Endbewertung 16 Störungen, jeder Handelstag, paarweise gegen die Basis: das Ziel, für das die Änderung
+  gedacht ist, besser in ≥ 12 von 16 Störungen, in beiden Spread-Lagen.
+- **K-e Plateau:** Nachbarwerte eines gewählten Parameters erfüllen K-a ebenfalls (kein Einzelspitzenwert).
+- **K-f Einfachheit:** höchstens zwei neue Eingaben je Änderung; Werte aus der Regelmechanik, nicht aus dem besten Ergebnis.
+- **K-g Stress:** mit Kanten-Abschlag (20 % der Fade-Gewinner zufällig entfernt, auch für den Wächter) keine
+  Verschlechterung der Sicherheit gegenüber der Basis unter demselben Abschlag.
+
+Werden mehrere Kandidaten angenommen, muss auch ihre Kombination K-a bis K-g gegen die Basis erfüllen.
+
+## Kandidaten
+
+| Nr | Idee | Begründung (ex ante) | Werte |
+|---|---|---|---|
+| Z1 | **Ziel für den gültigen Tag mit Gewinnsicherung:** Erreicht ein Fade sein Ziel, würde das Schließen den Tag aber nicht gültig machen, obwohl dem Zyklus noch gültige Tage fehlen, bleibt die Position offen: Stop auf Einstieg + L × Zielweite (Gewinn gesichert), neues Ziel dort, wo das Schließen den Tag gültig macht (Schwelle + 5 %), höchstens M R vom Einstieg | Engpass sind die gültigen Tage (Bericht 6.60, Abschnitt 3: in 72 % der Zyklen zuletzt erfüllt). Ein Fade-Treffer unter der Schwelle zählt für den Takt nicht (N1330/N1300: Ziel 0,3–0,5 R, machen nie allein einen Tag gültig). Die Sicherung verhindert, dass aus dem Treffer ein Verlust wird: kein zusätzliches Verlustrisiko, keine größere Position (anders als K1 in 6.60) | Mitte L 0,5 (halbe Zielweite bleibt sicher), M 1,0 (Ziel höchstens so weit wie der Stop). Nachbarn L 0,3 / 0,7, M 0,8 / 1,2 |
+| Z2 | **Tagessperre der Fades je Symbol:** nach einem Fade-Verlust im Symbol keine weiteren Fades in diesem Symbol bis 17:00 NY | Fades verlieren an Trendtagen; an einem Trendtag scheitern mehrere Fades desselben Symbols nacheinander (sieben NAS-Module, alle long). Der Serien-Stopp greift erst nach drei Verlusten über alle Module | 1 (Nachbar 2) |
+| Z3 | **Fade-Einstand:** Stop auf Einstieg + 0,05 R, sobald der Fade X R im Plus war (ohne Teilgewinn) | Weniger Verlierer → weniger Serien, weniger Rückgang zum Boden. 6.30 (andere Regeln): Serien ≥ 6 −40 %, Auszahlungen −0,1 | X 0,6 (Nachbarn 0,5 / 0,75) |
+| Z4 | **Serien-Stopp nach 2** statt 3 Verlusten in Folge (Rest des Tages) | direkte Begrenzung der Serien | 2 (Basis 3) |
+| Z5 | **Tages-Einstiegsstopp:** keine neuen Einstiege, sobald die Equity X % vom Startsaldo unter dem Tagesstart liegt (Tagesreferenz wie die Tagesbremse) | 65 % der Serien-Verluste folgen am selben Tag auf einen Verlust; ein schlechter Tag setzt sich fort | X 0,75 (ein voller Fade-Verlust; Nachbarn 0,5 / 1,0) |
+| Z6 | **Noise-Tagespause:** nach N Noise-Teilen mit Verlust keine neuen Noise-Einstiege bis 17:00 NY | Noise stellt ein Drittel der Serien-Verluste; ein Noise-Teil kann nach dem Ausstieg an einer späteren Prüfung wieder einsteigen (Fehlsignale um die Bandgrenze an einem richtungslosen Tag) | N 1 (Nachbar 2) |
+
+## Statistik
+
+- Paarweise je Störung (gleiche ausgelassene Signale und gleicher Schlupf für Basis und Variante).
+- Anzahl der geprüften Varianten wird gezählt; bei der Endauswahl zusätzlich die Streuung über 16 Störungen.
+- Absolute Zahlen sind Replikat-Schätzungen; belastbar ist der Vergleich unter gleichen Annahmen.
+
+## Nachtrag 1 (Runde 2), festgelegt nach Runde 1 und vor den Tests von Z9–Z11
+
+**Stand nach Runde 1** (Screening beide Spread-Lagen, Endbewertung für Z2): Kein Kandidat erfüllt alle Kriterien.
+- Z1, Z3, Z6: Auszahlungen deutlich weniger (K-a). Z4: GFT-nah −0,21 Auszahlungen, −3,4 % Netto (K-a). Z5: breit Serien ≥ 6
+  nur −5 % (K-a), Nachbar 0,75 kostet −3,5 / −6 % Netto (K-e).
+- Z2 (Sperre nach 1 Verlust): 2022–25 in beiden Lagen besser (Auszahlungen +0,35 / +0,33, Netto +77 / +59 $, je 14 bzw. 12–14
+  von 16 Störungen), Stress besser. Aber: Fremddaten Busts +0,0062 ± 0,0013 je Jahr (Grenze +0,005) und Bust im 1. Jahr
+  +0,53 Prozentpunkte (Grenze +0,5); Nachbar 2 ohne deutliche Verbesserung (K-e); auf Signal-Ebene waren die gesperrten
+  Signale 2024–25 und 2026 nicht schlechter als die übrigen (`a70_sig.py`); Zukunftstest 2026 (nur berichtet) −0,07 / −0,16
+  Auszahlungen. **Nicht angenommen.**
+- Diagnose der Busts auf den Fremddaten: Sie liegen in der Episode Februar–Juni 2010 (Fades live von August 2009 bis Februar
+  2010, ab März 2010 nur virtuell) und im April 2011 (live). Rund 60 % der Busts fallen in die Monate **nach** dem Abschalten
+  der Fades (März–Juni 2010), wenn nur RSI21 und Noise handeln.
+
+**Kandidaten Runde 2** (Kriterien K-a bis K-g unverändert gegen 6.60; zusätzlich wird der Zukunftstest 2026 berichtet – ein
+paarweise um mehr als einen Standardfehler schlechteres Ergebnis gilt als Warnsignal und wird im Bericht genannt):
+
+| Nr | Idee | Begründung (ex ante) | Werte |
+|---|---|---|---|
+| Z9 | **Regime-Größe:** RSI21 und Noise mit Faktor F, solange der Portfolio-Wächter die Fades nicht live handeln lässt (Signalzeit) | Die Busts des alten Regimes entstehen nach dem Ende einer Fade-Phase; ohne Fade-Regime hat das System keine belegte Kante (2006–21). Im heutigen Regime fast ohne Wirkung (Fades 2022–25 zu 88 % live, 2026 immer) | F 0,5 (Nachbarn 0,3 / 0,7) |
+| Z10 | Z9 + Z2 | Z2 verbessert 2022–25 alle drei Ziele; Z9 soll den Sicherheitsverlust im alten Regime ausgleichen | F 0,5, Sperre 1 |
+| Z11 | Z9 + RSI21 an gültigen Tagen schon ab 11:00 NY (`GueltigSchutzR21BisNY=11`, vorhandene Eingabe) | Bericht 6.50: +Netto, +Auszahlungen 2022–25, aber mehr Busts 2010; Z9 soll das ausgleichen | F 0,5 |
+
+Z10 und Z11 werden nur angenommen, wenn auch Z9 allein die Sicherheitskriterien erfüllt.
+
+## Nachtrag 2 (Runde 3), festgelegt vor dem Test von Z12
+
+**Stand nach Runde 2:** Z9 senkt die Busts der Fremddaten auf 0,0065 je Jahr (Basis 0,0381), im heutigen Regime ohne Wirkung
+(2022–25 und 2026 gleich), kostet aber im alten Regime und im Stresstest Auszahlungen und Netto (Fremddaten 1,48 statt 2,15
+Auszahlungen, 248 statt 363 $; Stress breit 5,94 statt 6,29). Z9 verbessert kein Ziel im heutigen Regime (K-a nicht erfüllt).
+Z10 = Z9 + Z2: 2022–25 wie Z2 (Auszahlungen +0,36 / +0,33, 14 / 13 von 16 Störungen), Fremddaten-Busts 0,0100, Stress
+sicherer; aber K-e (Nachbar von Z2) nicht erfüllt, und der Zukunftstest 2026 ist ein **Warnsignal** (GFT-nah −0,16 ± 0,14
+Auszahlungen, −47 ± 31 $; breit −0,07 ± 0,12, −36 ± 35 $). Z11: K-b nicht erfüllt (Start 2024–25: breit −0,64, GFT-nah −0,27
+Auszahlungen). Serien-Stopp 2 (Option): 2026 breit −0,34 ± 0,13 Auszahlungen.
+
+**Diagnose Verlustserien je Position:** MT5-Bericht und GFT-Dashboard zählen jede Position einzeln. Dann zählt ein
+Noise-Verlust bis zu dreimal (drei Teilpositionen mit Stops 0,35 / 0,5 / 0,75 Sigma). Basis 6.60 (1-Jahres-Konten, Seed 0):
+je Position Serien ≥ 5 7,8 und ≥ 6 4,8 je Jahr, längste Serie im Mittel 9,0 (höchstens 11); je Idee 2,4 / 1,0 / 6,8 (10).
+
+| Nr | Idee | Begründung (ex ante) | Werte |
+|---|---|---|---|
+| Z12 | **Noise mit einer Position** (Stop 0,5 Sigma, volles Noise-Risiko; EA: `NzStops="0.5"`, vorhandene Eingabe) | Das Drei-Stop-Ensemble verdreifacht die sichtbaren Verlust-Positionen eines Noise-Fehlsignals; eine Position am mittleren Stop hat dieselbe Idee und dasselbe Risiko | 0,5 Sigma (Mitte des Ensembles) |
+
+Kriterien wie oben; für Z12 gelten als Verlustserien zusätzlich die Serien je Position (S5p, S6p, längste Serie je Position):
+deutlich besser, wenn S6p ≤ Basis − 20 % (und S5p ≤ Basis), bei A ≥ Basis − 0,1 und N ≥ Basis − 1 %.

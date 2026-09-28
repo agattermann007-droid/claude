@@ -364,6 +364,7 @@ def nz_days(D, s="NAS", ntage=14, k=1.0, checks=(600, 660, 720, 780, 840, 900), 
                 lr = np.log(v / prev); acc += lr * lr; prev = v
                 todCR[b] = acc
         refU = max(O, pc)
+        refL = min(O, pc)                       # 6.60: untere Bandgrenze (Noise short)
         span = float(schluss - first_check)
         for em in checks:
             b = (em - 570) // 5 - 1                  # Block, der um em endet
@@ -380,6 +381,7 @@ def nz_days(D, s="NAS", ntage=14, k=1.0, checks=(600, 660, 720, 780, 840, 900), 
                 continue
             i5 = int(sel[jj])
             UB = refU * (1.0 + k * sig[b])
+            LB = refL * (1.0 - k * sig[b])
             tv = -1.0
             for q in range(b, -1, -1):
                 if todCR[q] >= 0:
@@ -391,12 +393,13 @@ def nz_days(D, s="NAS", ntage=14, k=1.0, checks=(600, 660, 720, 780, 840, 900), 
                 vw = min(vmax, max(vmin, ratio)) ** (-vpow)
             tfak = max(0.1, (schluss - em) / span) ** zeitpow if zeitpow > 0 else 1.0
             dists = [st_ * O * sd * tfak for st_ in stops]
-            out.append((dd, em, i5, close, UB, vw, tfak, O, sd, *dists))
+            out.append((dd, em, i5, close, UB, vw, tfak, O, sd, *dists, LB))
     A = np.array(out, dtype=np.float64)
     nst = len(stops)
     res = dict(day=A[:, 0].astype(np.int64), em=A[:, 1].astype(np.int64), i5=A[:, 2].astype(np.int64),
                close=A[:, 3], UB=A[:, 4], vw=A[:, 5], tf=A[:, 6], O=A[:, 7], sd=A[:, 8],
-               dist=A[:, 9:9 + nst].copy(), entry_ok=(A[:, 1] <= last_entry).astype(np.int64))
+               dist=A[:, 9:9 + nst].copy(), entry_ok=(A[:, 1] <= last_entry).astype(np.int64),
+               LB=A[:, 9 + nst].copy())                    # 6.60: untere Bandgrenze (Noise short)
     # EOD-Schluss 15:55: M5-Index je Tag
     eod = {}
     for dd in np.unique(res["day"]):

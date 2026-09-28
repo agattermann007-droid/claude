@@ -1,0 +1,254 @@
+; DEADBAND LIVE 6.40 TAKT - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Alle Werte = Voreinstellung des EA: Handelslogik 6.30 (10 Fehlausbruch-Fades 0,75 % mit Probability Grid, RSI21 0,50 %,
+;   NAS-Noise, Einstand RSI21/Noise ab 1 R, Serien-Stopp nach 3 Verlusten, Budget/Idee 0,9 %), dazu 6.40 Auszahlungstakt:
+;   Auszahlung ab dem GFT-Minimum (MinProfitPct 0 = 131,25 $ Gewinn), Abschluss-Ernte immer (AbschlussLetzte 5), Schutz
+;   gueltiger Tage (GueltigSchutz), Regime-Waechter ueber das Fade-Portfolio (PF der letzten 200 Signale > 1,15),
+;   Pufferkurve: volle Groesse bis 1 % Rueckgang, x0,2 ab 3,5 % (DDFullPct 5 / DDMinPct 2,5 / DDMinFactor 0,2),
+;   Fades ohne Teilgewinn (FadeT1R 0), Noise 0,45 %.
+; Replikat GFT-Ersatz 2022-25 (Fremddaten; 16 Stoerungen, rollierend 1/2/3 J, jeder Handelstag ein neues Konto, Waechter
+;   wie im EA): Tage je Auszahlung (Ausz/J), Busts/J, kleinster Abstand zum Boden im Mittel, Netto/J, Trefferquote
+;   GFT-nahe Spreads:  6.30 Ertrag 44,1 T (8,29) / 0 / 248 $ / 2516 $ / 66,3 %
+;                      6.40 Ertrag 30,3 T (12,06) / 0 / 248 $ / 2232 $ / 66,1 %
+;   breite Spreads:    6.30 Ertrag 49,9 T (7,33) / 0 / 215 $ / 2171 $ / 65,0 %
+;                      6.40 Ertrag 32,5 T (11,25) / 0 / 255 $ / 2051 $ / 65,6 %
+;   Startjahr 2022 / 2023 / 2024 / 2025 (GFT-nah): alle 28,1 / 26,3 / 41,6 / 37,3 Tage (6.30: 39,1 / 38,3 / 64,7 / 68,6)
+; Fremddaten 2006-21 (anderes Marktregime), Ausz/J / Busts/J / Konten mit Bust im 1. Jahr:
+;   6.30 Ertrag 1,83 / 0,347 / 29,2 %  -  6.40 Ertrag 2,16 / 0,035 / 0,9 %
+; Auszahlungen sind kleiner (im Mittel 239 $ statt 391 $ Gewinn), dafuer haeufiger; Netto je Jahr 6-11 % weniger.
+; Die 30 Tage setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet, und GFT bucht
+;   binnen etwa eines Tages (jeder Tag spaeter kostet rund einen Tag je Auszahlung).
+; Pufferkurve NICHT lockern: mit der Kurve von 6.30 oder 4/1,5/0,3 kamen im Maerz 2025 6-12 % der Konten dem Boden
+;   auf < 100 $ nahe (Bericht 6.40, Abschnitt 3.4).
+; Mit den GFT-Exporten nachrechnen: Replikat_v6/x46.py gft (die GFT-Daten fehlten in dieser Sitzung).
+; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
+; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
+; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.40 Auszahlungstakt | ...'.
+; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
+; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
+; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
+; Zurueck auf 6.30: rollback_6.30/ (mq5 und beide Sets). Bericht: DEADBAND_LIVE4_640_Bericht.md.
+SymbolList=XAUUSD.x,NAS100.x
+SessStartNY=3.0
+SessEndNY=13.0
+AutoNYOffset=false
+NYOffsetHours=7
+UseTrend=true
+EmaLen=50
+UseVwap=true
+UseRsi=true
+RsiLen=14
+RsiLvl=50.0
+UseCls=true
+ClsMinList=0.70,0.65
+UseMacd=true
+MacdFast=12
+MacdSlow=26
+MacdSignal=9
+UseVolume=true
+VolLen=50
+VolMin=1.00
+UseAtrStop=true
+AtrLen=14
+AtrMult=3.00
+UseDynRisk=true
+VolaRankLen=500
+DynA=1.40
+DynB=0.80
+DynMin=0.35
+DynMax=2.00
+UseStochRisk=true
+StochK=14
+StochSlow=3
+StochD=3
+StochWeight=0.20
+RiskPctList=0.259,0.288
+RiskMult=0.9
+Tp1R=1.5
+Tp1F=0.50
+Tp2R=5.0
+Tp2F=0.00
+TpFinalList=8,10
+UseBeAfterT1=true
+BeAfterT1R=0.05
+MaxHoldBars=192
+MaxTradesDay=1
+MaxLossDay=2
+DayStopPct=2.4
+FloatStopPct=0.80
+FloatBasisMinSaldo=true
+FloatGestuft=true
+MinLotRiskTol=2.0
+RiskBudgetPct=0.80
+MagicBase=230250
+KontoAb20260902=true
+KontoAb20260730=true
+MaxLossPct=6.00
+RuleDayLossPct=3.0
+ValidDayPct=0.50
+NeedValidDays=5
+CycleDays=10
+ProfitSplit=0.80
+MinPayoutUSD=105.0
+MinProfitPct=0.0
+PayoutCapPct=6.0
+PayoutCapCount=2
+StopMode=0
+ReminderHours=24
+UsePush=true
+StartBalanceOverride=0.0
+FloorOverride=0.0
+PeakSafetyPct=0.10
+CycleStartOverride=
+CountForeignPositions=true
+HistoryDaysMax=400
+FloorOverrideZeit=
+AuszahlungKennung=
+KeineAuszahlung=
+AuszahlungZeiten=
+AuszahlungAngefordertAm=
+ValidDayReserveUSD=0.5
+GueltigHeuteZaehlt=true
+DDFullPct=5.0
+DDMinPct=2.5
+DDMinFactor=0.2
+PeakUnsicherFaktor=0.6
+BelowStartMult=0.8
+UseSafety=false
+SafetyBufPct=1.30
+SafetyFactor=0.50
+AllowShortList=0,1
+HourBoostFromNY=9.0
+HourBoost=1.50
+HarvestMode=2
+HarvestMinR=2.0
+HarvestMargin=0.05
+HarvestFromNY=16.0
+HarvestPartial=true
+HarvestAnyR=0.0
+HarvestMinR2=0.5
+HarvestGapFrac=0.3
+GeAktiv=true
+GeRueckgangR=0.0
+GeMinR=1.0
+GeAufschlag=0.05
+GeAbNY=0.0
+GeBisNY=17.0
+WeAktiv=true
+WeSchlussNY=16.75
+WeAufnahme=true
+WeAufnahmeAbNY=18.0
+WeAufnahmeReif=true
+WeStopMaxR=2.0
+WeGroesseBudget=false
+WeSpreadMaxList=0,0
+R21Aktiv=true
+R21RiskPct=0.50
+R21GoldMult=0.70
+R21Gewichte=1.25,1.0,0.75
+R21GoldSymbol=XAUUSD.x
+R21NasSymbol=NAS100.x
+R21GoldOhneH1=true
+R21AbNY=9.5
+R21NasBisNY=13.0
+R21GoldBisNY=17.0
+R21RsiLen=21
+R21Oben=75.0
+R21Unten=25.0
+R21CrossThr=55.0
+R21MaLang=200
+R21MaSchnell=100
+R21DivH4=true
+R21DivRadius=2
+R21DivGap=2.0
+R21DivHistoryH1=6000
+R21StopATR=2.0
+R21NasRR=2.2
+R21GoldRR=2.64
+R21ExitBarsM5=1152
+R21ExitTage=8
+R21BudgetPct=1.20
+GesamtBudgetPct=0.90
+R21MaxLossDay=2
+R21ReifeSchliessen=true
+R21MagicOffset=10
+R21FolgeMin=240
+R21ZweiterPlatz=true
+HedgeSperre=true
+NewsSperreMin=6
+MinHalteSek=130
+SchlussVorlaufMin=5
+WeSonderTage=2026.11.27 12.5;2026.12.24 12.5;2026.12.31 16.0;2027.03.25 16.5;2027.11.26 12.5;2027.12.23 16.5
+MaxIdeeMarginPct=70.0
+WeSpreadMaxR=0.15
+VpsSperre=true
+InaktivWarnTage=20
+TagesRefEquity=true
+PayoutErkennMinUSD=50.0
+R21ReifeModus=2
+NzAktiv=true
+NzSymbol=NAS100.x
+NzRiskPct=0.45
+NzStops=0.35,0.5,0.75
+NzBudgetPct=0.0
+NzTage=14
+NzK=1.0
+NzErstePruefung=600
+NzLetzterEinstieg=930
+NzPruefAlle=60
+NzSchlussMin=955
+NzStopZeitPow=0.5
+NzVolaGewicht=true
+NzVolaPow=0.5
+NzVolaMin=0.5
+NzVolaMax=2.0
+NzReifeModus=2
+NzMagicOffset=30
+NzFreieTage=
+FloatNurVerlierer=true
+SwapVorsorgePct=0.80
+SwapVorsorgeMin=10
+IdeeMaxRisikoPct=0.90
+NurAufPcPfad=
+AbschlussLetzte=5
+AbschlussMinR=0.3
+AbschlussAbNY=0.0
+AbschlussBisNY=17.0
+AbschlussModule=15
+SerienStopp=3
+SerienPauseTage=0
+DbAktiv=false
+FadeAktiv=true
+FadeListe=
+FadeAus=
+FadeRiskPct=0.75
+FadeWaechterN=30
+FadeWaechterPF=1.20
+FadeWaechterMin=30
+FadeHistTage=600
+FadeZielAbSek=130
+FadeMinStopSpreads=6.0
+FadeMagicOffset=50
+GridAktiv=true
+GridTF=5
+GridLaenge=15
+GridMaxSchenkel=1000
+GridMinSchenkel=30
+GridMaxStopChance=0.70
+GridMinReife=0.0
+GridVorlaufTage=300
+GridOhne=N1800
+GridNurLive=false
+FadeT1R=0.0
+FadeT1Anteil=0.5
+R21EinstandAbR=1.0
+NzEinstandAbR=1.0
+EinstandPlusR=0.05
+GueltigSchutz=true
+FadeWaechterModus=1
+FadePortN=200
+FadePortPF=1.15
+ShowPanel=true
+ShowLeiter=true
+Barreserve=0.0
+KaufPuffer=2.0

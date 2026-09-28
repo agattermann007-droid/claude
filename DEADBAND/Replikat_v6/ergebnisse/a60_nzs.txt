@@ -1,0 +1,13 @@
+Noise-Area-Momentum NAS100 (Signal-Ebene, R je Signal der Risikoeinheit): Zellen Jahr: Signale Treffer% Summe-R PF
+  Long  2006: 108  27% -12.6R PF0.77 | 2007:  81  42% +11.9R PF1.41 | 2008:  82  35%  -8.6R PF0.78 | 2009: 107  34%  -9.4R PF0.79 | 2010:  69  42%  +4.5R PF1.16
+  Long  2011:  86  45%  +1.8R PF1.06 | 2012:  84  46% +21.9R PF1.79 | 2013:  90  36%  -9.2R PF0.75 | 2014:  80  42% +11.7R PF1.39 | 2015:  72  47% +15.8R PF1.75
+  Long  2016:  79  41%  +8.7R PF1.30 | 2017:  80  48% +19.2R PF1.82 | 2018:  83  34%  +4.1R PF1.13 | 2019:  83  43% +12.4R PF1.47 | 2020:  87  48%  +9.6R PF1.42
+  Long  2021:  88  55% +23.4R PF1.84 | 2022:  76  49% +25.6R PF2.08 | 2023:  97  49% +31.4R PF2.02 | 2024:  78  53% +16.6R PF1.66 | 2025:  72  47%  +6.2R PF1.26
+  Short 2006:  85  26%  -9.7R PF0.78 | 2007:  83  28% +19.1R PF1.48 | 2008: 112  38% +21.0R PF1.43 | 2009:  77  26%  -7.2R PF0.79 | 2010:  91  29%  -8.5R PF0.82
+  Short 2011: 101  25% -11.3R PF0.77 | 2012:  79  35%  +4.2R PF1.11 | 2013:  63  35% +11.7R PF1.37 | 2014:  78  33% +23.7R PF1.59 | 2015:  76  34%  -0.2R PF0.99
+  Short 2016:  85  29%  +8.9R PF1.19 | 2017:  76  29% +21.6R PF1.52 | 2018:  71  48% +32.1R PF2.20 | 2019:  76  20% -14.6R PF0.67 | 2020:  67  37%  +9.9R PF1.30
+  Short 2021:  72  33%  +2.5R PF1.07 | 2022:  83  37% +11.5R PF1.40 | 2023:  72  33%  -5.8R PF0.80 | 2024:  76  38% +10.7R PF1.34 | 2025:  76  29%  +1.3R PF1.03
+  Long  Perioden: 2006-13:  88.4/J +0.000 R/Sig PF 1.00 R/J  +0.0 | 2014-21:  81.5/J +0.161 R/Sig PF 1.49 R/J +13.1 | 2022-23:  86.6/J +0.330 R/Sig PF 2.05 R/J +28.5 | 2024-25:  74.9/J +0.152 R/Sig PF 1.46 R/J +11.4
+  Short Perioden: 2006-13:  86.4/J +0.028 R/Sig PF 1.06 R/J  +2.4 | 2014-21:  75.1/J +0.140 R/Sig PF 1.28 R/J +10.5 | 2022-23:  77.6/J +0.037 R/Sig PF 1.10 R/J  +2.9 | 2024-25:  75.9/J +0.079 R/Sig PF 1.17 R/J  +6.0
+  2006-21: Tage mit Short-Noise und NAS-Fade: 445, Korrelation der Tages-R -0.24; Short-Noise an Tagen mit Fade-Verlust (< -0,5 R): +112.9 R in 177 Tagen
+  2022-25: Tage mit Short-Noise und NAS-Fade: 118, Korrelation der Tages-R -0.24; Short-Noise an Tagen mit Fade-Verlust (< -0,5 R): +27.9 R in 38 Tagen

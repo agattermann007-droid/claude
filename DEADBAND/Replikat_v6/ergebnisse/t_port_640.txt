@@ -1,0 +1,28 @@
+1. Zeitpunkt der virtuellen Fade-Ergebnisse (FadeKerze -> FadeVirtSchluss(m, px, nx.time) gegen pg_guard.known_time)
+  gft N1030  :   125 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft N1330  :   224 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch (ausser 1 Signal(en) am Datenbeginn 2022-01-21T14:35, ATR ohne Vorlauf)
+  gft X0630  :   218 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch (ausser 1 Signal(en) am Datenbeginn 2022-01-21T08:40, ATR ohne Vorlauf)
+  gft X0400  :   161 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft N1800  :   108 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft N0930  :   106 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft N1100  :   158 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft N1300  :   182 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch (ausser 1 Signal(en) am Datenbeginn 2022-01-21T14:35, ATR ohne Vorlauf)
+  gft X0300S :   197 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  gft X1000S :   101 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N1030  :   387 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N1330  :   794 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext X0630  :   899 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext X0400  :   508 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N1800  :   320 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N0930  :   337 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N1100  :   501 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext N1300  :   642 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext X0300S :   540 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+  ext X1000S :   321 Signale, Einstieg/R/Zeitpunkt des Ergebnisses identisch
+2. Portfolio-Waechter (FadePortfolioPF/FadeWaechterOk gegen pg_guard.port_live_ea)
+  Portfolio-Waechter PF200 > 1.15: 6309 Signale (Fremddaten bis 2021 + GFT-Ersatz), live nach Replikat 1573 von 6309, nach EA 1573 von 6309 -> IDENTISCH (bis 2021 live 295, ab 2022 live 1278)
+  Portfolio-Waechter PF200 > 1.2: 6309 Signale (Fremddaten bis 2021 + GFT-Ersatz), live nach Replikat 1479 von 6309, nach EA 1479 von 6309 -> IDENTISCH (bis 2021 live 213, ab 2022 live 1266)
+  Portfolio-Waechter PF100 > 1.1: 6309 Signale (Fremddaten bis 2021 + GFT-Ersatz), live nach Replikat 2190 von 6309, nach EA 2190 von 6309 -> IDENTISCH (bis 2021 live 842, ab 2022 live 1348)
+3. Schutz gueltiger Tage
+  Schutz gueltiger Tage: 112 Zustaende, Entscheidung EA = Replikat: IDENTISCH
+GESAMT IDENTISCH

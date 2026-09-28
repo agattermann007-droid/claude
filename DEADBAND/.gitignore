@@ -5,3 +5,6 @@ data/
 extdata/raw/
 extdata/work/
 extdata/fx1m/
+
+# Python-Zwischenstaende
+__pycache__/

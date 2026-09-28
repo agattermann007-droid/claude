@@ -1,0 +1,5 @@
+Basis 6.60, Fremddaten, 1-Jahres-Konten jeder 3. Tag, Seed 0: 10 Busts
+Monate: 2010-05:2 2010-06:8
+Ergebnis je Modul in den 60 Tagen vor dem Bust (Summe ueber alle Busts, je Bust):
+  RSI21     -45.2 $ je Bust,   5.0 Trades je Bust
+  Noise      -2.9 $ je Bust,  31.9 Trades je Bust

@@ -1,21 +1,34 @@
-; DEADBAND LIVE 6.10 FADE - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
-; Alle Werte = Voreinstellung des EA: 10 Fehlausbruch-Fades (0,75 %, Regime-Waechter PF der letzten 30 > 1,2, Stop >= 6 Spreads,
-;   keine Fades an US-Feiertagen) + RSI21 0,50 % + NAS-Noise 0,35 %, DEADBAND-Einstiege aus, Serien-Stopp nach 3 Verlusten,
-;   Gesamtbudget/Idee 0,9 %, Auszahlung ab 3 %, Abschluss-Ernte aller Module (3 gueltige Tage fehlen, Vorlauf >= 0,3 R),
-;   Kontoerkennung 6.10 (Historie muss den Saldo erklaeren, Auszahlung per Saldo-Test, NY-Versatz fest 7 h,
-;   Tagesreferenz aus synchronen Kursen, Boden-Pruefung mit allen Stops).
-; Replikat GFT-Daten 2022-26 (16 Stoerungen, rollierend 1/2/3 J, Auszahlung ab 3 % = 300 $):
-;   Ausz/J, Busts/J, Netto/J, Serien >= 6 Verluste je J, laengste Serie Mittel/max
-;   6.10 Ertrag (Echtbetrieb): 7,51 / 0,00 / 2143 $ / 0,36 / 5,9/10   (Startjahr 2022: 10,1 Auszahlungen)
-;   6.10 Sicher:               5,86 / 0,00 / 1603 $ / 0,07 / 5,0/10
-; Fremddaten 2006-21 (anderes Marktregime): Ertrag 2,02/0,40/503 $, Sicher 0,56/0,33/104 $.
-; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Regime-Waechter braucht ~600 Tage M5).
+; DEADBAND LIVE 6.70 REGIME - ECHTBETRIEB (Auspraegung Ertrag), GFT Instant Premium 10k (Konto ab 02.09.2026).
+; Alle Werte = Voreinstellung des EA. Der Handel ist UNVERAENDERT wie 6.60: Fade-Risiko 0,75 %, Schutz gueltiger Tage je Modul
+;   (N1330/N1300 frei, RSI21 ab 13:00 NY im Fade-Regime), Portfolio-Waechter PF200 > 1,15, Pufferkurve 5 / 2,5 / x0,2,
+;   Regime-Meldungen. Neu in 6.70 sind nur zwei Optionen, hier AUS: RegimeGroesse=1.0, FadeTagessperre=0.
+; Warum keine neue Voreinstellung: Nach dem vorab festgelegten Pruefprotokoll (Replikat_v6/PROTOKOLL_670.md) hat keine der 10
+;   gepruften Ideen mehr Netto, mehr Auszahlungen und weniger Verlustserien robust geliefert (Bericht 6.70, Abschnitt 1).
+; Optionen als eigene Sets: DEADBAND_LIVE4_670_Regimeschutz.set (Kontoschutz bei einem Regimewechsel) und
+;   DEADBAND_LIVE4_670_Tagessperre.set (Test-Option, nur nach eigenem Strategietester-Lauf auf GFT-Kursen).
+; Replikat, 16 Stoerungen, jeder Handelstag ein neues Konto; Auszahlungen/J / Netto/J (breite / GFT-nahe Spreads):
+;   GFT-Ersatz 2022-25:   6.60 = 6.70 Echtbetrieb 11,53 / 2244 $  -  12,05 / 2493 $, 0 Busts
+;                         Regimeschutz            11,53 / 2244 $  -  12,05 / 2492 $, 0 Busts
+;                         Tagessperre             11,89 / 2322 $  -  12,39 / 2552 $, 0 Busts, laengste Serie 6,4 / 6,2 (6.60: 7,2 / 7,3)
+;   Zukunftstest 2026 (100-Tage-Konten; seit 6.60 verbraucht, nur berichtet):
+;                         6.60 = Regimeschutz     12,54 / 2229 $  -  12,38 / 2319 $
+;                         Tagessperre             12,48 / 2194 $  -  12,21 / 2272 $ (schlechter, 5-7 von 16 Stoerungen besser)
+;   Fremddaten 2006-21 (altes Regime, Fades meist nur virtuell): Auszahlungen/J / Netto/J / Busts je Jahr / Bust im 1. Jahr:
+;                         6.60 = 6.70 Echtbetrieb 2,15 / 363 $ / 0,038 / 1,0 %
+;                         Regimeschutz            1,48 / 248 $ / 0,0065 / 0,2 %
+;                         Tagessperre             1,46 / 242 $ / 0,0100 / 0,2 %
+; Pufferkurve NICHT lockern (Bericht 6.40, Abschnitt 3.4). FadeRiskPct nicht ueber 0,75 (Floating-Bremse bei -0,8 %).
+; Die ~30 Tage je Auszahlung setzen voraus: Auszahlung sofort beantragen, wenn der EA 'JETZT AUSZAHLUNG BEANTRAGEN' meldet.
+; Regime-Meldungen: Push 'FADE-REGIME AUS' (PF der letzten 200 Fade-Signale <= 1,15) - dann zahlt der EA deutlich seltener
+;   aus (Fremddaten 2006-21: rund alle 170 Tage). Wer dann das Konto schonen will: RegimeGroesse=0.5 (Regimeschutz-Set).
+; WICHTIG: Extras > Optionen > Charts > Max. Balken im Chart = Unbegrenzt (Waechter ~600 Tage M5, Grid 300 Tage mehr).
 ; Nur auf dem eigenen PC (GFT: VPS/Server verboten), EIN Chart (XAUUSD.x M15), kein zweites Konto mit Gegenposition.
-; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen.
+; Beim Laden: Journal-Zeilen 'KONTO ERKANNT' und MQL5\Files\DEADBAND4_Konto_<Login>.txt mit dem GFT-Dashboard vergleichen,
+;   je Symbol 'GRID ...: Historie ab ...' (ohne WARNUNG), 'FADE Portfolio-Waechter: PF ...' und '6.70 Regime | Handel wie 6.60'.
 ; Nach dem Beantragen einer Auszahlung: AuszahlungAngefordertAm = Zeitpunkt (Serverzeit) setzen; nach der Buchung wieder leeren.
 ; Teilauszahlung (Saldo bleibt ueber dem Startsaldo): AuszahlungZeiten = Buchungszeit (Serverzeit) setzen.
 ; FloorOverride nur zusammen mit FloorOverrideZeit (Zeitpunkt der Dashboard-Ablesung), sonst startet der EA nicht.
-; Zurueck auf 6.00: rollback_6.00/. Bericht: DEADBAND_LIVE4_610_Bericht.md.
+; Zurueck auf 6.60: rollback_6.60/ (mq5 und beide Sets); mit diesem Set rechnet 6.70 genau wie 6.60. Bericht: DEADBAND_LIVE4_670_Bericht.md.
 SymbolList=XAUUSD.x,NAS100.x
 SessStartNY=3.0
 SessEndNY=13.0
@@ -78,7 +91,7 @@ NeedValidDays=5
 CycleDays=10
 ProfitSplit=0.80
 MinPayoutUSD=105.0
-MinProfitPct=3.0
+MinProfitPct=0.0
 PayoutCapPct=6.0
 PayoutCapCount=2
 StopMode=0
@@ -97,9 +110,10 @@ AuszahlungZeiten=
 AuszahlungAngefordertAm=
 ValidDayReserveUSD=0.5
 GueltigHeuteZaehlt=true
-DDFullPct=4.0
-DDMinPct=1.5
-DDMinFactor=0.6
+DDFullPct=5.0
+DDMinPct=2.5
+DDMinFactor=0.2
+PeakUnsicherFaktor=0.6
 BelowStartMult=0.8
 UseSafety=false
 SafetyBufPct=1.30
@@ -165,7 +179,7 @@ HedgeSperre=true
 NewsSperreMin=6
 MinHalteSek=130
 SchlussVorlaufMin=5
-WeSonderTage=2026.11.27 12.5;2026.12.24 12.5;2026.12.31 16.0;2027.03.25 16.5;2027.11.26 12.5;2027.12.23 16.5
+WeSonderTage=2026.11.27 12.5;2026.12.24 12.5;2026.12.31 16.0;2027.03.25 16.5;2027.06.18 12.5;2027.11.26 12.5;2027.12.23 16.5
 MaxIdeeMarginPct=70.0
 WeSpreadMaxR=0.15
 VpsSperre=true
@@ -175,7 +189,7 @@ PayoutErkennMinUSD=50.0
 R21ReifeModus=2
 NzAktiv=true
 NzSymbol=NAS100.x
-NzRiskPct=0.35
+NzRiskPct=0.45
 NzStops=0.35,0.5,0.75
 NzBudgetPct=0.0
 NzTage=14
@@ -197,7 +211,7 @@ SwapVorsorgePct=0.80
 SwapVorsorgeMin=10
 IdeeMaxRisikoPct=0.90
 NurAufPcPfad=
-AbschlussLetzte=3
+AbschlussLetzte=5
 AbschlussMinR=0.3
 AbschlussAbNY=0.0
 AbschlussBisNY=17.0
@@ -216,6 +230,31 @@ FadeHistTage=600
 FadeZielAbSek=130
 FadeMinStopSpreads=6.0
 FadeMagicOffset=50
+GridAktiv=true
+GridTF=5
+GridLaenge=15
+GridMaxSchenkel=1000
+GridMinSchenkel=30
+GridMaxStopChance=0.70
+GridMinReife=0.0
+GridVorlaufTage=300
+GridOhne=N1800
+GridNurLive=false
+FadeT1R=0.0
+FadeT1Anteil=0.5
+R21EinstandAbR=1.0
+NzEinstandAbR=1.0
+EinstandPlusR=0.05
+GueltigSchutz=true
+FadeWaechterModus=1
+FadePortN=200
+FadePortPF=1.15
+GueltigSchutzR21BisNY=13.0
+GueltigSchutzFrei=N1330;N1300
+GueltigSchutzR21Regime=true
+FadeFruehwarnPF=1.25
+RegimeGroesse=1.0
+FadeTagessperre=0
 ShowPanel=true
 ShowLeiter=true
 Barreserve=0.0

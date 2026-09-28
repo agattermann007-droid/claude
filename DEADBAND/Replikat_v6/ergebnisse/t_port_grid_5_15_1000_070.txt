@@ -1,0 +1,11 @@
+X0630    1121 Signale: Replikat laesst    1 aus, EA    1 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+X0400     672 Signale: Replikat laesst   95 aus, EA   95 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+X0300S    738 Signale: Replikat laesst  278 aus, EA  278 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+X1000S    424 Signale: Replikat laesst   23 aus, EA   23 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N1030     515 Signale: Replikat laesst   73 aus, EA   73 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N1330    1021 Signale: Replikat laesst    7 aus, EA    7 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N1800     429 Signale: Replikat laesst  270 aus, EA  270 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N0930     447 Signale: Replikat laesst    8 aus, EA    8 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N1100     662 Signale: Replikat laesst   18 aus, EA   18 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+N1300     827 Signale: Replikat laesst   18 aus, EA   18 - GLEICH; Stop-Chance max. Abweichung 0.0e+00
+GESAMT IDENTISCH

@@ -1,0 +1,27 @@
+Basis 6.60 (gft), 364 Konten zu 1 Jahr, 352 Konto-Jahre
+Serien >= 5: 2.36 je Jahr; Verluste darin nach Modul (Anteil) gegen alle Verluste:
+  Noise   alle  24.0 %   in Serien >= 5  33.4 %
+  RSI21   alle  17.0 %   in Serien >= 5  21.6 %
+  X0630   alle  10.7 %   in Serien >= 5   9.6 %
+  X0300S  alle   7.3 %   in Serien >= 5   9.4 %
+  N1330   alle   7.3 %   in Serien >= 5   2.2 %
+  X0400   alle   6.3 %   in Serien >= 5   6.6 %
+  N1100   alle   5.4 %   in Serien >= 5   3.8 %
+  X1000S  alle   5.3 %   in Serien >= 5   4.6 %
+  N1300   alle   5.3 %   in Serien >= 5   4.3 %
+  N1030   alle   4.0 %   in Serien >= 5   1.7 %
+  N1800   alle   3.8 %   in Serien >= 5   1.2 %
+  N0930   alle   3.5 %   in Serien >= 5   1.7 %
+  Verlust in Serie am selben Tag wie der vorige: 64.8 % (4120 Paare)
+Handelstage (Ausstiegstag) je Jahr: 187.4; gueltig 67.9, 0..50,50 $ 55.8 (davon mit Fade-Gewinn 48.7), <= 0 63.7
+Fade-Ergebnis in R je Modul: Trades je Jahr, Trefferquote, Anteil Gewinner < 0,71 R, Median-Gewinn R:
+  N1030    21.5/J  WR  75.8 %  Gewinner < 0,71 R  45.6 %  Median-Gewinn 0.72 R
+  N1330    46.0/J  WR  79.5 %  Gewinner < 0,71 R 100.0 %  Median-Gewinn 0.28 R
+  X0630    43.9/J  WR  68.5 %  Gewinner < 0,71 R  68.6 %  Median-Gewinn 0.62 R
+  X0400    23.4/J  WR  65.0 %  Gewinner < 0,71 R  42.6 %  Median-Gewinn 0.74 R
+  N1800    15.3/J  WR  68.0 %  Gewinner < 0,71 R  54.1 %  Median-Gewinn 0.61 R
+  N0930    17.8/J  WR  74.3 %  Gewinner < 0,71 R  55.3 %  Median-Gewinn 0.66 R
+  N1100    21.2/J  WR  66.9 %  Gewinner < 0,71 R  45.3 %  Median-Gewinn 0.76 R
+  N1300    33.3/J  WR  79.5 %  Gewinner < 0,71 R  95.0 %  Median-Gewinn 0.45 R
+  X0300S   26.5/J  WR  64.3 %  Gewinner < 0,71 R  38.6 %  Median-Gewinn 0.79 R
+  X1000S   15.9/J  WR  56.5 %  Gewinner < 0,71 R  68.0 %  Median-Gewinn 0.48 R
