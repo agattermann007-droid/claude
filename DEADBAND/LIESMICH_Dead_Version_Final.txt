@@ -1,0 +1,31 @@
+DEAD_VERSION_FINAL (Build 6.71, 28.09.2026)
+===========================================
+
+Grundlage: DEADBAND_LIVE4.mq5 Build 6.70. Mit den Voreinstellungen handelt 6.70 genau wie 6.60 ZUKUNFT
+(Abgleich EA <-> Replikat identisch, Bericht 6.70 Abschnitt 9) und ist laut Bericht 6.70 Abschnitt 12 die
+empfohlene Fassung fuer das Live-Konto (GFT Instant Premium 10k): Voreinstellungen ohne Set.
+Die Handelslogik ist unveraendert. Neu ist nur der Push-Check:
+
+1. Lebenszeichen: jede volle Stunde (PC-Uhr) ein Push aufs Handy, z. B.
+   "DEADBAND laeuft 14:00 | Saldo 10234.50, Equity 10251.20, heute +34.10 | 2 Pos. | gueltig 3/5, Zyklustag 4/10 | Puffer 5.2 %"
+   Zusaetze bei Problemen: HANDEL BLOCKIERT, KEINE SERVERVERBINDUNG, REIF: Auszahlung beantragen.
+   Laeuft ueber den Sekunden-Timer, kommt also auch am Wochenende. Fehlgeschlagene Pushes: neuer Versuch jede Minute.
+   BLEIBT DER PUSH AUS, LAEUFT DER BOT NICHT (PC/Terminal aus, EA entfernt oder abgestuerzt, kein Internet).
+2. Push beim Stoppen: "DEADBAND GESTOPPT: ..." (EA entfernt, Chart/Terminal geschlossen, Start fehlgeschlagen).
+   Neuladen (Parameter, Zeitrahmen, Neukompilieren, Kontowechsel) meldet nichts.
+
+Neue Eingaben (Gruppe "Final: Lebenszeichen"):
+  LebenszeichenStd = 1     alle X Stunden, 0 = aus
+  LebenszeichenVon = 0     Ruhezeit: nur von X Uhr ...
+  LebenszeichenBis = 24    ... bis X Uhr (z. B. 7 und 23 = nachts Ruhe; 0/24 = rund um die Uhr)
+  StoppPush        = true  Push beim Stoppen
+
+Voraussetzung: MT5-App am Handy -> Einstellungen -> Chat und Nachrichten -> MetaQuotes ID.
+Im Terminal: Extras -> Optionen -> Benachrichtigungen -> "Push-Benachrichtigungen aktivieren", ID eintragen,
+"Test" druecken. UsePush = true (Voreinstellung).
+
+Presets: DEADBAND_LIVE4_Echtbetrieb.set und die 6.70-Presets passen weiter (neue Eingaben behalten ihre Voreinstellung).
+Inbetriebnahme sonst wie LIESMICH_670_Betrieb.txt.
+
+Geprueft: statische Pruefung Replikat_v6/t_mq5.py bestanden. NICHT geprueft: Kompilieren in MetaEditor,
+Strategietester, Demo - bitte kompilieren (erwartet 0 Fehler).
