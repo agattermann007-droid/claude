@@ -187,3 +187,20 @@ Was MT5 allein nicht wissen kann, lässt sich per Eingabe festlegen:
    max(Saldo, Equity), gültiger Tag in beiden Kommissions-Lesarten, 10 × 24 h). Ist GFT milder, kostet das nur wenig.
 6. **Hedging über eigene Konten** und **mehrere Konten mit demselben EA**: siehe Bericht 6.00, Abschnitt 8.
 7. **Öffentliches Repository:** Empfehlung „Private“.
+
+## 8. Dead_Version_Final (Build 6.11, 28.09.2026)
+
+`Dead_Version_Final.mq5` = Build 6.10 „Ertrag“ (beste getestete Version: 7,51 Auszahlungen je Jahr, 0 Busts auf
+2022–26) mit unveränderter Handelslogik, dazu:
+
+- **Stündlicher Push-Check** („DEADBAND laeuft 14:00 | Saldo …, Equity …, heute … | 2 Pos. | gueltig 3/5,
+  Zyklustag 4/10 | Puffer 5,2 %“). Zeitgeber ist die PC-Uhr über den Sekunden-Timer, der Push kommt also auch am
+  Wochenende. **Bleibt er aus, läuft der Bot nicht** (PC/Terminal aus, EA entfernt oder abgestürzt, kein Internet).
+  Warnzusätze: `HANDEL BLOCKIERT`, `KEINE SERVERVERBINDUNG`, `REIF: Auszahlung beantragen`.
+  Eingaben: `LebenszeichenStd` (1 = stündlich, 0 = aus), `LebenszeichenVon`/`LebenszeichenBis` (Ruhezeit, z. B. 7 und 23).
+- **Push beim Stoppen** (`StoppPush`): EA entfernt, Chart oder Terminal geschlossen, Start fehlgeschlagen. Beim
+  Neuladen (Parameter, Zeitrahmen, Neukompilieren) kommt keine Meldung.
+
+Voraussetzung: MetaQuotes ID aus der MT5-App unter Extras → Optionen → Benachrichtigungen eintragen, „Push-Benachrichtigungen
+aktivieren“ anhaken, `UsePush = true`. Die vorhandenen Presets (`*.set`) passen weiter; die neuen Eingaben haben ihre
+Voreinstellung. Nicht kompiliert (kein MetaEditor hier) – bitte in MetaEditor kompilieren, erwartet 0 Fehler.
