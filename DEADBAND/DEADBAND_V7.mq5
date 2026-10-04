@@ -1,4 +1,30 @@
 //+------------------------------------------------------------------+
+//|  DEADBAND V7  -  Build 7.10, 04.10.2026                          |
+//|  BUILD 7.10: SPIKE-FADE NAS 8:30 (neues Fade-Modul S0830)        |
+//|  Alles aus 7.00 bleibt gleich. Neu ist ein elftes Fade-Modul:    |
+//|  NAS100 nach den US-Daten um 8:30 NY. Die ersten 2 M5-Kerzen     |
+//|  (8:30-8:40) messen den Daten-Spike. Faellt der Kurs um mind.    |
+//|  0,20 ATR(D1,14) unter das 8:30-Open (Abwaertsspike staerker als |
+//|  Aufwaertsspike), kauft das Modul um 9:00 (Open der Kerze nach   |
+//|  6 Kerzen) - "Fade the news spike" aus den YouTube-Quellen       |
+//|  (Bericht DEADBAND_V7_710_Bericht.md).                           |
+//|  Stop: Tief 8:30-9:00 - 0,25 ATR. Ziel: Tief + 50 % der Strecke  |
+//|  Tief -> 8:30-Open (halbe Rueckkehr). Ausstieg spaetestens 11:00 |
+//|  NY. Risiko SpikeRiskPct (0,75 %) x Pufferkurve wie die Fades.   |
+//|  Kein Portfolio-Waechter (eigene Statistik), kein Grid. Alle     |
+//|  uebrigen Fade-Sperren gelten (GueltigSchutz, News, Hedging,     |
+//|  Budget, Feiertage, 130-s-Ziel, Tagessperre).                    |
+//|  Replikat (eng6, Stand 6.10 + generische Stroeme, Python):       |
+//|  GFT-Ersatzdaten 2022-2025: 10,26 -> 11,00 Auszahlungen/Jahr,    |
+//|  netto 1873 -> 2008 $/J, 0 Pleiten. Unabhaengige Daten 2006-2021:|
+//|  2,62 -> 2,70 Ausz./J, 0 Pleiten. Signal: 2022-25 WR 92 %, PF 5,3|
+//|  (11 Signale/J); 2006-21 WR 87 %, PF 2,7. Beide Richtungen sind  |
+//|  schlechter (Short-Spikes kollidieren per Hedging-Sperre mit     |
+//|  Noise/RSI21). SpikeAktiv=false = handelsgleich 7.00.            |
+//|  NICHT KOMPILIERT ERSTELLT - vor dem Einsatz im MetaEditor       |
+//|  kompilieren und im Strategietester (Echte Ticks) pruefen.       |
+//+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
 //|  DEADBAND V7  -  Build 7.00, 02.10.2026                          |
 //|  BUILD 7.00: FIRMENPROFIL - MEHR PLATZ = GROESSERE AUSZAHLUNGEN  |
 //|  Handelssignale = 6.81 (Fades, RSI21, Noise, Grid unveraendert). |
@@ -148,7 +174,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "7.00"
+#property version   "7.10"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -383,7 +409,19 @@ input int    FadeWaechterMin  = 30;     // ... und mindestens so viele Signale v
 input int    FadeHistTage     = 600;    // Historie fuer den Waechter beim Start (Kalendertage M5; Max. Balken im Chart auf Unbegrenzt stellen)
 input int    FadeZielAbSek    = 130;    // Ziel erst nach X s Haltedauer setzen (mind. 120; GFT: Gewinne aus Trades < 120 s werden gestrichen)
 input double FadeMinStopSpreads = 6.0;  // Einstieg nur, wenn der Stop mind. X aktuelle Spreads entfernt ist (Reserve der -1-%-Regel bei Kursspruengen; 0 = aus)
-input long   FadeMagicOffset  = 50;     // Fade-Magic = MagicBase + Offset + Modul (0..9), mindestens NzMagicOffset + 8
+input long   FadeMagicOffset  = 50;     // Fade-Magic = MagicBase + Offset + Modul (0..9, 7.10: Spike-Modul = naechste Nummer nach der Liste), mindestens NzMagicOffset + 8
+input group             "=== 7.10: Spike-Fade NAS 8:30 (Modul S0830, US-Daten-Spike zurueckhandeln) ==="
+input bool   SpikeAktiv       = true;       // 7.10: Spike-Fade-Modul S0830 anlegen (false = handelsgleich 7.00)
+input string SpikeSymbol      = "NAS";      // Symbol (Teil des Namens aus der SymbolList, wie in der FadeListe)
+input int    SpikeStartNY     = 510;        // Beginn der Messung in NY-Minuten (510 = 8:30, US-Daten)
+input int    SpikeMessKerzen  = 2;          // M5-Kerzen, die die Spike-Richtung bestimmen (2 = 8:30-8:40)
+input int    SpikeWarteKerzen = 6;          // Einstieg am Open der Kerze nach X Kerzen ab Beginn (6 = 9:00); Tief/Hoch bis dahin = Spike-Extrem
+input double SpikeKMin        = 0.20;       // Spike mind. X ATR(D1,14) vom Open der Startkerze (Replikat: 0,15 0,20 0,25 alle besser als ohne, 0,20 bestes GFT-Ergebnis)
+input double SpikeStopATR     = 0.25;       // Stop X ATR jenseits des Spike-Extrems
+input double SpikeZiel        = 0.5;        // Ziel: Anteil der Strecke Extrem -> Start-Open (0,5 = halbe Rueckkehr)
+input int    SpikeAusstiegNY  = 660;        // Zeit-Ausstieg in NY-Minuten (660 = 11:00)
+input int    SpikeRichtung    = 1;          // 1 = nur Long (Abwaertsspike kaufen, Voreinstellung), 0 = beide, -1 = nur Short
+input double SpikeRiskPct     = 0.75;       // Risiko je Spike-Trade in % vom Startsaldo (x Pufferkurve, Budgets wie die Fades)
 input group             "=== 6.20: Probability Grid (Schwung-Statistik als Fade-Filter, Konzept LuxAlgo) ==="
 input bool   GridAktiv        = true;       // Fade-Signale GEGEN den laufenden Schwung nur, wenn die Schwung-Statistik es erlaubt (false = Fades wie 6.10)
 input ENUM_TIMEFRAMES GridTF  = PERIOD_M5;  // Zeitebene der Schwuenge, aus M5 gebildet: M5, M10, M15, M20, M30 oder H1 (Replikat: M5 am besten)
@@ -443,7 +481,7 @@ input double KaufPuffer    = 2.0;
 
 #define MAXSYM 8
 #define MAXSLOT 16            // 4.40: DEADBAND-Plaetze 0..nSym-1, RSI21-Plaetze nSym..nSlot-1
-#define MAXFADE 10            // 6.00: Fade-Module (vor der ersten Verwendung in AbschlussErntePruefen)
+#define MAXFADE 11            // 6.00: Fade-Module (7.10: 10 Listenplaetze + Spike-Modul) (vor der ersten Verwendung in AbschlussErntePruefen)
 #define FADEHIST 256          // 6.40: 256 (>= FadePortN, der Portfolio-Waechter braucht bis zu FadePortN Ergebnisse je Modul)
 struct SymState
   {
@@ -2739,7 +2777,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND 7.00 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND 7.10 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3518,7 +3556,7 @@ void ZyklusPanel()
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    if(gGueltigSchutz) status += " | TAG GUELTIG - Schutz bis 17:00 NY (Umfang: Auszahlungstakt)";   // 6.40 (6.50: je Modul)
    txt += StringFormat(
-      "DEADBAND 7.00 %s   %s\n"
+      "DEADBAND 7.10 %s   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -5153,6 +5191,10 @@ struct FadeDef
    ulong    t1Chk;           // 6.30: Position, deren Deal-Historie schon geprueft wurde
    datetime t1Versuch;       // 6.30: letzter Versuch des Teilgewinns
    int      nT1;             // 6.30: Teilgewinne seit dem Start (Panel)
+   bool     spike;           // 7.10: Spike-Fade-Modul (eigene Signal-Logik SpikeKerze, kein Portfolio-Waechter)
+   double   spP0;            // 7.10: Open der Startkerze (8:30)
+   int      spDir;           // 7.10: Richtung des Fades nach den Messkerzen (+1 long, -1 short, 0 = noch keine)
+   double   spA, spGoal;     // 7.10: ATR des Tages, Ziel des Signals
   };
 FadeDef  F[MAXFADE];
 int      nFade = 0;
@@ -5245,8 +5287,47 @@ bool FadeListeLesen()
       F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
       F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
       F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;                  // 6.30
+      F[m].spike = false; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;   // 7.10
       nFade++;
      }
+   if(SpikeAktiv) return SpikeAnlegen();                                      // 7.10
+   return true;
+  }
+
+// 7.10: Spike-Fade-Modul S0830 hinter die Liste haengen. Zeiten in den Fade-Feldern: r0 = Beginn, L = Wartezeit (Range-Ende =
+//       Einstieg), tlen = eine Kerze (Einstiegsfenster), xoff bis zum Ausstieg - so rechnen FadeZeiten, FadeVerwalten und
+//       FadeLive (Feiertag, Ausstieg) ohne Aenderung.
+bool SpikeAnlegen()
+  {
+   if(nFade >= MAXFADE) { PrintFormat("DEADBAND4: 7.10 Spike-Modul - kein Platz (FadeListe hat schon %d Eintraege) - Spike AUS", nFade); return true; }
+   string sy = SpikeSymbol; StringTrimLeft(sy); StringTrimRight(sy); StringToUpper(sy);
+   int k = -1;
+   for(int q=0;q<nSym && StringLen(sy) > 0;q++) { string u = S[q].sym; StringToUpper(u); if(StringFind(u, sy) >= 0) { k = q; break; } }
+   if(k < 0) { PrintFormat("DEADBAND4: 7.10 Spike-Modul - Symbol %s nicht in der SymbolList - Spike AUS", SpikeSymbol); return true; }
+   int L = SpikeWarteKerzen*5, xoff = SpikeAusstiegNY - (SpikeStartNY + L + 5);
+   if(SpikeMessKerzen < 1 || SpikeWarteKerzen < SpikeMessKerzen || SpikeWarteKerzen > 60 || SpikeKMin < 0.0 || SpikeStopATR < 0.0 || SpikeZiel <= 0.0
+      || SpikeRiskPct <= 0.0 || SpikeRiskPct > 1.0 || (SpikeRichtung != 1 && SpikeRichtung != 0 && SpikeRichtung != -1)
+      || SpikeStartNY < 0 || SpikeStartNY + L > 990 || xoff < 0 || SpikeAusstiegNY > 1000)
+     { Print("DEADBAND4: 7.10 Spike-Eingaben ungueltig (1 <= SpikeMessKerzen <= SpikeWarteKerzen <= 60, SpikeKMin >= 0, SpikeStopATR >= 0, SpikeZiel > 0, 0 < SpikeRiskPct <= 1, SpikeRichtung -1/0/1, Ausstieg nach dem Einstieg und <= 1000) - Spike AUS"); return true; }
+   int m = nFade;
+   F[m].k = k; F[m].r0 = SpikeStartNY; F[m].L = L; F[m].tlen = 5; F[m].xoff = xoff; F[m].buf = SpikeStopATR; F[m].tgt = 0;
+   F[m].dir = SpikeRichtung; F[m].mx = 99.0; F[m].name = "S0830";
+   F[m].pt = SymbolInfoDouble(S[k].sym, SYMBOL_POINT);
+   if(F[m].pt <= 0.0) { Print("DEADBAND4: 7.10 Spike-Modul - Symbol ohne Point - Spike AUS"); return true; }
+   for(int q=0;q<m;q++) if(F[q].name == F[m].name) { PrintFormat("DEADBAND4: 7.10 Name %s schon in der FadeListe - Spike AUS", F[m].name); return true; }
+   F[m].aus = FadeNameInListe(F[m].name, FadeAus);
+   F[m].schutzFrei = FadeNameInListe(F[m].name, GueltigSchutzFrei);
+   F[m].gridAus = true;                                                         // kein Probability Grid (im Replikat ungetestet)
+   F[m].day = -1; F[m].nbar = 0; F[m].hh = -DBL_MAX; F[m].ll = DBL_MAX; F[m].rng = 0.0; F[m].exHi = 0.0; F[m].exLo = 0.0;
+   F[m].ready = false; F[m].done = false; F[m].skip = false; F[m].vOn = false; F[m].vDir = 0;
+   F[m].vEnt = 0.0; F[m].vSl = 0.0; F[m].vTp = 0.0; F[m].vRd = 0.0; F[m].vBar = 0; F[m].vX = 0;
+   for(int q=0;q<FADEHIST;q++) { F[m].hist[q] = 0.0; F[m].histT[q] = 0; }
+   F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = false; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;
+   F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
+   F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
+   F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;
+   F[m].spike = true; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
+   nFade++;
    return true;
   }
 
@@ -5331,6 +5412,7 @@ double FadePortfolioPF(const datetime tSig, int &n, bool &alle)
    ArrayResize(key, MathMax(nFade, 1)*FADEHIST);
    for(int m=0;m<nFade;m++)
      {
+      if(F[m].spike) continue;                                                 // 7.10: Spike-Modul nicht im Portfolio-Waechter
       if(!F[m].histFertig) alle = false;
       for(int i=0;i<F[m].nh;i++)
         {
@@ -5345,7 +5427,7 @@ double FadePortfolioPF(const datetime tSig, int &n, bool &alle)
    ArraySort(key);
    long tMin = (long)tSig - (long)FadeHistTage*86400;
    for(int m=0;m<nFade;m++)                                                    // kuerzere M5-Historie eines Symbols: nur die Zeit, in der
-      if(F[m].histFertig && (long)F[m].histAb + 86400 > tMin) tMin = (long)F[m].histAb + 86400;   // ALLE Module Ergebnisse haben
+      if(!F[m].spike && F[m].histFertig && (long)F[m].histAb + 86400 > tMin) tMin = (long)F[m].histAb + 86400;   // ALLE Module Ergebnisse haben
    double pos = 0.0, neg = 0.0;
    for(int i=nk-1;i>=0 && n<FadePortN;i--)
      {
@@ -5651,6 +5733,7 @@ void EinstandSchlupfWaechter()
 // Regime-Waechter: darf Modul m ein Signal mit Einstieg zur Zeit tSig live handeln?
 bool FadeWaechterOk(const int m, const datetime tSig)
   {
+   if(F[m].spike) return true;                                                  // 7.10: Spike-Modul ohne Waechter (Replikat)
    if(FadeWaechterModus == 1)                                                   // 6.40: Portfolio
      {
       if(FadePortPF <= 0.0) return true;
@@ -5699,6 +5782,7 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
      }
    if(F[m].vOn && tn >= F[m].vX)
       FadeVirtSchluss(m, F[m].vDir > 0 ? nx.open : nx.open + nx.spread*pt, nx.time);
+   if(F[m].spike) { SpikeKerze(m, b, nx, live); return; }                      // 7.10
    // 2) Tageszustand und Signal
    long Dt = FadeFloorDiv(t - F[m].r0, 1440);
    long rs, re, te, xm; FadeZeiten(m, Dt, rs, re, te, xm);
@@ -5766,6 +5850,59 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
          PrintFormat("DEADBAND4 %s FADE %s: %s-Signal nur virtuell - Probability Grid: %s", S[F[m].k].sym, FadeName(m), (d > 0 ? "LONG" : "SHORT"), gg);
         }
       else FadeLive(m, d, st, goal, xm, nx.time);
+     }
+  }
+
+// 7.10: Tageszustand und Signal des Spike-Moduls (wie y7sig.spike_fade im Replikat): Startkerze rs (8:30) liefert das
+//       Open p0; nach SpikeMessKerzen Kerzen bestimmt der groessere Ausschlag die Richtung (Aufwaerts >= Abwaerts -> Short,
+//       sonst Long), mind. SpikeKMin x ATR. Hoch/Tief laufen bis zur letzten Kerze vor dem Einstieg weiter (lueckenlos).
+//       Einstieg am Open der Kerze re (9:00), Stop Extrem -/+ SpikeStopATR x ATR, Ziel Extrem + SpikeZiel x (p0 - Extrem).
+void SpikeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool live)
+  {
+   double pt = F[m].pt;
+   long t = FadeNyMin(b.time), tn = FadeNyMin(nx.time);
+   long Dt = FadeFloorDiv(t - F[m].r0, 1440);
+   long rs, re, te, xm; FadeZeiten(m, Dt, rs, re, te, xm);
+   if(Dt != F[m].day)
+     {
+      F[m].day = Dt; F[m].nbar = 0; F[m].hh = -DBL_MAX; F[m].ll = DBL_MAX; F[m].ready = false; F[m].done = false; F[m].skip = false;
+      F[m].sigHeute = 0; F[m].einHeute = 0; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
+     }
+   int dow = (int)(((Dt + 4) % 7 + 7) % 7);
+   if(dow < 1 || dow > 5) return;
+   if(F[m].done || F[m].skip || t < rs) return;
+   if(t >= re) { F[m].done = true; return; }
+   if(F[m].nbar == 0) { if(t != rs) { F[m].skip = true; return; } F[m].spP0 = b.open; }
+   else if(t != rs + 5*F[m].nbar) { F[m].skip = true; return; }               // Luecke in den Kerzen: kein Signal (wie Replikat)
+   F[m].nbar++;
+   if(b.high > F[m].hh) F[m].hh = b.high;
+   if(b.low < F[m].ll) F[m].ll = b.low;
+   if(F[m].nbar == SpikeMessKerzen)
+     {
+      double a = FadeAtr(m, FadeSrvZeit(rs));
+      double up = F[m].hh - F[m].spP0, dn = F[m].spP0 - F[m].ll;
+      int d = (up >= dn ? -1 : 1);
+      double mv = (up >= dn ? up : dn);
+      if(!(a > 0.0) || mv < SpikeKMin*a || (F[m].dir != 0 && d != F[m].dir)) { F[m].skip = true; return; }
+      F[m].spDir = d; F[m].spA = a;
+     }
+   if(tn != re || F[m].nbar < SpikeMessKerzen) return;
+   F[m].done = true;                                                            // hoechstens ein Signal je Tag
+   if(F[m].nbar != SpikeWarteKerzen || F[m].spDir == 0 || tn >= xm) return;
+   int d = F[m].spDir;
+   double ex = (d > 0 ? F[m].ll : F[m].hh);
+   double goal = ex + d*SpikeZiel*MathAbs(ex - F[m].spP0);
+   double ent = nx.open + (d > 0 ? nx.spread*pt : 0.0);
+   double st  = ex - d*F[m].buf*F[m].spA;
+   double r = (ent - st)*d, g = (goal - ent)*d;
+   if(r <= 0.0 || g <= 0.0) return;
+   F[m].ready = true; F[m].spGoal = goal; F[m].rng = MathAbs(ex - F[m].spP0);
+   F[m].vOn = true; F[m].vDir = d; F[m].vEnt = ent; F[m].vSl = st; F[m].vTp = goal; F[m].vRd = r; F[m].vBar = nx.time; F[m].vX = xm;
+   F[m].nSig++;
+   if(live)
+     {
+      F[m].sigHeute++;
+      FadeLive(m, d, st, goal, xm, nx.time);
      }
   }
 
@@ -5923,7 +6060,7 @@ void FadeLive(const int m, const int d, const double st, const double goal, cons
    double fak = DDFaktor(buf);
    if(!peakOk) fak *= PeakUnsicherFaktor;                                     // Boden unsicher
    if(AccountInfoDouble(ACCOUNT_EQUITY) < kStart) fak *= BelowStartMult;
-   double risk = kStart*FadeRiskPct/100.0*fak*gH;                             // 7.00: x ProfilHebel
+   double risk = kStart*(F[m].spike ? SpikeRiskPct : FadeRiskPct)/100.0*fak*gH;   // 7.00: x ProfilHebel (7.10: Spike-Modul eigenes Risiko)
    double ideeU = 0.0;
    double unsicht = FadeUnsichtbar(s, d, ideeU);                              // eben eroeffnete (alle Module) und vorgemerkte Positionen
    double rest = (GesamtBudgetPct > 0.0) ? kStart*GesamtBudgetPct*gH/100.0 - OffenesRisiko(0) - unsicht : DBL_MAX;
@@ -5998,6 +6135,7 @@ void FadeVerwalten(const int m)
    if(tpAlt > 0.0) return;
    double goal = 0.0;
    if(F[m].liveDay == Dt && F[m].liveGoal > 0.0) goal = F[m].liveGoal;
+   else if(F[m].day == Dt && F[m].ready && F[m].spike) goal = F[m].spGoal;   // 7.10
    else if(F[m].day == Dt && F[m].ready) goal = (F[m].tgt == 0) ? 0.5*(F[m].hh + F[m].ll) : (d > 0 ? F[m].hh : F[m].ll);   // nach Neustart aus der Historie
    if(goal <= 0.0) return;
    if(now - tOpen < MathMax(FadeZielAbSek, 120)) return;
@@ -6216,6 +6354,16 @@ void FadeInitMeldung()
                (GridAktiv ? (gridOk ? "AN" : "AUS (Eingaben ungueltig)") : "aus (Fades wie 6.10)"), PeriodSeconds(GridTF)/60, GridLaenge, GridMaxSchenkel, GridMinSchenkel,
                GridMaxStopChance*100.0, (GridMaxStopChance > 0.0 ? "" : " (aus)"), (GridMinReife > 0.0 ? StringFormat("Lauf mind. %.0f. Perzentil", GridMinReife*100.0) : "aus"), GridVorlaufTage,
                (GridNurLive ? "gesperrte Signale zaehlen im Waechter mit (GridNurLive)" : "gesperrte Signale entfallen auch im Waechter") + (StringLen(GridOhne) > 0 ? " | ohne Grid: " + GridOhne : ""));
+   for(int m=0;m<nFade;m++)                                                    // 7.10
+      if(F[m].spike)
+         PrintFormat("DEADBAND4: 7.10 Spike-Fade %s %s%s | Messung %s NY, %d Kerze(n), mind. %.2f ATR, Einstieg %s NY, Stop %.2f ATR jenseits des Extrems, Ziel %.0f %% zurueck, Ausstieg %s NY | %s | Risiko %.2f %% je Trade x Pufferkurve | ohne Portfolio-Waechter und Grid | Magic %I64d",
+                     FadeName(m), S[F[m].k].sym, (F[m].aus ? " (AUS per FadeAus)" : ""), FadeUhr(F[m].r0), SpikeMessKerzen, SpikeKMin, FadeUhr(F[m].r0 + F[m].L),
+                     SpikeStopATR, SpikeZiel*100.0, FadeUhr(SpikeAusstiegNY), (F[m].dir > 0 ? "nur Long" : (F[m].dir < 0 ? "nur Short" : "beide Richtungen")), SpikeRiskPct, FadeMagic(m));
+   if(SpikeAktiv && fadeOk)
+     {
+      bool da = false; for(int m=0;m<nFade;m++) if(F[m].spike) da = true;
+      if(!da) Print("DEADBAND4: 7.10 Spike-Fade AUS (Eingaben/Symbol/Platz - siehe Meldung oben)");
+     }
    if(fadeOk && nyOff != NYOffsetHours)
       PrintFormat("DEADBAND4: ACHTUNG - gemessener NY-Versatz %d h, die Fade-Module rechnen fest mit NYOffsetHours=%d h (GFT: Server = NY + 7 h). Broker-Serverzeit und PC-Uhr pruefen.", nyOff, NYOffsetHours);
   }

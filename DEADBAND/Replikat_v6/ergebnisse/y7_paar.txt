@@ -1,0 +1,13 @@
+# y7_paar.py gft
+gft Basis                Ausz 10.13 Netto   1835 Bust 0.000 S6 1.45 maxS 6.8
+gft Spike Long k0.20     Ausz 10.75 Netto   1966 Bust 0.000 S6 1.22 maxS 6.4
+gft Spike Long k0.25     Ausz 10.58 Netto   1949 Bust 0.000 S6 1.16 maxS 6.3
+gft Spike Long k0.20     - Basis: Ausz +0.62 (SD 0.81, SE 0.20, besser 12/16) | Netto +130 (SE 40, besser 14/16) | S6 -0.22
+gft Spike Long k0.25     - Basis: Ausz +0.45 (SD 0.92, SE 0.23, besser 10/16) | Netto +114 (SE 40, besser 11/16) | S6 -0.29
+
+# y7_paar.py ext
+ext Basis                Ausz  2.65 Netto    458 Bust 0.000 S6 1.93 maxS 8.8
+ext Spike Long k0.20     Ausz  2.72 Netto    471 Bust 0.000 S6 1.64 maxS 7.8
+ext Spike Long k0.25     Ausz  2.67 Netto    464 Bust 0.000 S6 1.73 maxS 7.8
+ext Spike Long k0.20     - Basis: Ausz +0.08 (SD 0.09, SE 0.03, besser 7/8) | Netto +14 (SE 7, besser 7/8) | S6 -0.30
+ext Spike Long k0.25     - Basis: Ausz +0.02 (SD 0.06, SE 0.02, besser 4/8) | Netto +6 (SE 3, besser 6/8) | S6 -0.21
