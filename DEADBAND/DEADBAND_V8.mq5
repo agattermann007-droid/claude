@@ -2321,7 +2321,8 @@ void ResetKontoZustand()
    gGueltigSchutz = false; gGsTag = -1;                                    // 6.40
    kDayIdx = -1; kRefTag = -1; kDayRefPlus = 0.0; kDayStartBal = 0.0; kMode = 0; reifGemeldet = false; kLastReminder = 0; kLastRecalc = 0; kFlatSince = 0;
    peakGespeichert = 0.0; peakPayGesp = -1; peakSpeicherZeit = 0; peakOk = true; peakFehl = 0; peakVersuch = 0;
-   serNDeals = -1; serN = 0; serNZ = 0; kZust = -1; kZustSeit = 0; kZustGrund = ""; serStoppZeit = 0; kBereitAb = 0;   // 8.10: Zustand neu bestimmen kStartWarnung = false; kBuchWarn = false; kGebWarn = false; kLogin = 0;
+   serNDeals = -1; serN = 0; serStoppZeit = 0; kBereitAb = 0; kStartWarnung = false; kBuchWarn = false; kGebWarn = false; kLogin = 0;
+   serNZ = 0; kZust = -1; kZustSeit = 0; kZustGrund = "";                    // 8.10: Kontozustand neu bestimmen
    kAuszahlungHeute = false; tagesRefUnsicher = false; kFloorOvWarn = false; kCreditWarn = false; kKeinePayGemeldet = 0; kPayoutVerarbeitet = 0; kPeakVorlaeufig = false; refFehl = 0; refVersuch = 0; kEqMaxZyklus = 0.0; kBalRecalc = 0.0; kPosSigRecalc = -1.0;
   }
 
