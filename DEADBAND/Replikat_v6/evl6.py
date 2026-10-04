@@ -128,7 +128,8 @@ def agg(rows):
                maxdd=float(np.mean([r["maxdd"] for r in rows])), valid=sum(r["valid"] for r in rows) / Y,
                cool=sum(r["cool"] for r in rows) / Y, bank=sum(r["bank"] for r in rows) / Y, ge=sum(r["ge"] for r in rows) / Y,
                cyc=sum(r["cyc"] for r in rows) / max(npay, 1),
-               p_bust=float(np.mean([r["nbust"] > 0 for r in rows])), n=len(rows))
+               p_bust=float(np.mean([r["nbust"] > 0 for r in rows])), n=len(rows),
+               b_floor=sum(r["floor_b"] for r in rows) / Y, b_float=sum(r["float_b"] for r in rows) / Y, b_day=sum(r["day_b"] for r in rows) / Y)
     mods = {}
     for r in rows:
         for nm, (x, n, w) in r["mods"].items():

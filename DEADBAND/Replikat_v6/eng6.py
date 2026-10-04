@@ -13,14 +13,14 @@ from numba import njit
 import prep5 as P
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NG = 14                 # generische Stroeme, je Strom ein Platz je Symbol
+NG = 32                 # generische Stroeme (Stufe 8: 14 -> 32), je Strom ein Platz je Symbol
 NZ0 = 6
 NZ1 = 9
 G0 = 9
 NSLOT = G0 + 2 * NG
 # Spalten der Strom-Parameter GP[strom, spalte]
 GPN = ["on", "risk", "tp1r", "tp1f", "be", "maxtrades", "maxloss", "budget", "ripeclose",
-       "trail_from", "trail_dist", "harv", "usefak", "maxopen_sym", "cool_excl", "tpdelay"]
+       "trail_from", "trail_dist", "harv", "usefak", "maxopen_sym", "cool_excl", "tpdelay", "minbuf"]
 GPI = {n: i for i, n in enumerate(GPN)}
 
 # ------------------------------------------------------------------ Parameter
@@ -984,6 +984,8 @@ def run_path(Pv, d0, d1, seed,
             if GP[s_, 5] > 0.5 and g_trades[2 * s_ + sy] >= int(GP[s_, 5]):
                 continue
             if GP[s_, 6] > 0.5 and losses[k] >= int(GP[s_, 6]):
+                continue
+            if GP[s_, 16] > 0.0 and buf_now < GP[s_, 16]:                       # Stufe 8: Strom nur mit genug Puffer
                 continue
             d = g_dir[a]
             hed = False

@@ -1,2 +1,4 @@
 __pycache__/
 cache/
+ergebnisse/n8_scan_*.json
+ergebnisse/n8_robust_*.json
