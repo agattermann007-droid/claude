@@ -80,13 +80,13 @@ def modname(sl):
     return f"g{(sl - E.G0) // 2}"
 
 
-def one(Pv, d0, d1, seed, skip, slip, GP):
+def one(Pv, d0, d1, seed, skip, slip, GP, SM=None):
     m = mk()
     Pv = Pv.copy()
     if seed > 0:
         Pv[E.PI["slip_frac"]] = slip
     ms = masks(m, seed, skip if seed > 0 else 0.0)
-    r = E.run(m, Pv, d0, d1, seed=seed, masks=ms, GP=GP)
+    r = E.run(m, Pv, d0, d1, seed=seed, masks=ms, GP=GP, SM=SM)
     st = r["st"]; S = E.SI; tr = r["tr"]; ev = r["ev"]
     pnls, slots = ideas(tr)
     n5, n6, n8, mx, worst = streaks(pnls)
@@ -96,7 +96,15 @@ def one(Pv, d0, d1, seed, skip, slip, GP):
         nm = modname(int(sl))
         a = mods.setdefault(nm, [0.0, 0, 0])
         a[0] += x; a[1] += 1; a[2] += int(x > 0)
-    return dict(years=r["years"], npay=float(st[S["npay"]]), sumpay=float(st[S["sumpay"]]), nbust=int(st[S["nbust"]]),
+    # 8.10: Ergebnis je Kontozustand beim Einstieg und Modul; Tage und Pleiten je Zustand
+    zm = {}
+    for row in tr:
+        key = (int(row[4]), modname(int(row[2])))
+        a = zm.setdefault(key, [0.0, 0, 0])
+        a[0] += row[1]; a[1] += 1; a[2] += int(row[1] > 0)
+    zdays = [float(st[E.Z_ST0 + z]) for z in range(E.NZST)]
+    zbust = [float(st[E.Z_B0 + z]) for z in range(E.NZST)]
+    return dict(zm=zm, zdays=zdays, zbust=zbust, years=r["years"], npay=float(st[S["npay"]]), sumpay=float(st[S["sumpay"]]), nbust=int(st[S["nbust"]]),
                 floor_b=float(st[S["floor_b"]]), float_b=float(st[S["float_b"]]), day_b=float(st[S["day_b"]]),
                 ntr=float(len(pnls)), wins=float((pnls > 0).sum()), n5=n5, n6=n6, n8=n8, mx=mx, worst=worst,
                 gapmax=float(st[S["gaps_max"]]), maxdd=float(st[S["maxdd"]]), valid=float(st[S["valid_days"]]),
@@ -136,11 +144,20 @@ def agg(rows):
             a = mods.setdefault(nm, [0.0, 0, 0])
             a[0] += x; a[1] += n; a[2] += w
     out["mods"] = {nm: dict(pnl=a[0] / Y, tr=a[1] / Y, wr=100.0 * a[2] / max(a[1], 1)) for nm, a in mods.items()}
+    if rows and "zdays" in rows[0]:
+        out["zdays"] = [sum(r["zdays"][z] for r in rows) / Y for z in range(E.NZST)]
+        out["zbust"] = [sum(r["zbust"][z] for r in rows) / Y for z in range(E.NZST)]
+        zm = {}
+        for r in rows:
+            for (z, nm), (x, n, w) in r["zm"].items():
+                a = zm.setdefault(f"{E.ZN[z]}|{nm}", [0.0, 0, 0])
+                a[0] += x; a[1] += n; a[2] += w
+        out["zm"] = {k: dict(pnl=a[0] / Y, tr=a[1] / Y, wr=100.0 * a[2] / max(a[1], 1)) for k, a in zm.items()}
     return out
 
 
 def evaluate(Pv, GP=None, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)), skip=0.03, slip=0.3, workers=4,
-             warm=WARM, end=None):
+             warm=WARM, end=None, SM=None):
     m = mk()
     if GP is None:
         GP = _GP if _GP is not None else E.gparams([])
@@ -148,7 +165,7 @@ def evaluate(Pv, GP=None, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)
     for h in horizons:
         for (a, b) in starts(m, h, step, warm, end):
             for s in seeds:
-                jobs.append((h, (Pv, a, b, s, skip, slip, GP)))
+                jobs.append((h, (Pv, a, b, s, skip, slip, GP, SM)))
     if workers > 1:
         with ProcessPoolExecutor(workers) as ex:
             outs = list(ex.map(_job, [j[1] for j in jobs], chunksize=32))
@@ -159,11 +176,14 @@ def evaluate(Pv, GP=None, horizons=(250, 500, 750), step=3, seeds=tuple(range(8)
         byh.setdefault(h, []).append(o)
     res = {h: agg(byh[h]) for h in horizons if h in byh}
     hs = [h for h in horizons if h in res]
-    keys = [k for k in res[hs[0]].keys() if k != "mods"]
+    keys = [k for k in res[hs[0]].keys() if k not in ("mods", "zdays", "zbust", "zm")]
     res["mean"] = {k: float(np.mean([res[h][k] for h in hs])) for k in keys}
     res["mean"]["mxmax"] = float(np.max([res[h]["mxmax"] for h in hs]))
     res["mean"]["p_bust1"] = res[hs[0]]["p_bust"]
     res["mean"]["mods"] = res[hs[0]]["mods"]
+    for k in ("zdays", "zbust", "zm"):
+        if k in res[hs[0]]:
+            res["mean"][k] = res[hs[0]][k]
     return res
 
 

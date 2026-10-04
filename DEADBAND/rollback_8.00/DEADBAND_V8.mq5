@@ -1,43 +1,4 @@
 //+------------------------------------------------------------------+
-//|  DEADBAND V8  -  Build 8.10, 04.10.2026                          |
-//|  BUILD 8.10: KONTOERKENNER + TREND-DAY NAS (Modul TD)            |
-//|  1) KONTOERKENNER (immer an): Zustand des Kontos laufend aus     |
-//|     Puffer zum Boden, gueltigen Tagen, Gewinn, Verlustserie,     |
-//|     Auszahlungen, Reife und Sicherheit der Equity-Spitze:        |
-//|     REIF > TIEF (<2 %) > LEICHT (<4 %) > UNSICHER > SERIE (>=3)  |
-//|     > REIFENAH > GEWINN > NACH_AUSZ > FRISCH, Hysterese 0,5 %.   |
-//|     Panel-Zeile "Kontozustand", Startmeldung mit Grund, Wechsel  |
-//|     im Journal + Push. ANPASSER: je Zustand Faktoren auf das     |
-//|     Risiko je Strom (AnpFrisch ... AnpUnsicher, 0 = Strom aus).  |
-//|     Voreinstellung NEUTRAL (alle x1): Im Replikat hat kein Satz  |
-//|     Auswahl 22-23, Pruefung 24-25 UND Fremddaten verbessert.     |
-//|     Bester Auswahl-Satz (17,00 Ausz./J) fiel in der Pruefung auf |
-//|     8,61 (8.00: 11,75). Rauschen gemessen: Faktor x0,99/x1,01    |
-//|     verschiebt schon -0,57..+0,22 Ausz./J. Die Pufferkurve deckt |
-//|     die echte Zustandsabhaengigkeit bereits ab.                  |
-//|     Replikat: eng6 st_on/st_*/SM (Zustand zst), z8.py, z8_opt.py.|
-//|  2) MODUL TD (Trend-Day, Schluss-Momentum Baltussen et al. JFE   |
-//|     2021 / E. Chan): 14:00 NY Long, wenn der NAS seit dem        |
-//|     Vortagesschluss (16:00) mind. 0,75 ATR(D1) gestiegen ist;    |
-//|     Stop 0,3 ATR, kein Ziel, Ausstieg 15:55. Risiko 0,5 %.       |
-//|     Allein schwach (0,8 Ausz./J), aber gueltige Tage zu einer    |
-//|     sonst ruhigen Zeit. TdKerze = Zeile fuer Zeile               |
-//|     n9sig.gen_lastmom (z9_lm.py, z8_final.py).                   |
-//|  Replikat eng6 (gepaart, 0 Pleiten in allen Teilen):             |
-//|   2022-25   13,49 -> 14,30 Ausz./J, netto 2800 -> 3019 $/J,      |
-//|             Zyklus 24,8 -> 23,4 Tage, avg 267 -> 272 $           |
-//|   22-23 (Auswahl) 16,09 -> 17,22 | 24-25 (Pruefung) 11,75->12,50 |
-//|   Fremddaten 2006-21: 3,16 -> 3,81 Ausz./J, 608 -> 723 $         |
-//|   Schlupf 100 % Spread: 11,31 -> 12,25. Jahre 22/23/24 besser,   |
-//|   2025 -0,22 (Rauschen). Plateau: Mittel der TD-Nachbarn nur     |
-//|   ~+0,4 (Spitze +0,81) - Erwartung +0,2..+0,5 Ausz./J.           |
-//|  RUECKFALL = 8.00: TdAktiv=false und AnpasserAktiv=false.        |
-//|  8.00 liegt unveraendert in rollback_8.00/.                      |
-//|  Bericht: DEADBAND_V8x_Bericht.md.                               |
-//|  NICHT KOMPILIERT ERSTELLT - vor dem Einsatz im MetaEditor       |
-//|  kompilieren und im Strategietester (Echte Ticks) pruefen.       |
-//+------------------------------------------------------------------+
-//+------------------------------------------------------------------+
 //|  DEADBAND V8  -  Build 8.00, 04.10.2026                          |
 //|  BUILD 8.00: NEUES KONZEPT "STAFFEL" - MEHR STROEME, NEUE KURVE  |
 //|  Jede YouTube-Strategie wurde zuerst ALLEIN unter den GFT-Regeln |
@@ -242,7 +203,7 @@
 //|      weiter. Nichts neu laden.                                    |
 //+------------------------------------------------------------------+
 #property copyright "DEADBAND LIVE 4"
-#property version   "8.10"
+#property version   "8.00"
 #include <Trade\Trade.mqh>
 CTrade trade;
 
@@ -512,39 +473,6 @@ input double AsiaStopATR      = 0.6;        // Stop X x ATR(D1,14)
 input double AsiaZielR        = 1.0;        // Ziel in R (0 = keins)
 input double AsiaRiskPct      = 0.75;       // Risiko je XA-Trade in % vom Startsaldo (x Pufferkurve)
 input double AsiaMinPuffer    = 0.0;        // XA nur ab X % Puffer zum Boden (0 = immer)
-input group             "=== 8.10: Trend-Day NAS (Modul TD, Schluss-Momentum nach Baltussen et al. 2021 / E. Chan) ==="
-input bool   TdAktiv          = true;       // 8.10: Modul TD anlegen (false = handelsgleich 8.00)
-input string TdSymbol         = "NAS";      // Symbol (Teil des Namens aus der SymbolList)
-input int    TdEinNY          = 840;        // Einstieg am Open dieser Kerze (NY-Minuten, 840 = 14:00; die Kerze muss existieren)
-input int    TdAusNY          = 955;        // Zeit-Ausstieg am Open dieser Kerze (955 = 15:55 NY)
-input int    TdSchlussNY      = 960;        // Vortagesschluss = letzter Schluss vor dieser NY-Minute (16:00), Kerze ab 1 h davor
-input double TdMinATR         = 0.75;       // Tagesrendite (Schluss vor dem Einstieg - Vortagesschluss) mind. X x ATR(D1,14) (Replikat-Plateau, Bericht V8x)
-input double TdStopATR        = 0.3;        // Stop X x ATR(D1,14) vom Einstieg
-input double TdZielR          = 0.0;        // Ziel in R (0 = keins, nur Stop/Zeit-Ausstieg)
-input int    TdRichtung       = 1;          // 1 = nur Long (Replikat), 0 = beide, -1 = nur Short
-input double TdRiskPct        = 0.50;       // Risiko je TD-Trade in % vom Startsaldo (x Pufferkurve)
-input double TdMinPuffer      = 0.0;        // TD nur ab X % Puffer zum Boden (0 = immer; Replikat: Schwelle 4 % schlechter)
-input group             "=== 8.10: Kontoerkenner und Anpasser (Replikat eng6: st_on/SM, z8.py) ==="
-input bool   AnpasserAktiv    = true;       // 8.10: Faktoren je Kontozustand anwenden (false = handelsgleich 8.00; der Erkenner zeigt den Zustand trotzdem an)
-input int    AnpZustandErzwingen = -1;      // -1 = automatisch | 0 FRISCH 1 NACH_AUSZ 2 GEWINN 3 REIFENAH 4 LEICHT 5 TIEF 6 SERIE 7 REIF 8 UNSICHER (Test)
-input double AnpTiefPct       = 2.0;        // TIEF: Puffer zum Boden unter X % (eng6 st_deep)
-input double AnpLeichtPct     = 4.0;        // LEICHT: Puffer unter X % (eng6 st_light; = LwMinPuffer)
-input double AnpHysPct        = 0.5;        // Hysterese: TIEF/LEICHT erst verlassen, wenn der Puffer X % ueber der Schwelle liegt (eng6 st_hys)
-input int    AnpReifeNahTage  = 1;          // REIFENAH: hoechstens X gueltige Tage fehlen ... (eng6 st_near_v)
-input double AnpReifeNahGewinn= 0.8;        // ... oder Gewinn >= X x Mindestgewinn (eng6 st_near_p)
-input double AnpGewinnPct     = 1.0;        // GEWINN: Saldo >= Start + X % (eng6 st_prof)
-input int    AnpSerie         = 3;          // SERIE: X Verlusttrades in Folge (eigener Zaehler, ohne Ruecksetzen beim Serien-Stopp; eng6 st_streak)
-input bool   AnpPush          = true;       // Zustandswechsel per Push (Journal immer)
-// Faktoren auf das Risiko je Zustand, Reihenfolge: DEADBAND, RSI21, Noise, Fades, Spike S0830, LW, XA, TD (0 = Strom im Zustand aus, hoechstens 2)
-// 8.10: alle neutral - kein gepruefter Satz hat Auswahl (2022-23), Pruefung (2024-25) UND Fremddaten (2006-21) verbessert (Bericht V8x, Abschnitt 3)
-input string AnpFrisch        = "1,1,1,1,1,1,1,1";
-input string AnpNachAusz      = "1,1,1,1,1,1,1,1";
-input string AnpGewinn        = "1,1,1,1,1,1,1,1";
-input string AnpReifeNah      = "1,1,1,1,1,1,1,1";
-input string AnpLeicht        = "1,1,1,1,1,1,1,1";
-input string AnpTief          = "1,1,1,1,1,1,1,1";
-input string AnpSerieF        = "1,1,1,1,1,1,1,1";
-input string AnpUnsicher      = "1,1,1,1,1,1,1,1";   // nur EA: Equity-Spitze nicht sicher rekonstruiert (PeakUnsicherFaktor gilt zusaetzlich)
 input group             "=== 6.20: Probability Grid (Schwung-Statistik als Fade-Filter, Konzept LuxAlgo) ==="
 input bool   GridAktiv        = true;       // Fade-Signale GEGEN den laufenden Schwung nur, wenn die Schwung-Statistik es erlaubt (false = Fades wie 6.10)
 input ENUM_TIMEFRAMES GridTF  = PERIOD_M5;  // Zeitebene der Schwuenge, aus M5 gebildet: M5, M10, M15, M20, M30 oder H1 (Replikat: M5 am besten)
@@ -604,7 +532,7 @@ input double KaufPuffer    = 2.0;
 
 #define MAXSYM 8
 #define MAXSLOT 16            // 4.40: DEADBAND-Plaetze 0..nSym-1, RSI21-Plaetze nSym..nSlot-1
-#define MAXFADE 14            // 6.00: Fade-Module (7.10: 10 Listenplaetze + Spike-Modul; 8.00: + LW + XA; 8.10: + TD) (vor der ersten Verwendung in AbschlussErntePruefen)
+#define MAXFADE 13            // 6.00: Fade-Module (7.10: 10 Listenplaetze + Spike-Modul; 8.00: + LW + XA) (vor der ersten Verwendung in AbschlussErntePruefen)
 #define FADEHIST 256          // 6.40: 256 (>= FadePortN, der Portfolio-Waechter braucht bis zu FadePortN Ergebnisse je Modul)
 struct SymState
   {
@@ -789,16 +717,6 @@ int      serN = 0;                   // Verlusttrades in Folge seit dem letzten 
 datetime serStoppZeit = 0;           // Schliesszeit des Trades, der den letzten Serien-Stopp ausgeloest hat
 datetime serGemeldet = 0;            // zuletzt gemeldeter Serien-Stopp
 int      serNDeals = -1;             // Deal-Zahl der letzten Auswertung (Cache)
-// 8.10: Kontoerkenner und Anpasser (Replikat: eng6 Zustand zst, Matrix SM; Bewertung z8.py / z8_opt.py)
-#define  ANPKL 8                     // Klassen: 0 DEADBAND, 1 RSI21, 2 Noise, 3 Fades, 4 Spike S0830, 5 LW, 6 XA, 7 TD
-#define  ANPZ  9                     // Zustaende (0-7 wie eng6.ZN, 8 = UNSICHER nur im EA)
-string   ANP_NAME[ANPZ] = {"FRISCH", "NACH_AUSZ", "GEWINN", "REIFENAH", "LEICHT", "TIEF", "SERIE", "REIF", "UNSICHER"};
-double   anpF[ANPZ][ANPKL];          // Risikofaktoren je Zustand und Klasse
-bool     anpOk = false;              // Eingaben gueltig (sonst wirkt der Anpasser nicht, der Erkenner zeigt weiter an)
-int      kZust = -1;                 // aktueller Kontozustand (-1 = noch nicht bestimmt)
-datetime kZustSeit = 0;              // Zeit des letzten Zustandswechsels
-string   kZustGrund = "";            // Begruendung (Panel, Journal)
-int      serNZ = 0;                  // Verlusttrades in Folge OHNE Ruecksetzen beim Serien-Stopp (Zustand SERIE, eng6 z_cons)
 datetime serLetzt = 0;
 datetime swapLog = 0;                // letzte Meldung der Swap-Vorsorge
 
@@ -929,13 +847,6 @@ int OnInit()
       Meldung(StringFormat("HINWEIS 6.81: BelowStartMult %.2f = 6.71 (Set 6.60). 0,95 = 6.80-Punkt 1: Kopf B +1,31 Ausz./J, +91 $/J, 2026 +-0, Betrag je Ausz. eher kleiner. Preis: Abstand zum Boden -11 $ (bis -23 $), reisst K-c", BelowStartMult));
    if(BelowStartMult < 0.95 - 1e-9 && !R21Aktiv && !NzAktiv)                                                  // 6.81: Sicher-Set (nur Fades)
       Meldung(StringFormat("HINWEIS 6.81: BelowStartMult %.2f, nur Fades. 0,95: Fade-Replikat +0,46..0,59 Ausz./J, +52..75 $/J, 2026 uneinheitlich. Preis: Abstand zum Boden -11 $ (bis -23 $), reisst K-c. 0,8 ist hier vertretbar", BelowStartMult));
-   anpOk = AnpLesen();                                                                                          // 8.10: Kontoerkenner und Anpasser
-   PrintFormat("DEADBAND4: 8.10 Kontoerkenner AN | Anpasser %s | Zustand %s | TIEF < %.2f %%, LEICHT < %.2f %% (Hysterese %.2f %%), REIFENAH ab %d fehlenden gueltigen Tagen oder %.0f %% des Mindestgewinns, GEWINN ab %.2f %%, SERIE ab %d Verlusten in Folge | Push bei Wechsel %s",
-               (AnpWirkt() ? "AN" : (AnpasserAktiv ? "AUS (Eingaben ungueltig)" : "aus (AnpasserAktiv=false, handelsgleich 8.00)")),
-               (AnpZustandErzwingen >= 0 && AnpZustandErzwingen < ANPZ ? "ERZWUNGEN " + ANP_NAME[AnpZustandErzwingen] : "automatisch"),
-               AnpTiefPct, AnpLeichtPct, AnpHysPct, AnpReifeNahTage, AnpReifeNahGewinn*100.0, AnpGewinnPct, AnpSerie, (AnpPush ? "an" : "aus"));
-   for(int z=0;z<ANPZ && AnpWirkt();z++)
-      if(z != 7) PrintFormat("DEADBAND4: 8.10 Satz %-9s %s", ANP_NAME[z], AnpSatzText(z));
    if(StringLen(KaufdatumGFT) > 0 && (StringLen(KaufdatumGFT) < 10 || StringToTime(KaufdatumGFT) < D'2020.01.01'))   // 6.81
      { Print("DEADBAND4: KaufdatumGFT bitte als \"JJJJ.MM.TT\" (Kaufdatum im GFT-Dashboard) oder leer lassen"); return(INIT_PARAMETERS_INCORRECT); }
    if(FloorOverride > 0.0 && (StringLen(FloorOverrideZeit) < 10 || StringToTime(FloorOverrideZeit) < D'2020.01.01'))   // 6.10: ohne Ablesezeit ginge die Spitze bis zum Neustart verloren
@@ -2321,7 +2232,7 @@ void ResetKontoZustand()
    gGueltigSchutz = false; gGsTag = -1;                                    // 6.40
    kDayIdx = -1; kRefTag = -1; kDayRefPlus = 0.0; kDayStartBal = 0.0; kMode = 0; reifGemeldet = false; kLastReminder = 0; kLastRecalc = 0; kFlatSince = 0;
    peakGespeichert = 0.0; peakPayGesp = -1; peakSpeicherZeit = 0; peakOk = true; peakFehl = 0; peakVersuch = 0;
-   serNDeals = -1; serN = 0; serNZ = 0; kZust = -1; kZustSeit = 0; kZustGrund = ""; serStoppZeit = 0; kBereitAb = 0;   // 8.10: Zustand neu bestimmen kStartWarnung = false; kBuchWarn = false; kGebWarn = false; kLogin = 0;
+   serNDeals = -1; serN = 0; serStoppZeit = 0; kBereitAb = 0; kStartWarnung = false; kBuchWarn = false; kGebWarn = false; kLogin = 0;
    kAuszahlungHeute = false; tagesRefUnsicher = false; kFloorOvWarn = false; kCreditWarn = false; kKeinePayGemeldet = 0; kPayoutVerarbeitet = 0; kPeakVorlaeufig = false; refFehl = 0; refVersuch = 0; kEqMaxZyklus = 0.0; kBalRecalc = 0.0; kPosSigRecalc = -1.0;
   }
 
@@ -2574,12 +2485,12 @@ double PeakRekonstruktion(const bool pruefen)                          // pruefe
 //+------------------------------------------------------------------+
 void SerienStand()
   {
-   if(SerienStopp <= 0 && AnpSerie <= 0) return;                             // 8.10: auch fuer den Zustand SERIE
+   if(SerienStopp <= 0) return;
    if(nD == serNDeals && (nD == 0 || D[nD-1].time == serLetzt)) return;    // keine neuen Deals
    serNDeals = nD; serLetzt = (nD > 0 ? D[nD-1].time : 0);
    long ids[]; double sum[], vin[], vout[]; bool nz[]; int grp[]; int np = 0;
    datetime gT[]; int gOffen[]; double gSum[]; int ng = 0;
-   int n = 0, nz8 = 0; datetime stopZeit = 0;
+   int n = 0; datetime stopZeit = 0;
    for(int i=0;i<nD;i++)
      {
       if(!IstHandel(i) || !IsOurMagic(D[i].magic)) continue;
@@ -2612,12 +2523,12 @@ void SerienStand()
         }
       if(erg < 0.0)
         {
-         n++; nz8++;
-         if(SerienStopp > 0 && n >= SerienStopp) { stopZeit = D[i].time; n = 0; }
+         n++;
+         if(n >= SerienStopp) { stopZeit = D[i].time; n = 0; }
         }
-      else { n = 0; nz8 = 0; }
+      else n = 0;
      }
-   serN = n; serStoppZeit = stopZeit; serNZ = nz8;
+   serN = n; serStoppZeit = stopZeit;
    if(serStoppZeit > 0 && serStoppZeit != serGemeldet && SerienPause())
      {
       serGemeldet = serStoppZeit;
@@ -2638,118 +2549,6 @@ string SerienText()
    if(SerienStopp <= 0) return "Serien-Stopp aus";
    if(SerienPause()) return StringFormat("SERIEN-STOPP aktiv (seit %s)", TimeToString(serStoppZeit, TIME_DATE|TIME_MINUTES));
    return StringFormat("Verluste in Folge %d/%d", serN, SerienStopp);
-  }
-
-//+------------------------------------------------------------------+
-//| 8.10 Kontoerkenner und Anpasser                                  |
-//| Zustand wie eng6 (Replikat, Prioritaet von oben):                |
-//|   REIF > TIEF > LEICHT > (UNSICHER, nur EA) > SERIE > REIFENAH > |
-//|   GEWINN > NACH_AUSZ > FRISCH                                    |
-//| TIEF/LEICHT mit Hysterese AnpHysPct. Der Faktor des Zustands     |
-//| wirkt zusaetzlich zu Pufferkurve, BelowStartMult und             |
-//| PeakUnsicherFaktor auf das Risiko je Einstieg; 0 = Strom aus.    |
-//+------------------------------------------------------------------+
-bool AnpZeileLesen(const string txt, const int z)
-  {
-   string t[]; int n = StringSplit(txt, StringGetCharacter(",", 0), t);
-   if(n != ANPKL) return false;
-   for(int c=0;c<ANPKL;c++)
-     {
-      string s = t[c]; StringTrimLeft(s); StringTrimRight(s);
-      if(StringLen(s) == 0) return false;
-      double f = StringToDouble(s);
-      if(f < 0.0 || f > 2.0 + 1e-9) return false;                          // > 2 verboten (Martingale-Naehe, wie BelowStartMult > 1)
-      anpF[z][c] = f;
-     }
-   return true;
-  }
-
-bool AnpLesen()
-  {
-   for(int z=0;z<ANPZ;z++) for(int c=0;c<ANPKL;c++) anpF[z][c] = 1.0;
-   string src[ANPZ];
-   src[0] = AnpFrisch; src[1] = AnpNachAusz; src[2] = AnpGewinn; src[3] = AnpReifeNah; src[4] = AnpLeicht;
-   src[5] = AnpTief; src[6] = AnpSerieF; src[7] = "1,1,1,1,1,1,1,1"; src[8] = AnpUnsicher;   // REIF: keine Einstiege (kMode)
-   bool ok = true; string fehl = "";
-   for(int z=0;z<ANPZ;z++)
-      if(!AnpZeileLesen(src[z], z)) { ok = false; fehl += " " + ANP_NAME[z]; }
-   if(AnpTiefPct < 0.0 || AnpLeichtPct < AnpTiefPct || AnpHysPct < 0.0 || AnpReifeNahTage < 0 || AnpReifeNahGewinn <= 0.0
-      || AnpGewinnPct < 0.0 || AnpSerie < 0 || AnpZustandErzwingen < -1 || AnpZustandErzwingen >= ANPZ)
-     { ok = false; fehl += " Schwellen"; }
-   // SERIE endet erst mit einem Gewinn-Trade: sind dort alle Stroeme aus, kommt keiner mehr (Replikat: 0,6 Ausz./J statt 16)
-   bool alleAus = true; for(int c=0;c<ANPKL;c++) if(anpF[6][c] > 0.0) alleAus = false;
-   if(alleAus && AnpSerie > 0) { ok = false; fehl += " SERIE (alle Faktoren 0 - der Zustand wuerde nie enden)"; }
-   if(!ok)
-     {
-      for(int z=0;z<ANPZ;z++) for(int c=0;c<ANPKL;c++) anpF[z][c] = 1.0;
-      Print("DEADBAND4: 8.10 Anpasser-Eingaben ungueltig (je Zustand 8 Faktoren 0-2 mit Komma, 0 <= AnpTiefPct <= AnpLeichtPct, AnpHysPct >= 0, AnpReifeNahGewinn > 0, AnpZustandErzwingen -1..8):", fehl, " - Anpasser AUS (handelsgleich 8.00), Erkenner zeigt weiter an");
-     }
-   return ok;
-  }
-
-bool AnpWirkt() { return AnpasserAktiv && anpOk; }
-
-// Faktor fuer eine Klasse im aktuellen Zustand (1 = wie 8.00)
-double AnpFaktor(const int kl)
-  {
-   if(!AnpWirkt() || kZust < 0 || kZust >= ANPZ || kl < 0 || kl >= ANPKL) return 1.0;
-   return anpF[kZust][kl];
-  }
-
-string AnpSatzText(const int z)
-  {
-   if(z < 0 || z >= ANPZ) return "-";
-   bool neutral = true; for(int c=0;c<ANPKL;c++) if(MathAbs(anpF[z][c] - 1.0) > 1e-9) neutral = false;
-   if(neutral) return "neutral (alle x1)";
-   string kn[ANPKL] = {"DB", "R21", "NZ", "FADE", "SPIKE", "LW", "XA", "TD"};
-   string s = "";
-   for(int c=0;c<ANPKL;c++) s += StringFormat("%s%s x%.2f", (c > 0 ? " " : ""), kn[c], anpF[z][c]);
-   return s;
-  }
-
-// Zustand aus dem Konto bestimmen (Begruendung in grund). Puffer wie die Pufferkurve: bei FirmaProfil 1 auf 6 % normiert.
-int KontoZustandBerechnen(string &grund)
-  {
-   double bal = AccountInfoDouble(ACCOUNT_BALANCE);
-   double buf = PufferPct();
-   if(gV7 && MaxLossPct > 0.0) buf = buf*6.0/MaxLossPct;
-   int vz = GueltigeTageMitHeute();
-   if(kMode >= 1) { grund = "Auszahlungsreife - keine neuen Einstiege"; return 7; }
-   if(buf < AnpTiefPct || (kZust == 5 && buf < AnpTiefPct + AnpHysPct))
-     { grund = StringFormat("Puffer zum Boden %.2f %% unter %.2f %%%s", buf, AnpTiefPct + (kZust == 5 ? AnpHysPct : 0.0), (kZust == 5 ? " (Hysterese)" : "")); return 5; }
-   if(buf < AnpLeichtPct || ((kZust == 4 || kZust == 5) && buf < AnpLeichtPct + AnpHysPct))
-     { grund = StringFormat("Puffer zum Boden %.2f %% unter %.2f %%%s", buf, AnpLeichtPct + ((kZust == 4 || kZust == 5) ? AnpHysPct : 0.0), ((kZust == 4 || kZust == 5) ? " (Hysterese)" : "")); return 4; }
-   if(!peakOk) { grund = "Equity-Spitze (Boden) nicht sicher rekonstruiert - FloorOverride/Dashboard pruefen"; return 8; }
-   if(AnpSerie > 0 && serNZ >= AnpSerie) { grund = StringFormat("%d Verlusttrades in Folge (ab %d)", serNZ, AnpSerie); return 6; }
-   if(kCycleStart > 0 && (vz >= NeedValidDays - AnpReifeNahTage || bal - kStart >= kMinProfit*AnpReifeNahGewinn))
-     { grund = StringFormat("gueltige Tage %d/%d, Gewinn %.2f von %.2f", vz, NeedValidDays, bal - kStart, kMinProfit); return 3; }
-   if(bal - kStart >= kStart*AnpGewinnPct/100.0) { grund = StringFormat("Gewinn %.2f >= %.2f %% vom Start", bal - kStart, AnpGewinnPct); return 2; }
-   if(kPayouts > 0) { grund = StringFormat("%d Auszahlung(en), Zyklus laeuft, Puffer %.2f %%", kPayouts, buf); return 1; }
-   grund = StringFormat("noch keine Auszahlung, Puffer %.2f %%", buf);
-   return 0;
-  }
-
-// vor jedem Modul-Durchlauf (wie eng6: Zustand vor den Einstiegen der Kerze); Wechsel -> Journal (+ Push)
-void KontoZustandPruefen()
-  {
-   if(!kBereit) return;
-   string grund = "";
-   int z = KontoZustandBerechnen(grund);
-   if(AnpZustandErzwingen >= 0 && AnpZustandErzwingen < ANPZ) { z = AnpZustandErzwingen; grund = "erzwungen (AnpZustandErzwingen), berechnet: " + grund; }
-   if(z == kZust) { kZustGrund = grund; return; }
-   int alt = kZust;
-   kZust = z; kZustSeit = TimeCurrent(); kZustGrund = grund;
-   string txt = StringFormat("8.10 KONTOZUSTAND %s -> %s: %s | Satz: %s%s", (alt < 0 ? "(Start)" : ANP_NAME[alt]), ANP_NAME[z], grund,
-                             AnpSatzText(z), (AnpWirkt() ? "" : " - Anpasser aus, nur Anzeige"));
-   if(alt < 0 || AnpPush) Meldung(txt);
-   else Print("DEADBAND4: ", txt);
-  }
-
-string AnpStatusText()
-  {
-   if(kZust < 0) return "noch nicht bestimmt (Kontodaten fehlen)";
-   return StringFormat("%s (seit %s), Satz: %s%s | %s", ANP_NAME[kZust], TimeToString(kZustSeit, TIME_DATE|TIME_MINUTES), AnpSatzText(kZust),
-                       (AnpWirkt() ? "" : (AnpasserAktiv ? " [Eingaben ungueltig - aus]" : " [Anpasser aus]")), kZustGrund);
   }
 
 // Equity-Spitze: Saldo-Pfad plus beste Kurse aller Positionen je M5-Kerze seit 'von'
@@ -3029,7 +2828,7 @@ void KontoMeldung(string anlass)
    // 6.10: vollstaendiger Kontozustand zum Abgleich mit dem GFT-Dashboard (Journal + Datei MQL5/Files)
    string z[]; int nz = 0;
    ArrayResize(z, 64);
-   z[nz++] = StringFormat("DEADBAND 8.10 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
+   z[nz++] = StringFormat("DEADBAND 8.00 - Kontozustand %s (%s), Konto %I64d, Server %s", TimeToString(TimeCurrent(), TIME_DATE|TIME_SECONDS), anlass,
                           AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_SERVER));
    z[nz++] = StringFormat("Startsaldo %.2f (%s) | Einzahlung %s | Auszahlungen %d%s | Deckel %s", kStart, (StartBalanceOverride > 0.0 ? "StartBalanceOverride" : (kAccountFrom > 0 ? "aus Einzahlung" : "aus Saldo abgeleitet")),
                           (kAccountFrom>0 ? TimeToString(kAccountFrom, TIME_DATE|TIME_MINUTES) : "?"), kPayouts, (kLastPayout>0 ? ", letzte " + TimeToString(kLastPayout, TIME_DATE|TIME_MINUTES) : ""),
@@ -3038,8 +2837,6 @@ void KontoMeldung(string anlass)
    z[nz++] = StringFormat("Zyklus seit %s (%s) | Zyklustag %d von mind. %d | gueltige Tage %d/%d (Schwelle %.2f), Handelstage %d | realisiert im Zyklus %.2f, heute %.2f",
                           (kCycleStart>0 ? TimeToString(kCycleStart, TIME_DATE|TIME_MINUTES) : "noch kein Trade"), (StringLen(CycleStartOverride) >= 8 ? "CycleStartOverride" : "erster Trade nach der letzten Auszahlung"),
                           (int)zykTag, ZyklusTage(), GueltigeTageMitHeute(), NeedValidDays, GueltigSchwelle(), kTradeDays, kCycleReal, kTodayReal);
-   { string gz = ""; int zz = KontoZustandBerechnen(gz);                                                   // 8.10: Kontoerkenner
-     z[nz++] = StringFormat("8.10 Kontozustand %s: %s | Satz %s | Anpasser %s", ANP_NAME[zz], gz, AnpSatzText(zz), (AnpWirkt() ? "AN" : "aus")); }
    string tl = "Tage im Zyklus (Prop-Tag ab 17:00 NY, realisiert inkl. Swap/Kommission):";
    for(int i=0;i<kTagN;i++)
       tl += StringFormat(" %s %+.2f%s", TimeToString(PropDayStart(kTagIdx[i]), TIME_DATE), kTagErg[i],
@@ -3427,7 +3224,6 @@ void Durchlauf()
 
    // 6.40: Schutz gueltiger Tage vor JEDEM Modul neu bewerten - ein Ausstieg eines vorher laufenden Moduls (oder ein
    //       Broker-Stop/-Ziel) kann den Tag eben gueltig gemacht haben (nach einer Positionsaenderung wird die Historie neu geladen)
-   KontoZustandPruefen();                                              // 8.10: Kontoerkenner (Zustand vor den Einstiegen, wie eng6)
    GueltigSchutzPruefen(today);
    for(int k=0;k<nSym;k++) HandleSymbol(k, today, keineEinstiege || gGueltigSchutz);   // 6.40: Schutz gueltiger Tage (Verwaltung laeuft weiter)
    GueltigSchutzPruefen(today);
@@ -3811,7 +3607,7 @@ void ZyklusPanel()
    if(SerienPause()) status += " | SERIEN-STOPP bis 17:00 NY";
    if(gGueltigSchutz) status += " | TAG GUELTIG - Schutz bis 17:00 NY (Umfang: Auszahlungstakt)";   // 6.40 (6.50: je Modul)
    txt += StringFormat(
-      "DEADBAND 8.10 %s   %s\n"
+      "DEADBAND 8.00 %s   %s\n"
       "  Startsaldo        %.2f   (Einzahlung %s, %d Auszahlungen, Deckel %s)\n"
       "  Saldo / Equity    %.2f / %.2f   Gewinn %.2f   (Mindestgewinn %.2f)\n"
       "  Zyklus seit       %s   Tag %d / %d\n"
@@ -3830,7 +3626,6 @@ void ZyklusPanel()
       boden, eq-boden, buf, DDFaktor(buf)*(eq<kStart ? BelowStartMult : 1.0)*RiskMult, (eq<kStart && BelowStartMult!=1.0 ? " (unter Start)" : ""),
       (HarvestMode==0 ? "aus" : (HarvestMode==1 ? "jederzeit" : StringFormat("ab %.0f NY", HarvestFromNY))), GeStatusText(), nyOff,
       (CountForeignPositions ? "alle" : "eigene"));
-   txt += "\n  Kontozustand      " + AnpStatusText();                    // 8.10
    txt += "\n  Wochenend-Pause   " + WeStatusText();
    txt += "\n  RSI21-Modul       " + R21StatusText();
    txt += "\n  NAS-Noise-Modul   " + NzStatusText();                     // 5.00
@@ -4047,7 +3842,6 @@ void HandleSymbol(int k, long today, bool dayLocked)
    risk *= DDFaktor(buf);
    if(!peakOk) risk *= PeakUnsicherFaktor;            // 4.90: Boden unsicher (Spitze nicht vollstaendig rekonstruiert); 6.40 eigener Faktor
    if(AccountInfoDouble(ACCOUNT_EQUITY) < kStart) risk *= BelowStartMult;
-   risk *= AnpFaktor(0);                                // 8.10: Faktor des Kontozustands (0 = DEADBAND im Zustand aus)
    if(UseSafety && buf < SafetyBufPct) risk *= SafetyFactor;
    double restB = (RiskBudgetPct>0.0) ? BudgetRest(false) : DBL_MAX;   // 4.40: eigenes Budget, Gesamtdeckel
    restB = MathMin(restB, IdeeRest(s, sigL ? 1 : -1));               // 5.10: Risiko je Idee (Symbol + Richtung, alle Module)
@@ -4750,8 +4544,6 @@ void HandleR21(int k, long today, bool dayLocked)
       risk *= DDFaktor(buf);
       if(!peakOk) risk *= PeakUnsicherFaktor;                    // 4.90: Boden unsicher (6.40: eigener Faktor)
       if(AccountInfoDouble(ACCOUNT_EQUITY) < kStart) risk *= BelowStartMult;
-      risk *= AnpFaktor(1);                                       // 8.10: Faktor des Kontozustands
-      if(risk <= 0.0) { PrintFormat("DEADBAND4 %s RSI21: Signal ausgelassen - Strom im Kontozustand %s aus (8.10)", s, ANP_NAME[kZust]); return; }
       bool r21RegKlein = RegimeKlein(sigZeit);                     // 6.70: Regime-Groesse (Fades nicht live -> RSI21 x RegimeGroesse)
       if(r21RegKlein) risk *= RegimeGroesse;
       double restR = (R21BudgetPct > 0.0) ? BudgetRest(true) - unsicht : DBL_MAX;
@@ -5188,13 +4980,6 @@ void NzPruefung(const int endMin, const double close, const datetime chkEnd)
    double fak = DDFaktor(buf);
    if(!peakOk) fak *= PeakUnsicherFaktor;                                    // Boden unsicher (wie DEADBAND/RSI21)
    if(AccountInfoDouble(ACCOUNT_EQUITY) < kStart) fak *= BelowStartMult;
-   fak *= AnpFaktor(2);                                                      // 8.10: Faktor des Kontozustands
-   if(fak <= 0.0)
-     {
-      nzLetzte = StringFormat("%s Signal ausgelassen: Strom im Kontozustand %s aus (8.10)", NzHHMM(endMin), ANP_NAME[kZust]);
-      PrintFormat("DEADBAND4 %s NOISE: Signal %s ausgelassen - Strom im Kontozustand %s aus (8.10)", nzSym, NzHHMM(endMin), ANP_NAME[kZust]);
-      return;
-     }
    bool nzRegKlein = RegimeKlein(chkEnd);                                    // 6.70: Regime-Groesse (Fades nicht live -> Noise x RegimeGroesse)
    if(nzRegKlein) fak *= RegimeGroesse;
    bool   neuQ[8]; double neuR[8];                                           // eben eroeffnete Teile (die Positionsliste kann nachhinken)
@@ -5458,10 +5243,7 @@ struct FadeDef
    datetime t1Versuch;       // 6.30: letzter Versuch des Teilgewinns
    int      nT1;             // 6.30: Teilgewinne seit dem Start (Panel)
    bool     spike;           // 7.10: Spike-Fade-Modul (eigene Signal-Logik SpikeKerze, kein Portfolio-Waechter)
-   int      typ;             // 8.00: 0 = Fade aus der Liste, 1 = Spike S0830, 2 = Larry-Williams-Ausbruch LW, 3 = Gold-Asien-Halten XA, 4 = Trend-Day TD (8.10)
-   long     tdLetzt, tdVor;  // 8.10 TD: letzter und vorletzter NY-Werktag mit Kerzen
-   long     tdRefTag;        // 8.10 TD: NY-Tag des gemerkten Schlusses
-   double   tdRef;           // 8.10 TD: letzter Schluss vor TdSchlussNY an tdRefTag
+   int      typ;             // 8.00: 0 = Fade aus der Liste, 1 = Spike S0830, 2 = Larry-Williams-Ausbruch LW, 3 = Gold-Asien-Halten XA
    double   riskPct;         // 8.00: Risiko je Trade (Sondermodule; Listen-Fades: FadeRiskPct)
    double   minBuf;          // 8.00: Einstieg nur ab diesem Puffer zum Boden in % (0 = immer)
    double   lwPH, lwPL, lwCH, lwCL;   // 8.00 LW: Hoch/Tief der Vortages- und der laufenden Sitzung
@@ -5564,13 +5346,11 @@ bool FadeListeLesen()
       F[m].spike = false; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;   // 7.10
       F[m].typ = 0; F[m].riskPct = FadeRiskPct; F[m].minBuf = 0.0;                    // 8.00
       F[m].lwPH = 0.0; F[m].lwPL = 0.0; F[m].lwCH = -DBL_MAX; F[m].lwCL = DBL_MAX; F[m].lwPN = 0; F[m].lwCN = 0;
-   F[m].tdLetzt = -1; F[m].tdVor = -1; F[m].tdRefTag = -1; F[m].tdRef = 0.0;   // 8.10
       nFade++;
      }
    if(SpikeAktiv) SpikeAnlegen();                                             // 7.10
    if(LwAktiv) SonderAnlegen(2);                                              // 8.00
    if(AsiaAktiv) SonderAnlegen(3);                                            // 8.00
-   if(TdAktiv) SonderAnlegen(4);                                              // 8.10
    return true;
   }
 
@@ -5609,7 +5389,6 @@ bool SpikeAnlegen()
    F[m].spike = true; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
    F[m].typ = 1; F[m].riskPct = SpikeRiskPct; F[m].minBuf = 0.0;
    F[m].lwPH = 0.0; F[m].lwPL = 0.0; F[m].lwCH = -DBL_MAX; F[m].lwCL = DBL_MAX; F[m].lwPN = 0; F[m].lwCN = 0;
-   F[m].tdLetzt = -1; F[m].tdVor = -1; F[m].tdRefTag = -1; F[m].tdRef = 0.0;   // 8.10
    nFade++;
    return true;
   }
@@ -5617,9 +5396,9 @@ bool SpikeAnlegen()
 //       FadeZeiten den Zeit-Ausstieg liefert (FadeVerwalten, Feiertagspruefung in FadeLive bleiben unveraendert).
 bool SonderAnlegen(const int typ)
   {
-   string nm = (typ == 2 ? "LW" : (typ == 3 ? "XA" : "TD"));
+   string nm = (typ == 2 ? "LW" : "XA");
    if(nFade >= MAXFADE) { PrintFormat("DEADBAND4: 8.00 Modul %s - kein Platz (schon %d Module) - AUS", nm, nFade); return true; }
-   string sy = (typ == 2 ? LwSymbol : (typ == 3 ? AsiaSymbol : TdSymbol)); StringTrimLeft(sy); StringTrimRight(sy); StringToUpper(sy);
+   string sy = (typ == 2 ? LwSymbol : AsiaSymbol); StringTrimLeft(sy); StringTrimRight(sy); StringToUpper(sy);
    int k = -1;
    for(int q=0;q<nSym && StringLen(sy) > 0;q++) { string u = S[q].sym; StringToUpper(u); if(StringFind(u, sy) >= 0) { k = q; break; } }
    if(k < 0) { PrintFormat("DEADBAND4: 8.00 Modul %s - Symbol %s nicht in der SymbolList - AUS", nm, sy); return true; }
@@ -5630,13 +5409,6 @@ bool SonderAnlegen(const int typ)
       if(LwK <= 0.0 || LwZielR < 0.0 || L < 5 || xoff < 0 || LwAusstiegNY > 1000 || LwSitzungMin < 60 || LwSitzungMin > 600 || (dir != 1 && dir != 0 && dir != -1)
          || risk <= 0.0 || risk > 1.0 || mb < 0.0)
         { Print("DEADBAND4: 8.00 LW-Eingaben ungueltig (LwK > 0, LwZielR >= 0, LwStartNY < LwEndeNY < LwAusstiegNY <= 1000, LwSitzungMin 60-600, LwRichtung -1/0/1, 0 < LwRiskPct <= 1, LwMinPuffer >= 0) - LW AUS"); return true; }
-     }
-   else if(typ == 4)                                                         // 8.10: Trend-Day (wie n9sig.gen_lastmom)
-     {
-      r0 = TdEinNY; L = 5; tlen = 5; xoff = TdAusNY - TdEinNY - 10; buf = TdStopATR; dir = TdRichtung; risk = TdRiskPct; mb = TdMinPuffer;
-      if(TdEinNY < 600 || TdEinNY > 960 || TdAusNY <= TdEinNY + 10 || TdAusNY > 1000 || TdSchlussNY < 600 || TdSchlussNY > 1020 || TdMinATR < 0.0 || TdStopATR <= 0.0
-         || TdZielR < 0.0 || (dir != 1 && dir != 0 && dir != -1) || risk <= 0.0 || risk > 1.0 || mb < 0.0)
-        { Print("DEADBAND4: 8.10 TD-Eingaben ungueltig (600 <= TdEinNY <= 960, TdEinNY + 10 < TdAusNY <= 1000, 600 <= TdSchlussNY <= 1020, TdMinATR >= 0, TdStopATR > 0, TdZielR >= 0, TdRichtung -1/0/1, 0 < TdRiskPct <= 1, TdMinPuffer >= 0) - TD AUS"); return true; }
      }
    else
      {
@@ -5665,7 +5437,6 @@ bool SonderAnlegen(const int typ)
    F[m].spike = false; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
    F[m].typ = typ; F[m].riskPct = risk; F[m].minBuf = mb;
    F[m].lwPH = 0.0; F[m].lwPL = 0.0; F[m].lwCH = -DBL_MAX; F[m].lwCL = DBL_MAX; F[m].lwPN = 0; F[m].lwCN = 0;
-   F[m].tdLetzt = -1; F[m].tdVor = -1; F[m].tdRefTag = -1; F[m].tdRef = 0.0;   // 8.10
    nFade++;
    return true;
   }
@@ -6125,7 +5896,6 @@ void FadeKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    if(F[m].typ == 1) { SpikeKerze(m, b, nx, live); return; }                   // 7.10
    if(F[m].typ == 2) { LwKerze(m, b, nx, live); return; }                      // 8.00
    if(F[m].typ == 3) { AsiaKerze(m, b, nx, live); return; }                    // 8.00
-   if(F[m].typ == 4) { TdKerze(m, b, nx, live); return; }                      // 8.10
    // 2) Tageszustand und Signal
    long Dt = FadeFloorDiv(t - F[m].r0, 1440);
    long rs, re, te, xm; FadeZeiten(m, Dt, rs, re, te, xm);
@@ -6348,45 +6118,6 @@ void AsiaKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool li
    if(live) { F[m].sigHeute++; FadeLive(m, d, st, goal, xm, nx.time); }
   }
 
-// 8.10: Trend-Day / Schluss-Momentum (Zeile fuer Zeile wie n9sig.gen_lastmom, refmode 0). Vortagesschluss = letzter Schluss
-//       vor TdSchlussNY (16:00) des vorigen NY-Werktags mit Kerzen, sofern diese Kerze hoechstens 1 h davor liegt. Am Open der
-//       Kerze TdEinNY (14:00, muss existieren): Rendite = Schluss der Kerze davor - Vortagesschluss; ab TdMinATR x ATR(D1,14)
-//       Einstieg in Richtung der Rendite (TdRichtung 1: nur Long), Stop TdStopATR x ATR, Ziel TdZielR (0 = keins),
-//       Ausstieg am Open der Kerze TdAusNY (15:55). Ein Signal je Tag. Replikat-Funktion: n9sig.gen_lastmom (z9_lm.py, z8_opt.py).
-void TdKerze(const int m, const MqlRates &b, const MqlRates &nx, const bool live)
-  {
-   double pt = F[m].pt;
-   long t = FadeNyMin(b.time), tn = FadeNyMin(nx.time);
-   long Db = FadeFloorDiv(t, 1440);
-   int dowb = (int)(((Db + 4) % 7 + 7) % 7);
-   if(Db != F[m].tdLetzt && dowb >= 1 && dowb <= 5) { F[m].tdVor = F[m].tdLetzt; F[m].tdLetzt = Db; }   // Replikat: days = NY-Werktage mit Kerzen
-   long mb = t - Db*1440;
-   if(mb < TdSchlussNY && mb >= TdSchlussNY - 60) { F[m].tdRefTag = Db; F[m].tdRef = b.close; }   // spaeteste Kerze vor 16:00 gewinnt
-   long Dn = FadeFloorDiv(tn, 1440);
-   if(tn - Dn*1440 != TdEinNY) return;                                          // naechste Kerze = Einstiegskerze 14:00
-   int dow = (int)(((Dn + 4) % 7 + 7) % 7);
-   if(dow < 1 || dow > 5 || F[m].day == Dn) return;
-   long rs, re, te, xm; FadeZeiten(m, Dn, rs, re, te, xm);
-   F[m].day = Dn; F[m].nbar = 0; F[m].ready = false; F[m].done = true; F[m].skip = false;
-   F[m].sigHeute = 0; F[m].einHeute = 0; F[m].spGoal = 0.0;
-   long vor = (F[m].tdLetzt == Dn ? F[m].tdVor : F[m].tdLetzt);                // voriger NY-Werktag mit Kerzen
-   if(vor < 0 || F[m].tdRefTag != vor) return;                                  // kein Schluss 15:00-16:00 am Vortag
-   if(tn >= xm) return;
-   double a = FadeAtr(m, FadeSrvZeit(Dn*1440 + TdEinNY));
-   if(!(a > 0.0)) return;
-   double r = b.close - F[m].tdRef;
-   if(MathAbs(r) < TdMinATR*a || r == 0.0) return;
-   int d = (r > 0.0 ? 1 : -1);
-   if(F[m].dir != 0 && d != F[m].dir) return;
-   double ent = nx.open + (d > 0 ? nx.spread*pt : 0.0);
-   double rd = TdStopATR*a;
-   double st = ent - d*rd;
-   double goal = (TdZielR > 0.0 ? ent + d*TdZielR*rd : 0.0);
-   F[m].ready = true; F[m].spGoal = goal; F[m].spA = a; F[m].rng = r;
-   SonderVirtuell(m, d, ent, st, goal, rd, nx.time, xm);
-   if(live) { F[m].sigHeute++; FadeLive(m, d, st, goal, xm, nx.time); }
-  }
-
 // offene Fade-Position des Moduls (Ticket), 0 = keine
 ulong FadePosition(const int m)
   {
@@ -6495,9 +6226,6 @@ int FadeVerlusteHeute(const int k)
    return n;
   }
 
-// Klasse eines Fade-Moduls: Listen-Fade 3, Spike 4, LW 5, XA 6, TD 7
-int AnpKlasseFade(const int m) { int t = F[m].typ; return (t == 1 ? 4 : (t == 2 ? 5 : (t == 3 ? 6 : (t == 4 ? 7 : 3)))); }
-
 void FadeLive(const int m, const int d, const double st, const double goal, const long xm, const datetime tSig)
   {
    int k = F[m].k; string s = S[k].sym;
@@ -6546,13 +6274,6 @@ void FadeLive(const int m, const int d, const double st, const double goal, cons
    double fak = DDFaktor(buf);
    if(!peakOk) fak *= PeakUnsicherFaktor;                                     // Boden unsicher
    if(AccountInfoDouble(ACCOUNT_EQUITY) < kStart) fak *= BelowStartMult;
-   fak *= AnpFaktor(AnpKlasseFade(m));                                        // 8.10: Faktor des Kontozustands je Modulart
-   if(fak <= 0.0)
-     {
-      fadeLetzte = StringFormat("%s %s ausgelassen: Strom im Kontozustand %s aus (8.10)", FadeName(m), FadeUhr(FadeNyMin(TimeCurrent())), ANP_NAME[kZust]);
-      PrintFormat("DEADBAND4 %s FADE %s: Signal ausgelassen - Strom im Kontozustand %s aus (8.10)", s, FadeName(m), ANP_NAME[kZust]);
-      return;
-     }
    double risk = kStart*(F[m].typ != 0 ? F[m].riskPct : FadeRiskPct)/100.0*fak*gH;   // 7.00: x ProfilHebel (7.10/8.00: Sondermodule eigenes Risiko)
    double ideeU = 0.0;
    double unsicht = FadeUnsichtbar(s, d, ideeU);                              // eben eroeffnete (alle Module) und vorgemerkte Positionen
@@ -6858,11 +6579,6 @@ void FadeInitMeldung()
          PrintFormat("DEADBAND4: 8.00 Larry-Williams-Ausbruch %s %s%s | Range Vortag %s NY + %d min, Marken Open %s NY +/- %.2f x Range, Signal bis %s NY, Stop Mitte Open/Einstieg, Ziel %s, Ausstieg %s NY | %s | Risiko %.2f %% x Pufferkurve%s | Magic %I64d",
                      FadeName(m), S[F[m].k].sym, (F[m].aus ? " (AUS per FadeAus)" : ""), FadeUhr(F[m].r0), LwSitzungMin, FadeUhr(F[m].r0), LwK, FadeUhr(LwEndeNY),
                      (LwZielR > 0.0 ? StringFormat("%.1f R", LwZielR) : "keins"), FadeUhr(LwAusstiegNY), (F[m].dir > 0 ? "nur Long" : (F[m].dir < 0 ? "nur Short" : "beide Richtungen")),
-                     F[m].riskPct, (F[m].minBuf > 0.0 ? StringFormat(", nur ab %.1f %% Puffer zum Boden", F[m].minBuf) : ""), FadeMagic(m));
-      if(F[m].typ == 4)
-         PrintFormat("DEADBAND4: 8.10 Trend-Day %s %s%s | Einstieg %s NY, wenn die Rendite seit dem Vortagesschluss (letzter Schluss vor %s NY) mind. %.2f ATR betraegt | Stop %.2f ATR, Ziel %s, Ausstieg %s NY | %s | Risiko %.2f %% x Pufferkurve%s | ohne Portfolio-Waechter und Grid | Magic %I64d",
-                     FadeName(m), S[F[m].k].sym, (F[m].aus ? " (AUS per FadeAus)" : ""), FadeUhr(TdEinNY), FadeUhr(TdSchlussNY), TdMinATR, TdStopATR,
-                     (TdZielR > 0.0 ? StringFormat("%.1f R", TdZielR) : "keins"), FadeUhr(TdAusNY), (F[m].dir > 0 ? "nur Long" : (F[m].dir < 0 ? "nur Short" : "beide Richtungen")),
                      F[m].riskPct, (F[m].minBuf > 0.0 ? StringFormat(", nur ab %.1f %% Puffer zum Boden", F[m].minBuf) : ""), FadeMagic(m));
       if(F[m].typ == 3)
          PrintFormat("DEADBAND4: 8.00 Gold-Asien-Halten %s %s%s | Long %s NY bis %s NY, Trendfilter %d M5-Kerzen, Stop %.2f ATR, Ziel %s | Risiko %.2f %% x Pufferkurve%s | Magic %I64d",

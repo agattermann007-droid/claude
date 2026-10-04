@@ -59,6 +59,8 @@ PN = [
     "float_losers", "idea_cap", "lev", "idea_margin", "open_cap", "rule_losers", "swap_guard",
     "db_trail_from", "db_trail_dist", "r21_tp1r", "r21_tp1f", "r21_be", "r21_trail_from", "r21_trail_dist",
     "r21_first_mult", "bank_last", "bank_prof", "day_entry_stop", "floor_eod", "floor_rel",
+    # --- 8.10: Kontoerkenner und Anpasser (st_on 0 = aus = 8.00) ---
+    "st_on", "st_deep", "st_light", "st_hys", "st_near_v", "st_near_p", "st_prof", "st_streak",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -87,7 +89,8 @@ def params(**kw):
              db_minprofit_close=0, maxopen=0, valid_stop=0, valid_stop_from=0.0,
              harv_any_mods=0, ge_mode=0, stop_after_valid=0,
              float_losers=0, idea_cap=0.0, lev=10.0, idea_margin=70.0, open_cap=0.0, rule_losers=0, swap_guard=0.0,
-             db_trail_from=0.0, db_trail_dist=0.0, r21_tp1r=0.0, r21_tp1f=0.0, r21_be=0.0, r21_trail_from=0.0, r21_trail_dist=0.0, r21_first_mult=0.0, bank_last=0, bank_prof=0.0, day_entry_stop=0.0, floor_eod=0, floor_rel=0)
+             db_trail_from=0.0, db_trail_dist=0.0, r21_tp1r=0.0, r21_tp1f=0.0, r21_be=0.0, r21_trail_from=0.0, r21_trail_dist=0.0, r21_first_mult=0.0, bank_last=0, bank_prof=0.0, day_entry_stop=0.0, floor_eod=0, floor_rel=0,
+             st_on=0, st_deep=2.0, st_light=4.0, st_hys=0.5, st_near_v=1, st_near_p=0.8, st_prof=1.0, st_streak=3)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -258,8 +261,15 @@ ST = ["ntr", "wins", "pnl", "npay", "sumpay", "nbust", "floor_b", "float_b", "da
       "trade_days", "valid_days", "loss_days", "db_tr", "db_pnl", "r21_tr", "r21_pnl", "nz_tr", "nz_pnl",
       "harv", "ge", "brake_f", "brake_d", "we_close", "we_re", "cyc_days", "entries", "maxstreak",
       "streak5", "streak8", "maxlday", "lday3", "maxdd", "db_w", "r21_w", "nz_w", "ripe_lost", "bank", "cool",
-      "gaps_max", "gaps_sum", "fg_skip", "lim_valid", "lim_profit", "lim_ten", "cyc_v5", "cyc_pr", "swapg", "r_seen", "r_mode", "r_loss", "r_slot", "r_hedge", "r_budget", "r_minlot", "r_margin", "r_taken"]
+      "gaps_max", "gaps_sum", "fg_skip", "lim_valid", "lim_profit", "lim_ten", "cyc_v5", "cyc_pr", "swapg", "r_seen", "r_mode", "r_loss", "r_slot", "r_hedge", "r_budget", "r_minlot", "r_margin", "r_taken",
+      "z0", "z1", "z2", "z3", "z4", "z5", "z6", "z7", "zb0", "zb1", "zb2", "zb3", "zb4", "zb5", "zb6", "zb7"]
 SI = {n: i for i, n in enumerate(ST)}
+# 8.10 Kontozustaende (Prioritaet von oben): REIF > TIEF > LEICHT > SERIE > REIFENAH > GEWINN > NACH_AUSZ > FRISCH
+ZN = ["FRISCH", "NACH_AUSZ", "GEWINN", "REIFENAH", "LEICHT", "TIEF", "SERIE", "REIF"]
+NZST = len(ZN)
+ZI = {n: i for i, n in enumerate(ZN)}
+Z_ST0 = SI["z0"]; Z_B0 = SI["zb0"]
+NTRC = 5      # Spalten Trade-Protokoll: Tag, Ergebnis, Platz, Einstiegsminute, Zustand beim Einstieg
 MAXEV = 2000
 MAXTR = 6000
 
@@ -316,7 +326,7 @@ def run_path(Pv, d0, d1, seed,
              r_ev, r_sym, r_tf, r_dir, r_rd, r_first, r_next,
              z_ev, z_em, z_close, z_UB, z_vw, z_dist, z_entry, z_next, ev_nzeod,
              skipmask_db, skipmask_r, skipmask_z,
-             g_ev, g_str, g_sym, g_dir, g_rd, g_tp, g_xev, g_w, g_next, skipmask_g, GP,
+             g_ev, g_str, g_sym, g_dir, g_rd, g_tp, g_xev, g_w, g_next, skipmask_g, GP, SM,
              out_ev, out_tr, st):
     np.random.seed(seed)
     n_ev = ev_day.shape[0]
@@ -358,6 +368,8 @@ def run_path(Pv, d0, d1, seed,
     float_losers = Pv[112] > 0.5; idea_cap = Pv[113]; lev = Pv[114]; idea_margin = Pv[115]; open_cap = Pv[116]; rule_losers = Pv[117] > 0.5; swap_guard = Pv[118]
     db_trail_from = Pv[119]; db_trail_dist = Pv[120]; r21_tp1r = Pv[121]; r21_tp1f = Pv[122]; r21_be = Pv[123]
     r21_trail_from = Pv[124]; r21_trail_dist = Pv[125]; r21_first_mult = Pv[126]; bank_last = int(Pv[127]); bank_prof = Pv[128]; day_entry_stop = Pv[129]; floor_eod = Pv[130] > 0.5; floor_rel = Pv[131] > 0.5
+    st_on = Pv[132] > 0.5; st_deep = Pv[133]; st_light = Pv[134]; st_hys = Pv[135]; st_near_v = int(Pv[136])
+    st_near_p = Pv[137]; st_prof = Pv[138]; st_streak = int(Pv[139])
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
@@ -398,6 +410,9 @@ def run_path(Pv, d0, d1, seed,
     day_trades_all = 0
     v5_day = -1; pr_day = -1; pr_ok = False
     tr_done = 0; nz_pid = -1.0; nz_sum = 0.0; nz_pend = False
+    zst = 0                                   # 8.10: Kontozustand (ZN)
+    z_cons = 0                                # Verluste in Folge fuer den Zustand SERIE (ohne Ruecksetzen durch cool_n)
+    p_st = np.zeros(NSLOT, np.int64)          # Zustand beim Einstieg je Platz
 
     if d0 >= nd:
         return 0, 0
@@ -428,6 +443,7 @@ def run_path(Pv, d0, d1, seed,
                         rate = -3.0 if p_dir[k] > 0 else -1.5
                         sw = p_entry[k] * 10.0 * p_lots[k] * (rate / 100.0 / 360.0) * mult
                     p_swap[k] += sw
+            st[Z_ST0 + zst] += 1
             if day_had:
                 trade_days += 1
                 st[9] += 1
@@ -531,7 +547,7 @@ def run_path(Pv, d0, d1, seed,
                 p_on[k] = False
                 # Trade-Protokoll (Wochenend-Schluss beendet den Trade)
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                     n_tr += 1
                 if pnl < 0.0:
                     losses[k] += 1
@@ -642,7 +658,7 @@ def run_path(Pv, d0, d1, seed,
                         losses[k] += 1
                     tot = pnl
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                         n_tr += 1
                     if tot < 0.0:
                         cur_streak += 1
@@ -689,6 +705,24 @@ def run_path(Pv, d0, d1, seed,
             entries_ok = False
         if day_entry_stop > 0.0 and (eq_now - (day_start_bal + day_ref_plus)) <= -start * day_entry_stop / 100.0:
             entries_ok = False
+        # ---- 8.10: Kontozustand (auch bei st_on 0 gemessen; Anpassung nur mit st_on)
+        vz = valid_days + (1 if (day_had and day_real >= needday) else 0)
+        if mode >= 1:
+            zst = 7
+        elif buf_now < st_deep or (zst == 5 and buf_now < st_deep + st_hys):
+            zst = 5
+        elif buf_now < st_light or ((zst == 4 or zst == 5) and buf_now < st_light + st_hys):
+            zst = 4
+        elif st_streak > 0 and z_cons >= st_streak:
+            zst = 6
+        elif cyc_start >= 0 and (vz >= needvalid - st_near_v or bal - start >= minprofit * st_near_p):
+            zst = 3
+        elif bal - start >= start * st_prof / 100.0:
+            zst = 2
+        elif npay_acc > 0:
+            zst = 1
+        else:
+            zst = 0
 
         # offenes Risiko je Art
         def_dummy = 0
@@ -723,6 +757,10 @@ def run_path(Pv, d0, d1, seed,
                 r *= db_hb
             r *= db_f[a]
             r *= fak
+            if st_on:
+                r *= SM[zst, 0]
+                if r <= 0.0:
+                    continue
             # Budgets
             orisk_db = 0.0; orisk_all = 0.0
             for q in range(NSLOT):
@@ -771,7 +809,7 @@ def run_path(Pv, d0, d1, seed,
                 tpf = db_tpfix
             p_on[k] = True; p_sym[k] = k; p_dir[k] = d; p_entry[k] = ent; p_sl[k] = sl; p_tp[k] = ent + d * tpf * rd
             p_rd[k] = rd; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = False
-            p_t1[k] = False; p_i5[k] = ii; p_m15[k] = grp15[k, ii]; p_tmin[k] = days[dayidx] * 1440 + nymin
+            p_t1[k] = False; p_i5[k] = ii; p_m15[k] = grp15[k, ii]; p_tmin[k] = days[dayidx] * 1440 + nymin; p_st[k] = zst
             p_comm[k] = comm[k] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op
             v1 = np.floor(lots * db_tp1f / 0.01 + 1e-9) * 0.01
             if v1 < 0.01 or lots - v1 < 0.01:
@@ -833,6 +871,10 @@ def run_path(Pv, d0, d1, seed,
             if r_first[a] == 1:
                 w *= r21_first_mult
             r = start * r21_risk / 100.0 * w * fak
+            if st_on:
+                r *= SM[zst, 1]
+                if r <= 0.0:
+                    continue
             orisk_r = 0.0; orisk_all = 0.0
             for q in range(NSLOT):
                 if p_on[q]:
@@ -885,7 +927,7 @@ def run_path(Pv, d0, d1, seed,
             rrr = r21_rr[sy]
             p_on[k] = True; p_sym[k] = sy; p_dir[k] = d; p_entry[k] = ent; p_sl[k] = ent - d * rd; p_tp[k] = ent + d * rrr * rd
             p_rd[k] = rd; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = r21_tp1r <= 0.0
-            p_t1[k] = r21_tp1r <= 0.0; p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin
+            p_t1[k] = r21_tp1r <= 0.0; p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin; p_st[k] = zst
             p_comm[k] = comm[sy] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op; p_v1[k] = 0.0
             if r21_tp1r > 0.0 and r21_tp1f > 0.0:
                 v1r = np.floor(lots * r21_tp1f / 0.01 + 1e-9) * 0.01
@@ -934,6 +976,10 @@ def run_path(Pv, d0, d1, seed,
                         if rest3 < rest:
                             rest = rest3
                     r = start * nz_risk / 100.0 * z_vw[zcur] / nz_parts * fak
+                    if st_on:
+                        r *= SM[zst, 2]
+                        if r <= 0.0:
+                            continue
                     if rest < r:
                         r = rest
                     if r <= 0.0:
@@ -957,7 +1003,7 @@ def run_path(Pv, d0, d1, seed,
                     p_on[k] = True; p_sym[k] = 1; p_dir[k] = 1; p_entry[k] = ent; p_sl[k] = ent - dist; p_tp[k] = 0.0
                     p_rd[k] = dist; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0; p_be[k] = True
                     p_t1[k] = True; p_i5[k] = ii; p_comm[k] = 0.0; p_acc[k] = 0.0; p_last[k] = o5[1, ii]; p_v1[k] = 0.0
-                    p_tmin[k] = days[dayidx] * 1440 + nymin
+                    p_tmin[k] = days[dayidx] * 1440 + nymin; p_st[k] = zst
                     day_trades_all += 1
                     st[25] += 1
                     if cyc_start < 0:
@@ -1002,6 +1048,10 @@ def run_path(Pv, d0, d1, seed,
             r = start * GP[s_, 1] / 100.0 * g_w[a]
             if GP[s_, 12] > 0.5:
                 r *= fak
+            if st_on:
+                r *= SM[zst, 3 + s_]
+                if r <= 0.0:
+                    continue
             orisk_g = 0.0; orisk_all = 0.0
             for q in range(NSLOT):
                 if p_on[q]:
@@ -1046,7 +1096,7 @@ def run_path(Pv, d0, d1, seed,
             p_tp[k] = ent + d * tpr * rd if tpr > 0.0 else 0.0
             p_rd[k] = rd; p_ref[k] = ent; p_lots[k] = lots; p_swap[k] = 0.0; p_mfe[k] = 0.0
             p_be[k] = GP[s_, 2] <= 0.0; p_t1[k] = GP[s_, 2] <= 0.0
-            p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin
+            p_i5[k] = ii; p_m15[k] = 0; p_tmin[k] = days[dayidx] * 1440 + nymin; p_st[k] = zst
             p_comm[k] = comm[sy] * lots; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = op; p_v1[k] = 0.0
             p_xev[k] = g_xev[a]
             if GP[s_, 2] > 0.0 and GP[s_, 3] > 0.0:
@@ -1135,8 +1185,9 @@ def run_path(Pv, d0, d1, seed,
                     n_out += 1
                 st[5] += 1
                 st[5 + bust] += 1
+                st[Z_B0 + zst] += 1
                 mode = 3; wait = rebuydelay
-                cur_streak = 0; cons_loss = 0; cur_lday = 0; nz_pend = False; tr_done = n_tr
+                cur_streak = 0; cons_loss = 0; z_cons = 0; cur_lday = 0; nz_pend = False; tr_done = n_tr
                 if dayidx + 1 < nd:
                     p = day_first[dayidx + 1]
                     if p > end_ev:
@@ -1180,7 +1231,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                             n_tr += 1
                         if k < 2:
                             st[12] += 1; st[13] += tot
@@ -1206,7 +1257,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                                 n_tr += 1
                             losses[k] += 1
                             cur_streak += 1
@@ -1229,7 +1280,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                                 n_tr += 1
                             if pnl < 0:
                                 losses[k] += 1
@@ -1367,7 +1418,7 @@ def run_path(Pv, d0, d1, seed,
                 bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                 tot = p_acc[k] + pnl - p_comm[k]
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                     n_tr += 1
                 if k < 2:
                     st[12] += 1; st[13] += tot
@@ -1408,7 +1459,7 @@ def run_path(Pv, d0, d1, seed,
             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
             tot = p_acc[k] + pnl - p_comm[k]
             if n_tr < MAXTR:
-                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                 n_tr += 1
             p_on[k] = False
             w_on[k] = False
@@ -1454,7 +1505,7 @@ def run_path(Pv, d0, d1, seed,
                 bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                 tot = p_acc[k] + pnl - p_comm[k]
                 if n_tr < MAXTR:
-                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                    out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                     n_tr += 1
                 if pnl < 0.0:
                     losses[k] += 1
@@ -1523,7 +1574,7 @@ def run_path(Pv, d0, d1, seed,
                             bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                             tot = p_acc[k] + pnl - p_comm[k]
                             if n_tr < MAXTR:
-                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                                out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                                 n_tr += 1
                             if k < 2:
                                 st[12] += 1; st[13] += tot
@@ -1610,7 +1661,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                             n_tr += 1
                         if k < 2:
                             st[12] += 1; st[13] += tot
@@ -1683,7 +1734,7 @@ def run_path(Pv, d0, d1, seed,
                     bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                     tot = p_acc[k] + pnl - p_comm[k]
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                         n_tr += 1
                     if k < 2:
                         st[12] += 1; st[13] += tot
@@ -1746,7 +1797,7 @@ def run_path(Pv, d0, d1, seed,
                     bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                     tot = p_acc[k] + pnl - p_comm[k]
                     if n_tr < MAXTR:
-                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                        out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                         n_tr += 1
                     if k < NZ0:
                         st[14] += 1; st[15] += tot
@@ -1786,7 +1837,7 @@ def run_path(Pv, d0, d1, seed,
                         bal += pnl; day_real += pnl - p_comm[k]; day_had = True; st[2] += pnl
                         tot = p_acc[k] + pnl - p_comm[k]
                         if n_tr < MAXTR:
-                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k])
+                            out_tr[n_tr, 0] = float(days[dayidx]); out_tr[n_tr, 1] = tot; out_tr[n_tr, 2] = float(k); out_tr[n_tr, 3] = float(p_tmin[k]); out_tr[n_tr, 4] = float(p_st[k])
                             n_tr += 1
                         st[12] += 1; st[13] += tot
                         if tot > 0:
@@ -1823,15 +1874,15 @@ def run_path(Pv, d0, d1, seed,
                 else:
                     if nz_pend:
                         if nz_sum < 0.0:
-                            cons_loss += 1
+                            cons_loss += 1; z_cons += 1
                         else:
-                            cons_loss = 0
+                            cons_loss = 0; z_cons = 0
                     nz_pid = pid_; nz_sum = res_; nz_pend = True
             else:
                 if res_ < 0.0:
-                    cons_loss += 1
+                    cons_loss += 1; z_cons += 1
                 else:
-                    cons_loss = 0
+                    cons_loss = 0; z_cons = 0
         if nz_pend:
             still = False
             for k in range(NZ0, NZ1):
@@ -1839,9 +1890,9 @@ def run_path(Pv, d0, d1, seed,
                     still = True
             if not still:
                 if nz_sum < 0.0:
-                    cons_loss += 1
+                    cons_loss += 1; z_cons += 1
                 else:
-                    cons_loss = 0
+                    cons_loss = 0; z_cons = 0
                 nz_pend = False
         # Pause nach Verlustserie (jede Verlust-Schliessung zaehlt, auch Bremse/Noise/Wochenende)
         if cool_n > 0 and cons_loss >= cool_n:
@@ -1920,8 +1971,20 @@ def gparams(streams):
     return GP
 
 
-def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None):
-    out = np.zeros((MAXEV, 6)); tr = np.zeros((MAXTR, 4)); st = np.zeros(len(ST))
+def smatrix(rows=None):
+    """8.10: Risikofaktoren je Kontozustand und Klasse (0 DEADBAND, 1 RSI21, 2 Noise, 3+s generischer Strom s).
+    rows: dict Zustandsname -> dict Klasse -> Faktor (fehlend = 1)."""
+    SM = np.ones((NZST, 3 + NG))
+    for zn, cl in (rows or {}).items():
+        for c, f in cl.items():
+            SM[ZI[zn], c] = float(f)
+    return SM
+
+
+def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None, SM=None):
+    out = np.zeros((MAXEV, 6)); tr = np.zeros((MAXTR, NTRC)); st = np.zeros(len(ST))
+    if SM is None:
+        SM = smatrix()
     if masks is None:
         masks = make_masks(mk, seed, skip)
     if GP is None:
@@ -1935,7 +1998,7 @@ def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None):
                       mk.nz["ev"], mk.nz["em"], mk.nz["close"], mk.nz["UB"], mk.nz["vw"], mk.nz["dist"], mk.nz["entry_ok"],
                       mk.nz["next"], mk.ev_nzeod,
                       masks[0], masks[1], masks[2],
-                      g["ev"], g["str"], g["sym"], g["dir"], g["rd"], g["tp"], g["xev"], g["w"], g["next"], masks[3], GP,
+                      g["ev"], g["str"], g["sym"], g["dir"], g["rd"], g["tp"], g["xev"], g["w"], g["next"], masks[3], GP, SM,
                       out, tr, st)
     d1c = min(d1, len(mk.days) - 1)
     yrs = (mk.days[d1c] - mk.days[d0]) / 365.25
