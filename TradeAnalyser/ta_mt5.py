@@ -445,7 +445,12 @@ def markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWege
     ext = max(b[2] for b in C[-N:]) if d > 0 else min(b[3] for b in C[-N:])
     rs = d * (ext - kurs) / atr
     extTxt = ('Hoch' if d > 0 else 'Tief') + ' der letzten ' + str(N) + ' 5min-Kerzen ' + f(ext)
-    rsTxt = ('%.2f' % max(rs, 0.0)).replace('.', ',')  # zwei Stellen, damit die Anzeige die Grenzen RS_MIN_ATR/RS_MAX_ATR nicht scheinbar verletzt
+    grenzen = (Z['RS_MIN_ATR'], Z['RS_MAX_ATR'])
+    for n in (2, 3, 4, 6):  # zwei Stellen; knapp an einer Grenze so viele, dass die Anzeige die Grenze nicht scheinbar verletzt
+        rsTxt = '%.*f' % (n, max(rs, 0.0))
+        if rs in grenzen or float(rsTxt) not in grenzen:
+            break
+    rsTxt = rsTxt.replace('.', ',')
     if rs <= Z['RS_MIN_ATR']:
         return kein('Trend-Setup ohne gültigen Einstieg (kein Rücksetzer, Kurs nur ' + rsTxt + ' ATR5 vom ' + extTxt + ')')
     if rs > Z['RS_MAX_ATR']:

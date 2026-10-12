@@ -164,10 +164,10 @@ Die Trefferquote folgt fast genau Stop / (Stop + Target), ganz ohne Analyse. Sup
 
 Was daraus folgt:
 - **NAS100 2024/2025 und GER40 2026:** mt5-1.4 ist nicht von Zufallseinstiegen mit derselben Geometrie zu unterscheiden.
-- **GER40 2021–23 und ETH:** mt5-1.4 liegt vor Kosten vorn. Bei ETH frisst der Spread von 2 USD den Vorsprung auf.
+- **GER40 2021–23 und ETH:** mt5-1.4 liegt vorn. Bei ETH auch nach Spread: −0,027 gegen −0,087 bis −0,101 R je Trade. Der Spread von 2 USD macht das Ergebnis aber insgesamt negativ.
 - Die Trefferquote von 56–62 % ist also vor allem Geometrie. Wer sie weiter erhöhen will, kann das jederzeit über ein kleineres CRV tun. Ob dabei Geld übrig bleibt, hängt davon ab, ob die Regel besser ist als der Zufall.
 
-Mit der Stellschraube `ZIEL_R` lässt sich die Trefferquote verschieben. 0,5 statt 0,75 ergab außerhalb der Abstimmung 61–69 % Target vor Stop, also +4 bis +8 Punkte. Der Ertrag je Trade änderte sich dabei um −0,02 bis +0,003 R.
+Mit der Stellschraube `ZIEL_R` lässt sich die Trefferquote verschieben. 0,5 statt 0,75 ergab außerhalb der Abstimmung 61–70 % Target vor Stop (Endstand, ETH nur Mo–Fr), also +4 bis +8 Punkte. Der Ertrag je Trade änderte sich dabei um −0,02 bis +0,003 R.
 
 ## 6. Grenzen und Risiken
 

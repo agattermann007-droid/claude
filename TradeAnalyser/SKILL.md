@@ -10,7 +10,7 @@ Deine Arbeit: News holen, das Script ausführen, seine Ausgabe Zeichen für Zeic
 
 ## Konstanten
 - ORDNER_WIN = C:\Users\agatt\AppData\Roaming\MetaQuotes\Terminal\Common\Files\TA_Export
-- SHA = 55c6dae2282d359d9e354280b2f64f382b39e5b41bfd6f6e5983c1046a904c48
+- SHA = 843415c9659727fdefc93841ed7586dd18123590c0ff6a37deb18c8f5a4aeabe
 - Sicherung des Scripts im Projekt „Analyzer“: claude/ta_mt5.py
 - Script-Version: `version` im JSON muss `mt5-1.4` sein (sonst läuft eine alte Fassung).
 
@@ -54,7 +54,7 @@ d) Websuche scheitert HART (Tool-Fehler oder null Ergebnisse): EINE zweite Suche
 ### 2. Script – EIN device_bash-Aufruf (ZEIT und ARGS ersetzt)
 ARGS = `--zeit 'ZEIT' --news 'NEWS' ZUSATZ` (setup und Instrumente) oder `--zeit 'ZEIT' --auswerten` (auswerten).
 ```
-D=""; for f in "$HOME"/mnt/*/ta_mt5.py "$HOME"/mnt/*/TA_Export/ta_mt5.py "$HOME"/mnt/*/Files/TA_Export/ta_mt5.py "$HOME"/mnt/*/Common/Files/TA_Export/ta_mt5.py; do [ -f "$f" ] && { D=$(dirname "$f"); break; }; done; [ -z "$D" ] && { echo ORDNER_FEHLT; exit 0; }; [ "$(sha256sum "$D/ta_mt5.py" | cut -c1-64)" = "55c6dae2282d359d9e354280b2f64f382b39e5b41bfd6f6e5983c1046a904c48" ] || { echo PRUEFSUMME_FALSCH; exit 0; }; cd "$D" && python3 ta_mt5.py ARGS
+D=""; for f in "$HOME"/mnt/*/ta_mt5.py "$HOME"/mnt/*/TA_Export/ta_mt5.py "$HOME"/mnt/*/Files/TA_Export/ta_mt5.py "$HOME"/mnt/*/Common/Files/TA_Export/ta_mt5.py; do [ -f "$f" ] && { D=$(dirname "$f"); break; }; done; [ -z "$D" ] && { echo ORDNER_FEHLT; exit 0; }; [ "$(sha256sum "$D/ta_mt5.py" | cut -c1-64)" = "843415c9659727fdefc93841ed7586dd18123590c0ff6a37deb18c8f5a4aeabe" ] || { echo PRUEFSUMME_FALSCH; exit 0; }; cd "$D" && python3 ta_mt5.py ARGS
 ```
 Das Ergebnis ist JSON mit "form" (A/B/C/L), "ausgabe" und "chart" (Pfad ~/mnt/… oder null). Das Feld "log" ist nur für die Fehlersuche und wird nicht ausgegeben.
 
@@ -102,7 +102,7 @@ Alle Regelwerte stehen in der Zeile `SET = dict(…)` in ta_mt5.py und sind durc
   - mt5-1.3 kam auf 22–28 % Target vor Stop; nur rund 36 % der Limits wurden gefüllt; nach Spread −0,06 bis −0,28 R je Trade.
   - mt5-1.4 kommt auf 56–62 % Target vor Stop, und jede Order ist gefüllt. Nach Spread liegt es außerhalb der Abstimmungsdaten bei −0,03 bis +0,02 R je Trade, also etwa ±0. In der Abstimmung (NAS100 2021–23) waren es +0,055.
   - Ein belegter Vorteil ist das nicht: Zufallseinstiege mit gleichem Stop, Target und Zeitfenster schneiden auf NAS100 2024/2025 und GER40 2026 gleich ab. Die höhere Trefferquote kommt vor allem vom Verhältnis Stop zu Target.
-- Stellschraube ZIEL_R (nur auf Alex' Wunsch): 0,5 statt 0,75 hebt Target vor Stop im Backtest um 4–8 Punkte (auf 61–69 %). Der Ertrag je Trade ändert sich dabei um −0,02 bis +0,003 R.
+- Stellschraube ZIEL_R (nur auf Alex' Wunsch): 0,5 statt 0,75 hebt Target vor Stop im Backtest um 4–8 Punkte (auf 61–70 %). Der Ertrag je Trade ändert sich dabei um −0,02 bis +0,003 R.
 - Chart: letzte 212 M5-Kerzen, VWAP-Bänder, Entry/Stop/Target mit Risiko- und Zielzone, Wiener Zeit.
 
 ## Signal-Log und Auswertung
