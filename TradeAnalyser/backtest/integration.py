@@ -10,6 +10,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bt
@@ -128,8 +129,8 @@ def main():
                 kontrolle(o2)
     # News-Sperre
     schreibe(d, se, t)
-    hm = datetime.fromtimestamp(t + 299 + 600, timezone.utc).strftime('%H:%M')
-    o3 = rufe(modul, d, t + 299, '--news', json.dumps([['CPI', hm, 'UTC']]), '--nur', 'NAS100')
+    hm = datetime.fromtimestamp(t + 299 + 600, ZoneInfo('Europe/Vienna')).strftime('%H:%M')  # Termine gelten fuer den heutigen Wiener Tag
+    o3 = rufe(modul, d, t + 299, '--news', json.dumps([['CPI', hm, 'WIEN']]), '--nur', 'NAS100')
     assert o3['form'] == 'B' and 'News-Sperre' in o3['ausgabe'], o3['ausgabe']
     # Auswertung einige Tage spaeter
     schreibe(d, se, t + 3 * 86400)

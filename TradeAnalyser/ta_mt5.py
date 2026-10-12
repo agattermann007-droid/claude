@@ -40,9 +40,9 @@ SET = dict(MIN_CRV=1.5, MIN_STOP_ATR=1.0, ZIEL_STUFEN=2, PUFFER_INDEX_PCT=0.05, 
            PRUEF_TRADES=(50, 100, 150), PRUEF_Z_ZURUECK=(2.0, 1.8, 1.65), PRUEF_Z_BESSER=1.96,  # Regelvergleich: feste Pruefpunkte statt Dauertest
            # neu in mt5-1.4: nur Market-Orders (MARKT_MODUS=False = Regeln von mt5-1.3; MIN_CRV, ZIEL_STUFEN, ZIEL_VOR_KURS, ZIELVORLAUF_MIN, MARKT_LEVELKERZE gelten nur dort)
            MARKT_MODUS=True,
-           HANDELSZEIT_NAS_NY=('09:45', '15:30'), HANDELSZEIT_DAX_WIEN=('09:15', '17:00'), HANDELSZEIT_ETH_NY=('09:45', '15:30'),  # Einstieg nur von..bis (bis exklusiv)
+           HANDELSZEIT_NAS_NY=('09:45', '15:30'), HANDELSZEIT_DAX_WIEN=('09:15', '17:00'), HANDELSZEIT_ETH_NY=('09:45', '15:30'),  # Einstieg nur Mo-Fr von..bis (bis exklusiv)
            RS_KERZEN=12, RS_MIN_ATR=0.25, RS_MAX_ATR=1.5,  # Ruecksetzer: Kurs RS_MIN_ATR..RS_MAX_ATR x ATR5 unter dem Hoch (Long) / ueber dem Tief (Short) der letzten RS_KERZEN geschlossenen 5min-Kerzen
-           STOP_ATR=3.0, ZIEL_R=0.75, MIN_CRV_MARKT=0.4)  # Stop STOP_ATR x ATR5 hinter dem Entry; Target ZIEL_R x Risiko (mindestens MINZIEL); MIN_CRV_MARKT nur Selbstpruefung
+           STOP_ATR=3.0, ZIEL_R=0.75)  # Stop STOP_ATR x ATR5 hinter dem Entry (mindestens MIN_STOP_ATR); Target ZIEL_R x Risiko, mindestens MINZIEL
 SET_ALT = dict(SET, MARKT_MODUS=False)  # Regeln von mt5-1.3 (Limit-Leiter), nur fuer den Schatten-Vergleich
 
 INSTR = [('NAS100', 'INDEX'), ('GER40', 'INDEX'), ('ETH', 'ETH')]
@@ -273,14 +273,14 @@ def analysiere(NAME, KL, A, F, now_ms, ev, Z=SET):
         'vwap5': {b: jsfixed(LV[i], 2) for i, b in enumerate(LB)}, 'kerze5': lc[1:5],
         'kreuz': kreuz, 'unterUp1': unterUp1, 'ueberLo1': ueberLo1, 'minReset': minReset, 'atr5': jsfixed(atr, 2),
         'tagesHoch': F['hi'], 'tagesTief': F['lo'], 'swingHochs': sh[-6:], 'swingTiefs': sl[-6:], 'marketGesperrt': marketGesperrt}
+    if Z['MARKT_MODUS']:  # mt5-1.4: eigene Reihenfolge (Sperre und Handelszeit vor dem VWAP-Reset), sonst wie unten
+        return markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWegen, k30, v30, seite, kreuz, lo1, up1, now_ms,
+                            next((e for e in ev if e['t'] > now_ms), None), minReset)
     if minReset < Z['RESET_MIN']:
         return {'instrument': NAME, 'status': 'Kein Trade', 'grund': 'VWAP-Reset erst vor ' + str(minReset) + ' Minuten', 'daten': daten}
 
     fails = []
     naechste = next((e for e in ev if e['t'] > now_ms), None)
-    if Z['MARKT_MODUS']:
-        return markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWegen, k30, v30, seite, kreuz, lo1, up1,
-                            marketGesperrt, wien, ny, naechste)
 
     def pruefe(d, klasse, E0, markt, S0, sTxt, tg, zs):
         E = jsround(E0) if markt else (math.ceil(E0) if d > 0 else math.floor(E0))
@@ -413,19 +413,23 @@ def analysiere(NAME, KL, A, F, now_ms, ev, Z=SET):
         'daten': daten}
 
 
-def markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWegen, k30, v30, seite, kreuz, lo1, up1, marketGesperrt, wien, ny, naechste):
+def markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWegen, k30, v30, seite, kreuz, lo1, up1, now_ms, naechste, minReset):
     """mt5-1.4: Market-Order zum aktuellen Kurs. Nur Trend, nur Haupthandelszeit, Einstieg im Ruecksetzer: die letzte geschlossene
     5min-Kerze schloss gegen den Trend und der Kurs liegt RS_MIN_ATR..RS_MAX_ATR x ATR5 vom Extrem der letzten RS_KERZEN Kerzen.
     Stop STOP_ATR x ATR5 hinter dem Entry, Target ZIEL_R x Risiko (mindestens MINZIEL). Rundung wie bisher: Long Stop und Target ab, Short auf."""
     def kein(grund):
         return {'instrument': NAME, 'status': 'Kein Trade', 'grund': grund, 'daten': daten}
-    if marketGesperrt:  # jede Order ist eine Market-Order: in der Eroeffnungssperre gar kein Trade
-        sp = Z['SPERRE_NAS_NY'] if NAME == 'NAS100' else Z['SPERRE_DAX_WIEN']
-        return kein('Eröffnungssperre ' + sp[0] + '-' + sp[1] + (' New York' if NAME == 'NAS100' else ' Wiener Zeit') + ', kein Market-Einstieg')
-    hz, jetzt, zone = ((Z['HANDELSZEIT_DAX_WIEN'], wien, ' Wiener Zeit') if NAME == 'GER40' else
-                       (Z['HANDELSZEIT_ETH_NY'] if NAME == 'ETH' else Z['HANDELSZEIT_NAS_NY'], ny, ' New York'))
-    if not hhmm(hz[0]) <= jetzt < hhmm(hz[1]):  # ausserhalb der Haupthandelszeit war der Trend im Test zu schwach und der Spread zu teuer
-        return kein('außerhalb der Handelszeit (Einstiege nur ' + hz[0] + '-' + hz[1] + zone + ')')
+    hz, tz, zone = ((Z['HANDELSZEIT_DAX_WIEN'], WIEN, ' Wiener Zeit') if NAME == 'GER40' else
+                    (Z['HANDELSZEIT_ETH_NY'] if NAME == 'ETH' else Z['HANDELSZEIT_NAS_NY'], NY, ' New York'))
+    jetzt = datetime.fromtimestamp(now_ms / 1000, tz)
+    hm = jetzt.hour * 60 + jetzt.minute
+    sp = Z['SPERRE_NAS_NY'] if NAME == 'NAS100' else Z['SPERRE_DAX_WIEN'] if NAME == 'GER40' else None
+    if sp and hhmm(sp[0]) <= hm < hhmm(sp[1]):  # jede Order ist eine Market-Order: in der Eroeffnungssperre gar kein Trade (Ende exklusiv, die Handelszeit beginnt dort)
+        return kein('Eröffnungssperre ' + sp[0] + '-' + sp[1] + zone + ', kein Market-Einstieg')
+    if jetzt.weekday() > 4 or not hhmm(hz[0]) <= hm < hhmm(hz[1]):  # ausserhalb der Haupthandelszeit war der Trend im Test zu schwach und der Spread zu teuer
+        return kein('außerhalb der Handelszeit (Einstiege nur Mo-Fr ' + hz[0] + '-' + hz[1] + zone + ')')
+    if minReset < Z['RESET_MIN']:
+        return kein('VWAP-Reset erst vor ' + str(minReset) + ' Minuten')
     if not atr > 0:
         return kein('ATR5 ist null')
     if rangeWegen:
@@ -441,10 +445,11 @@ def markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWege
     ext = max(b[2] for b in C[-N:]) if d > 0 else min(b[3] for b in C[-N:])
     rs = d * (ext - kurs) / atr
     extTxt = ('Hoch' if d > 0 else 'Tief') + ' der letzten ' + str(N) + ' 5min-Kerzen ' + f(ext)
+    rsTxt = ('%.2f' % max(rs, 0.0)).replace('.', ',')  # zwei Stellen, damit die Anzeige die Grenzen RS_MIN_ATR/RS_MAX_ATR nicht scheinbar verletzt
     if rs <= Z['RS_MIN_ATR']:
-        return kein('Trend-Setup ohne gültigen Einstieg (kein Rücksetzer, Kurs nur ' + fc(max(rs, 0.0)) + ' ATR5 vom ' + extTxt + ')')
+        return kein('Trend-Setup ohne gültigen Einstieg (kein Rücksetzer, Kurs nur ' + rsTxt + ' ATR5 vom ' + extTxt + ')')
     if rs > Z['RS_MAX_ATR']:
-        return kein('Trend-Setup ohne gültigen Einstieg (Rücksetzer zu tief, Kurs ' + fc(rs) + ' ATR5 vom ' + extTxt + ')')
+        return kein('Trend-Setup ohne gültigen Einstieg (Rücksetzer zu tief, Kurs ' + rsTxt + ' ATR5 vom ' + extTxt + ')')
     if not (lc[4] < lc[1] if d > 0 else lc[4] > lc[1]):
         return kein('Trend-Setup ohne gültigen Einstieg (letzte 5min-Kerze schloss nicht gegen den Trend)')
     E = jsround(kurs)
@@ -456,23 +461,21 @@ def markt_signal(NAME, KL, Z, daten, kurs, atr, C, lc, MINZ, A, stDir, rangeWege
     if not risk > 0:
         return kein('Trend-Setup ohne gültigen Einstieg (kein Stop)')
     crv = d * (T - E) / risk
-    if crv < Z['MIN_CRV_MARKT']:
-        return kein('Trend-Setup ohne gültigen Einstieg (CRV unter ' + fc(Z['MIN_CRV_MARKT']) + ')')
     if not (d * (T - E) >= MINZ * E and (S < E < T if d > 0 else T < E < S) and E == jsround(kurs)):
         return {'instrument': NAME, 'fehler': 'Script-Selbstpruefung fehlgeschlagen (' + '/'.join(map(str, [S, E, T])) + ')'}
     mzPct = Z['MINZIEL_ETH_PCT'] if KL == 'ETH' else Z['MINZIEL_INDEX_PCT']
     tTxt = (jsnum(Z['ZIEL_R']).replace('.', ',') + ' x Risiko') if zr >= mz else ('Mindestziel ' + jsnum(mzPct).replace('.', ',') + ' %')
     satz1 = ('Trend ' + R + ', weil der 30min-Supertrend ' + R + ' bei ' + f(A['st']['wert']) + ' steht und der Kurs ' + f(k30)
              + (' über' if d > 0 else ' unter') + ' dem 30min-VWAP ' + f(v30) + ' liegt; Setup ist ein Rücksetzer im Trend: die letzte 5min-Kerze schloss gegen den Trend und der Kurs liegt '
-             + fc(rs) + ' ATR5 ' + ('unter dem ' if d > 0 else 'über dem ') + extTxt + ', Einstieg sofort zum Marktpreis.')
-    sTxt = jsnum(sa).replace('.', ',') + ' ATR5 (' + f(sa * atr) + ' Punkte) ' + ('unter' if d > 0 else 'über') + ' dem Entry'
+             + rsTxt + ' ATR5 ' + ('unter dem ' if d > 0 else 'über dem ') + extTxt + ', Einstieg sofort zum Marktpreis.')
+    sTxt = jsnum(sa).replace('.', ',') + ' ATR5 = ' + str(risk) + ' Punkte ' + ('unter' if d > 0 else 'über') + ' dem Entry'
     newsTxt = ('; nächster News-Termin ' + naechste['name'] + ' um ' + hm_wien(naechste['t']) + ' Wiener Zeit') if naechste else ''
     return {
         'instrument': NAME, 'status': 'Trade', 'klasse': 'TREND', 'orderart': 'Market',
-        'distanzPct': 0, 'crv': jsfixed(crv, 2), 'crvTxt': fc(crv),
-        'grenzen': {'minCrv': Z['MIN_CRV_MARKT'], 'minZielPct': jsfixed(MINZ * 100, 4)},
+        'distanzPct': 0, 'crv': jsfixed(crv, 2), 'crvTxt': fc(crv), 'zielR': Z['ZIEL_R'],
+        'grenzen': {'zielR': Z['ZIEL_R'], 'minZielPct': jsfixed(MINZ * 100, 4)},
         'distanzATR': 0,
-        'signal': {'d': d, 'E': E, 'S': S, 'T': T, 'level': 'Rücksetzer vom ' + ('Hoch' if d > 0 else 'Tief'), 'zielstufe': 0, 'kurs': kurs,
+        'signal': {'d': d, 'E': E, 'S': S, 'T': T, 'level': 'Rücksetzer vom ' + ('Hoch' if d > 0 else 'Tief'), 'zielstufe': -1, 'kurs': kurs,
                    'atr5': jsfixed(atr, 2), 'verfall': None},
         'zeilen': [
             'Entry: ' + NAME + ' ' + R + ' Market @ ' + str(E),
@@ -504,7 +507,9 @@ def auswahl(ergebnisse, einzel):
     kand = [e for e in ok if e.get('status') == 'Trade']
     if kand:
         reihen = [n for n, _ in INSTR]
-        w = sorted(kand, key=lambda e: (e['klasse'] != 'TREND', e['orderart'] != 'Market', e['distanzPct'], -e['crv'], reihen.index(e['instrument'])))[0]
+        # mt5-1.4 (Feld zielR): das CRV am naechsten an ZIEL_R zuerst; ein hoeheres CRV entsteht nur, wenn das Mindestziel greift, und trifft seltener
+        w = sorted(kand, key=lambda e: (e['klasse'] != 'TREND', e['orderart'] != 'Market', e['distanzPct'],
+                                        abs(e['crv'] - e['zielR']) if 'zielR' in e else -e['crv'], reihen.index(e['instrument'])))[0]
         zeilen = list(w['zeilen'])
         zeilen[-1] += hinweis
         return 'A', '\n'.join(zeilen), w
@@ -773,7 +778,8 @@ def auswerten(d, now_ms):
         tv, sv = sum(st(r) == 'Target' for r in g), sum(st(r) == 'Stop' for r in g)
         z.append('  Version %s: %d gefüllt, %+.2f R' % (ver, len(g), sum(r['ergebnis']['R'] for r in g))
                  + ((', Target vor Stop ' + wilson(tv, tv + sv)) if tv + sv else ''))
-    for lab, g in (('Target auf erstem Level', [r for r in rr if r.get('zielstufe', 0) == 0]), ('Target weiter gestreckt', [r for r in rr if r.get('zielstufe', 0) > 0])):
+    stufe = [r for r in rr if r.get('zielstufe', 0) >= 0]  # mt5-1.4 (Market zum Kurs) hat keine Zielstufe: -1 (nicht None, sonst stuerzt 'auswerten' von mt5-1.3 nach einem Zurueckrollen ab)
+    for lab, g in (('Target auf erstem Level', [r for r in stufe if r.get('zielstufe', 0) == 0]), ('Target weiter gestreckt', [r for r in stufe if r.get('zielstufe', 0) > 0])):
         if g:
             z.append('  %s: %d gefüllt, %+.2f R' % (lab, len(g), sum(r['ergebnis']['R'] for r in g)))
     kn = [r for r in rr if r['art'] == 'Limit' and r['ergebnis'].get('knapp')]
