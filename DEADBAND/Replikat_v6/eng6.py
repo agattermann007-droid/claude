@@ -67,6 +67,9 @@ PN = [
     # --- Forschung V8.10 (research/engine): 1 = Wochenend-Wiederaufnahme wird wie im EA jede Kerze erneut versucht
     #     (0 = wie bisher: bei flachem Konto erst am naechsten Signal oder Tagesbeginn - bitgleich zu 8.10)
     "we_genau",
+    # --- Forschung: 1 = Bodenverletzung beendet das Konto nicht; der Puffer wird wie bei einem neuen Konto wieder voll
+    #     (Boden = Equity - Abstand), Positionen laufen weiter. Fuer Tagesdatensaetze des Bootstraps (0 = bitgleich).
+    "pleite_weiter",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -97,7 +100,7 @@ def params(**kw):
              float_losers=0, idea_cap=0.0, lev=10.0, idea_margin=70.0, open_cap=0.0, rule_losers=0, swap_guard=0.0,
              db_trail_from=0.0, db_trail_dist=0.0, r21_tp1r=0.0, r21_tp1f=0.0, r21_be=0.0, r21_trail_from=0.0, r21_trail_dist=0.0, r21_first_mult=0.0, bank_last=0, bank_prof=0.0, day_entry_stop=0.0, floor_eod=0, floor_rel=0,
              st_on=0, st_deep=2.0, st_light=4.0, st_hys=0.5, st_near_v=1, st_near_p=0.8, st_prof=1.0, st_streak=3,
-             we_genau=0)
+             we_genau=0, pleite_weiter=0)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -382,6 +385,7 @@ def run_path(Pv, d0, d1, seed,
     st_on = Pv[132] > 0.5; st_deep = Pv[133]; st_light = Pv[134]; st_hys = Pv[135]; st_near_v = int(Pv[136])
     st_near_p = Pv[137]; st_prof = Pv[138]; st_streak = int(Pv[139])
     we_genau = Pv[140] > 0.5
+    pleite_weiter = Pv[141] > 0.5
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
@@ -1236,6 +1240,12 @@ def run_path(Pv, d0, d1, seed,
                 bust = 2                                   # Verlierer ueber 1 %, Netto-Bremse greift nicht
             elif ruleday > 0.0 and bal + gap - day_ref <= -day_ref * ruleday / 100.0:
                 bust = 3
+            if bust > 0 and pleite_weiter:
+                t_bust = float(bust)
+                st[5] += 1
+                st[5 + bust] += 1
+                peak = bal + worst                         # gedachtes neues Konto: Puffer wieder voll
+                bust = 0
             if bust > 0:
                 for k in range(NSLOT):
                     if p_on[k]:

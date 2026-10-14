@@ -103,12 +103,39 @@ def ny_minuten(server):
     return t.values.astype("datetime64[m]").astype(np.int64)
 
 
+def protokolliere_blindzugriff(was, grund=""):
+    """Jeder Zugriff auf data_blind/ wird mit Zeitstempel protokolliert (der Blindlauf findet genau einmal statt)."""
+    os.makedirs(K.ERGEBNISSE, exist_ok=True)
+    with open(os.path.join(K.ERGEBNISSE, "blindlauf_protokoll.txt"), "a") as f:
+        f.write(f"{dt.datetime.now(dt.timezone.utc).isoformat()} blind geoeffnet: {was} - {grund}\n")
+
+
+def letzte_serverzeit(pfad):
+    """Serverzeit der letzten Zeile einer MT5-CSV (nur das Dateiende wird gelesen)."""
+    with open(pfad, "rb") as f:
+        f.seek(0, os.SEEK_END)
+        n = f.tell()
+        f.seek(max(0, n - 4096))
+        zeilen = [z for z in f.read().decode("utf-8", "replace").splitlines() if z.strip()]
+    z = zeilen[-1]
+    if z[4:5] == ".":                                     # MT5: YYYY.MM.DD<TAB>HH:MM:SS
+        teile = z.split("\t")
+        return pd.Timestamp(teile[0].replace(".", "-") + " " + teile[1])
+    return pd.Timestamp(z[:19])                           # Python-Export: YYYY-MM-DD HH:MM:SS+00:00,...
+
+
+def pruefe_auswahl_ordner(ordner=K.DATEN):
+    """Kein CSV in data/ darf Zeilen ab dem Stichtag enthalten (sonst ist die Auswahl verunreinigt)."""
+    grenze = stichtag_grenze()
+    for fn in sorted(os.listdir(ordner)):
+        if fn.lower().endswith(".csv") and letzte_serverzeit(os.path.join(ordner, fn)) >= grenze:
+            raise RuntimeError(f"{fn} in {ordner} enthaelt Daten nach dem Stichtag - Auswahl-Daten sind verunreinigt")
+
+
 def lade(dateiname, blind=False, grund=""):
     """Arrays ny, o, h, l, c, v, sp_pkt (Spread in Punkten) aus data/ (Auswahl) oder data_blind/ (nur Blindlauf)."""
     if blind:
-        os.makedirs(K.ERGEBNISSE, exist_ok=True)
-        with open(os.path.join(K.ERGEBNISSE, "blindlauf_protokoll.txt"), "a") as f:
-            f.write(f"{dt.datetime.utcnow().isoformat()}Z blind geoeffnet: {dateiname} - {grund}\n")
+        protokolliere_blindzugriff(dateiname, grund)
         pfad = os.path.join(K.DATEN_BLIND, dateiname)
     else:
         pfad = os.path.join(K.DATEN, dateiname)

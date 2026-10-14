@@ -171,3 +171,19 @@ def test_short_zahlt_spread_beim_ausstieg():
     m = _markt("2024-03-05 04:00", 20)
     e = _sim(m, 1, -1, 3.0, ziel=0.0, maxhold15=2)
     assert e[1] == pytest.approx(-0.3 / 3.0)
+
+
+# ---------------------------------------------------------------- Stichtag-Schutz
+def test_auswahl_ordner_ohne_daten_nach_stichtag(tmp_path):
+    from engine import synthetisch as SY
+    df = SY.kerzen("XAU", "2025-06-20", "2025-07-02", seed=1)
+    vor = df[df["server"] < DT.stichtag_grenze()]
+    DT.schreibe_mt5(vor, str(tmp_path / "XAUUSD.x_M5.csv"))
+    DT.pruefe_auswahl_ordner(str(tmp_path))
+    assert DT.letzte_serverzeit(str(tmp_path / "XAUUSD.x_M5.csv")) == vor["server"].iloc[-1]
+    DT.schreibe_mt5(df, str(tmp_path / "NAS100.x_M5.csv"))        # reicht ueber den Stichtag hinaus
+    with pytest.raises(RuntimeError):
+        DT.pruefe_auswahl_ordner(str(tmp_path))
+    with open(tmp_path / "py.csv", "w") as f:
+        f.write("time,open,high,low,close,tick_volume,spread,real_volume\n2025-06-30 16:55:00+00:00,1,1,1,1,1,1,0\n")
+    assert DT.letzte_serverzeit(str(tmp_path / "py.csv")) == pd.Timestamp("2025-06-30 16:55:00")

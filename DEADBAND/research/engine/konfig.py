@@ -36,3 +36,9 @@ BOOT_TAGE_JE_PFAD = 252
 # Zufallsvergleich (PLAN 6.6)
 ZUFALL_LAEUFE = 1000
 ZUFALL_SCHWELLE = 0.95               # > 50 Varianten in einer Familie: 0.99
+
+# Konto-Ablauf wie eng6/EA (Y.BASE + z8.KW80): Wartetage bis zur Auszahlung bzw. zum neuen Konto, Abzug bei der
+# Auszahlung (evl6: 0,8 x 0,97) [Faktor 0,97 aus evl6 uebernommen, ungeprueft]
+WARTE_AUSZAHLUNG = 2
+WARTE_NEUKONTO = 1
+AUSZ_FAKTOR = 0.97
