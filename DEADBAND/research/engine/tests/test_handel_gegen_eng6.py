@@ -6,21 +6,6 @@ import pytest
 
 from engine import handel as HD
 from engine import spec as SP
-from engine import synthetisch as SY
-
-
-@pytest.fixture(scope="module")
-def daten(tmp_path_factory):
-    import prep5 as P
-    d = tmp_path_factory.mktemp("daten")
-    SY.schreibe(str(d), "2021-01-03", "2021-09-30", seed=21)
-    alt = P.DATA
-    P.DATA = str(d)
-    try:
-        D = P.build()
-    finally:
-        P.DATA = alt
-    return D
 
 
 OFFEN = dict(start=1e8, rulefloat=0.0, ruleday=0.0, maxlosspct=99.0, floatstop=0.0, daystop=99.0, ddfull=0.0, belowstart=1.0,
