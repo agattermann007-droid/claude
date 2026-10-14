@@ -69,6 +69,7 @@ PN = [
     "we_genau",
     # --- Forschung: 1 = Bodenverletzung beendet das Konto nicht; der Puffer wird wie bei einem neuen Konto wieder voll
     #     (Boden = Equity - Abstand), Positionen laufen weiter. Fuer Tagesdatensaetze des Bootstraps (0 = bitgleich).
+    #     2 = wie im MT5-Tester: nichts passiert, der Boden bleibt (Kalibrierung gegen den Testerbericht).
     "pleite_weiter",
 ]
 PI = {n: i for i, n in enumerate(PN)}
@@ -385,7 +386,7 @@ def run_path(Pv, d0, d1, seed,
     st_on = Pv[132] > 0.5; st_deep = Pv[133]; st_light = Pv[134]; st_hys = Pv[135]; st_near_v = int(Pv[136])
     st_near_p = Pv[137]; st_prof = Pv[138]; st_streak = int(Pv[139])
     we_genau = Pv[140] > 0.5
-    pleite_weiter = Pv[141] > 0.5
+    pleite_weiter = int(Pv[141] + 0.5)
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
@@ -1240,11 +1241,13 @@ def run_path(Pv, d0, d1, seed,
                 bust = 2                                   # Verlierer ueber 1 %, Netto-Bremse greift nicht
             elif ruleday > 0.0 and bal + gap - day_ref <= -day_ref * ruleday / 100.0:
                 bust = 3
-            if bust > 0 and pleite_weiter:
+            if bust > 0 and pleite_weiter > 0:
+                if t_bust == 0.0:
+                    st[5] += 1
+                    st[5 + bust] += 1
                 t_bust = float(bust)
-                st[5] += 1
-                st[5 + bust] += 1
-                peak = bal + worst                         # gedachtes neues Konto: Puffer wieder voll
+                if pleite_weiter == 1:
+                    peak = bal + worst                     # gedachtes neues Konto: Puffer wieder voll
                 bust = 0
             if bust > 0:
                 for k in range(NSLOT):
