@@ -22,7 +22,8 @@ Dein Konto wird nicht angefasst: Die Skripte lesen nur, der Referenz-EA läuft n
      - `MQL5\Scripts\DEADBAND\DEADBAND_Daten_Export.mq5`
      - `MQL5\Scripts\DEADBAND\DEADBAND_Kalender_Export.mq5`
      - `MQL5\Experts\DEADBAND_Forschung\DEADBAND_V8_810_Referenz.mq5` (= `DEADBAND_V8.mq5` Build 8.10, unverändert)
-   - Sie kompiliert alle drei mit dem MetaEditor des GFT-Terminals und zeigt je Datei **OK** oder **FEHLER**.
+     - `MQL5\Experts\DEADBAND_Forschung\DEADBAND_V8_Intrabar.mq5` (Stufe 3, nur für den Tester: `MT5_TESTPLAN_INTRABAR.md`)
+   - Sie kompiliert alle vier mit dem MetaEditor des GFT-Terminals und zeigt je Datei **OK** oder **FEHLER**.
 4. **Wichtig:** Steht beim Referenz-EA **FEHLER**, kompiliert V8.10 nicht. Dann bitte trotzdem weiter mit Schritt 2 und das Protokoll mit hochladen; ich behebe den Fehler zuerst.
 
 Findet die Datei das Terminal nicht: Installationsordner des GFT-Terminals (dort liegt `terminal64.exe`) als einzige Zeile in `C:\Trading\gft_terminal.txt` schreiben und erneut doppelklicken.

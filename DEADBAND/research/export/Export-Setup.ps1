@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 $DATEN_MQ5 = ##DATEI:daten##
 $KALENDER_MQ5 = ##DATEI:kalender##
 $EA_MQ5 = ##DATEI:ea##
+$INTRABAR_MQ5 = ##DATEI:intrabar##
 
 function Schreibe-Ascii([string]$pfad, [string]$text) {
     $t = $text -replace "`r?`n", "`r`n"
@@ -117,6 +118,11 @@ try {
         Write-Host "Referenz-EA abgelegt in $zielEa"
         $c = Kompiliere $inst $f3
         if (-not $c) { Write-Host 'Der Referenz-EA (V8.10) kompiliert NICHT - bitte die Fehlerzeilen oben schicken (ZIP mit [2] enthaelt das Protokoll).' -ForegroundColor Red }
+        # Stufe 3: V8.10 + EntryMode (nur Strategietester, research/MT5_TESTPLAN_INTRABAR.md)
+        $f4 = Join-Path $zielEa 'DEADBAND_V8_Intrabar.mq5'
+        Schreibe-Ascii $f4 $INTRABAR_MQ5
+        Write-Host "Intrabar-EA (Stufe 3, nur Tester) abgelegt in $zielEa"
+        $null = Kompiliere $inst $f4
         Write-Host ''
         if ($a -and $b) {
             Write-Host 'Fertig. Weiter im Terminal (Anleitung research/DATEN_EXPORT.md):' -ForegroundColor Green
