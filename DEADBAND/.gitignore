@@ -7,3 +7,5 @@ extdata/work/
 extdata/fx1m/
 __pycache__/
 data_blind/
+.pytest_cache/
+research/cache/
