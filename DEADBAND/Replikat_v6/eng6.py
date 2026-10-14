@@ -20,7 +20,10 @@ G0 = 9
 NSLOT = G0 + 2 * NG
 # Spalten der Strom-Parameter GP[strom, spalte]
 GPN = ["on", "risk", "tp1r", "tp1f", "be", "maxtrades", "maxloss", "budget", "ripeclose",
-       "trail_from", "trail_dist", "harv", "usefak", "maxopen_sym", "cool_excl", "tpdelay", "minbuf"]
+       "trail_from", "trail_dist", "harv", "usefak", "maxopen_sym", "cool_excl", "tpdelay", "minbuf",
+       # Forschung V8.10 (research/engine): Voreinstellung 0 = bisheriges Verhalten (bitgleich, research/engine/tests)
+       "we_resume",   # 1 = nach dem Freitags-Schluss Wiederaufnahme wie DEADBAND (Stop hoechstens we_stopmaxr R)
+       "flat_only"]   # 1 = Einstieg nur, wenn das Symbol ueber alle Plaetze flach ist (keine Position, keine Vormerkung)
 GPI = {n: i for i, n in enumerate(GPN)}
 
 # ------------------------------------------------------------------ Parameter
@@ -61,6 +64,9 @@ PN = [
     "r21_first_mult", "bank_last", "bank_prof", "day_entry_stop", "floor_eod", "floor_rel",
     # --- 8.10: Kontoerkenner und Anpasser (st_on 0 = aus = 8.00) ---
     "st_on", "st_deep", "st_light", "st_hys", "st_near_v", "st_near_p", "st_prof", "st_streak",
+    # --- Forschung V8.10 (research/engine): 1 = Wochenend-Wiederaufnahme wird wie im EA jede Kerze erneut versucht
+    #     (0 = wie bisher: bei flachem Konto erst am naechsten Signal oder Tagesbeginn - bitgleich zu 8.10)
+    "we_genau",
 ]
 PI = {n: i for i, n in enumerate(PN)}
 
@@ -90,7 +96,8 @@ def params(**kw):
              harv_any_mods=0, ge_mode=0, stop_after_valid=0,
              float_losers=0, idea_cap=0.0, lev=10.0, idea_margin=70.0, open_cap=0.0, rule_losers=0, swap_guard=0.0,
              db_trail_from=0.0, db_trail_dist=0.0, r21_tp1r=0.0, r21_tp1f=0.0, r21_be=0.0, r21_trail_from=0.0, r21_trail_dist=0.0, r21_first_mult=0.0, bank_last=0, bank_prof=0.0, day_entry_stop=0.0, floor_eod=0, floor_rel=0,
-             st_on=0, st_deep=2.0, st_light=4.0, st_hys=0.5, st_near_v=1, st_near_p=0.8, st_prof=1.0, st_streak=3)
+             st_on=0, st_deep=2.0, st_light=4.0, st_hys=0.5, st_near_v=1, st_near_p=0.8, st_prof=1.0, st_streak=3,
+             we_genau=0)
     for k in kw:
         if k not in PI:
             raise KeyError(k)
@@ -270,6 +277,10 @@ NZST = len(ZN)
 ZI = {n: i for i, n in enumerate(ZN)}
 Z_ST0 = SI["z0"]; Z_B0 = SI["zb0"]
 NTRC = 5      # Spalten Trade-Protokoll: Tag, Ergebnis, Platz, Einstiegsminute, Zustand beim Einstieg
+# Forschung V8.10: Tagesdatensaetze (run(..., tage=True)); Spalten je abgeschlossenem Prop-Tag
+KDN = ["tag", "modus0", "fak0", "real", "saldo", "equity", "eq_min", "eq_max", "flt_min", "saldo0", "refplus",
+       "pleite", "auszahlung", "neukonto", "spitze", "gueltig"]
+KD = len(KDN)
 MAXEV = 2000
 MAXTR = 6000
 
@@ -327,7 +338,7 @@ def run_path(Pv, d0, d1, seed,
              z_ev, z_em, z_close, z_UB, z_vw, z_dist, z_entry, z_next, ev_nzeod,
              skipmask_db, skipmask_r, skipmask_z,
              g_ev, g_str, g_sym, g_dir, g_rd, g_tp, g_xev, g_w, g_next, skipmask_g, GP, SM,
-             out_ev, out_tr, st):
+             out_ev, out_tr, st, out_day):
     np.random.seed(seed)
     n_ev = ev_day.shape[0]
     nd = days.shape[0]
@@ -370,9 +381,12 @@ def run_path(Pv, d0, d1, seed,
     r21_trail_from = Pv[124]; r21_trail_dist = Pv[125]; r21_first_mult = Pv[126]; bank_last = int(Pv[127]); bank_prof = Pv[128]; day_entry_stop = Pv[129]; floor_eod = Pv[130] > 0.5; floor_rel = Pv[131] > 0.5
     st_on = Pv[132] > 0.5; st_deep = Pv[133]; st_light = Pv[134]; st_hys = Pv[135]; st_near_v = int(Pv[136])
     st_near_p = Pv[137]; st_prof = Pv[138]; st_streak = int(Pv[139])
+    we_genau = Pv[140] > 0.5
 
     floor_dist = start * maxlosspct / 100.0
     needday = start * validpct / 100.0
+    tage_an = out_day.shape[0] > 1                    # Forschung: Tagesdatensaetze schreiben
+    n_day = 0
     minprofit = minpayout / split
 
     # ---- Kontozustand
@@ -397,6 +411,9 @@ def run_path(Pv, d0, d1, seed,
     w_be = np.zeros(NSLOT, np.bool_); w_t1 = np.zeros(NSLOT, np.bool_); w_i5 = np.zeros(NSLOT, np.int64)
     w_m15 = np.zeros(NSLOT, np.int64); w_tmin = np.zeros(NSLOT, np.int64); w_fri = np.zeros(NSLOT, np.int64)
     w_acc = np.zeros(NSLOT)
+    w_xev = np.full(NSLOT, -1, np.int64)       # Forschung: Ausstiegsereignis vorgemerkter generischer Positionen
+    # Tagesdatensaetze (Forschung)
+    t_mode0 = 0.0; t_fak0 = -1.0; t_eqmin = 1e18; t_eqmax = -1e18; t_fltmin = 0.0; t_bust = 0.0; t_pay = 0.0; t_neu = 0.0
     # Tageszaehler
     db_trades = np.zeros(2, np.int64); losses = np.zeros(NSLOT, np.int64)
     day_real = 0.0; day_had = False; day_start_bal = start; day_ref_plus = 0.0
@@ -434,6 +451,19 @@ def run_path(Pv, d0, d1, seed,
         dow = ev_dow[p]
         # ================================================= Tageswechsel (17:00 NY)
         if di != dayidx:
+            if tage_an and n_day < out_day.shape[0]:
+                flt_e = 0.0
+                for k in range(NSLOT):
+                    if p_on[k]:
+                        flt_e += (p_last[k] - p_entry[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]] + p_swap[k]
+                out_day[n_day, 0] = float(days[dayidx]); out_day[n_day, 1] = t_mode0; out_day[n_day, 2] = t_fak0
+                out_day[n_day, 3] = day_real; out_day[n_day, 4] = bal; out_day[n_day, 5] = bal + flt_e
+                out_day[n_day, 6] = min(t_eqmin, bal + flt_e); out_day[n_day, 7] = max(t_eqmax, bal + flt_e)
+                out_day[n_day, 8] = t_fltmin; out_day[n_day, 9] = day_start_bal; out_day[n_day, 10] = day_ref_plus
+                out_day[n_day, 11] = t_bust; out_day[n_day, 12] = t_pay; out_day[n_day, 13] = t_neu; out_day[n_day, 14] = peak
+                out_day[n_day, 15] = 1.0 if (day_had and day_real >= needday) else 0.0
+                n_day += 1
+            t_fak0 = -1.0; t_eqmin = 1e18; t_eqmax = -1e18; t_fltmin = 0.0; t_bust = 0.0; t_pay = 0.0; t_neu = 0.0
             mult = 3.0 if day_dow[dayidx] == 3 else 1.0          # Mittwoch-Servertag -> dreifacher Swap
             for k in range(NSLOT):
                 if p_on[k]:
@@ -475,6 +505,7 @@ def run_path(Pv, d0, d1, seed,
                             out_ev[n_out, 0] = 1.0; out_ev[n_out, 1] = float(days[di]); out_ev[n_out, 2] = amt
                             n_out += 1
                         st[3] += 1; st[4] += amt
+                        t_pay = amt
                         if cyc_start >= 0:
                             st[24] += float(days[di] - cyc_start)
                         gap_ = float(days[di] - last_pay_day)
@@ -485,6 +516,7 @@ def run_path(Pv, d0, d1, seed,
                         npay_acc += 1
                     else:
                         bal = start; peak = start; npay_acc = 0
+                        t_neu = 1.0
                         if n_out < MAXEV:
                             out_ev[n_out, 0] = 3.0; out_ev[n_out, 1] = float(days[di]); out_ev[n_out, 2] = fee
                             n_out += 1
@@ -499,6 +531,7 @@ def run_path(Pv, d0, d1, seed,
                 if p_on[k]:
                     flt0 += (p_last[k] - p_entry[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]] + p_swap[k]
             day_ref_plus = flt0 if (tagesrefeq and flt0 > 0.0) else 0.0
+            t_eqmin = bal + flt0; t_eqmax = bal + flt0
             if floor_eod and bal + flt0 > peak:
                 peak = bal + flt0
             day_real = 0.0; day_had = False; day_locked = False
@@ -508,6 +541,7 @@ def run_path(Pv, d0, d1, seed,
             for k in range(NSLOT):
                 losses[k] = 0
             day_trades_all = 0
+            t_mode0 = float(mode)
 
         i0 = ev_i[0, p]; i1 = ev_i[1, p]
         # Kurse am Open dieser Kerze je Symbol (Bid) und Spread
@@ -539,11 +573,12 @@ def run_path(Pv, d0, d1, seed,
                 bal += pnl; day_real += pnl - p_comm[k]; day_had = True
                 st[2] += pnl; st[22] += 1
                 tot = p_acc[k] + pnl - p_comm[k]
-                vorm = we_reentry and k < NZ0 and (mode == 0 or we_reif) and p_rd[k] > 0.0
+                vorm = we_reentry and (k < NZ0 or (k >= G0 and GP[(k - G0) // 2, 17] > 0.5)) and (mode == 0 or we_reif) and p_rd[k] > 0.0
                 if vorm:
                     w_on[k] = True; w_dir[k] = p_dir[k]; w_sl[k] = p_sl[k]; w_tp[k] = p_tp[k]; w_lots[k] = p_lots[k]
                     w_rd[k] = p_rd[k]; w_ref[k] = p_ref[k]; w_mfe[k] = p_mfe[k]; w_be[k] = p_be[k]; w_t1[k] = p_t1[k]
                     w_i5[k] = p_i5[k]; w_m15[k] = p_m15[k]; w_tmin[k] = p_tmin[k]; w_fri[k] = ev_i[0, p] * 0 + days[dayidx]
+                    w_xev[k] = p_xev[k]
                 p_on[k] = False
                 # Trade-Protokoll (Wochenend-Schluss beendet den Trade)
                 if n_tr < MAXTR:
@@ -592,9 +627,17 @@ def run_path(Pv, d0, d1, seed,
                 if k >= 2 and k < NZ0 and mode != 0 and r21_ripeclose:
                     w_on[k] = False
                     continue
+                if k >= G0 and mode != 0 and GP[(k - G0) // 2, 8] > 0.5:
+                    w_on[k] = False
+                    continue
                 if day_locked or p_on[k]:
                     continue
                 sy = 0 if (k == 0 or k == 2 or k == 4) else 1
+                if k >= G0:
+                    sy = (k - G0) % 2
+                if k >= G0 and w_xev[k] >= 0 and p >= w_xev[k]:
+                    w_on[k] = False                         # Zeit-Ausstieg waere schon erreicht
+                    continue
                 ii = ev_i[sy, p]
                 if ii < 0:
                     continue
@@ -628,6 +671,8 @@ def run_path(Pv, d0, d1, seed,
                 p_be[k] = w_be[k]; p_t1[k] = True; p_i5[k] = w_i5[k]; p_m15[k] = w_m15[k]; p_tmin[k] = w_tmin[k]
                 p_comm[k] = comm[sy] * p_lots[k]; bal -= p_comm[k]; p_acc[k] = 0.0; p_last[k] = bid
                 p_v1[k] = 0.0
+                if k >= G0:
+                    p_xev[k] = w_xev[k]
                 w_on[k] = False
                 st[23] += 1
 
@@ -684,6 +729,8 @@ def run_path(Pv, d0, d1, seed,
         fak = _ddf(eq_now, peak, floor_dist, start, ddfull, ddmin, ddfmin)
         if eq_now < start:
             fak *= belowstart
+        if t_fak0 < 0.0:
+            t_fak0 = fak
         buf_now = (eq_now - (peak - floor_dist)) / start * 100.0
         if floorguard > 0.0 and buf_now < floorguard:
             fak *= floorguard_mult
@@ -1040,8 +1087,19 @@ def run_path(Pv, d0, d1, seed,
                     hed = True
                 if w_on[q] and q < NZ0 and ((q == sy) or (q == 2 + sy) or (q == 4 + sy)) and w_dir[q] != d:
                     hed = True
+                if w_on[q] and q >= G0 and (q - G0) % 2 == sy and w_dir[q] != d:
+                    hed = True
             if hed:
                 continue
+            if GP[s_, 18] > 0.5:                                                 # Forschung: nur bei flachem Symbol
+                besetzt = False
+                for q in range(NSLOT):
+                    if p_on[q] and p_sym[q] == sy:
+                        besetzt = True
+                    if w_on[q] and ((q < NZ0 and q % 2 == sy) or (q >= NZ0 and q < G0 and sy == 1) or (q >= G0 and (q - G0) % 2 == sy)):
+                        besetzt = True
+                if besetzt:
+                    continue
             rd = g_rd[a]
             if rd <= stoplvl[sy] * 1.2:
                 continue
@@ -1158,6 +1216,12 @@ def run_path(Pv, d0, d1, seed,
                 fav = (bpx - p_ref[k]) * d / p_rd[k]
                 if fav > p_mfe[k]:
                     p_mfe[k] = fav
+            if bal + worst < t_eqmin:
+                t_eqmin = bal + worst
+            if bal + best > t_eqmax:
+                t_eqmax = bal + best
+            if worst_l < t_fltmin:
+                t_fltmin = worst_l
             if (not floor_eod) and bal + best > peak:
                 peak = bal + best
             day_ref = day_start_bal + day_ref_plus
@@ -1185,6 +1249,7 @@ def run_path(Pv, d0, d1, seed,
                     n_out += 1
                 st[5] += 1
                 st[5 + bust] += 1
+                t_bust = float(bust)
                 st[Z_B0 + zst] += 1
                 mode = 3; wait = rebuydelay
                 cur_streak = 0; cons_loss = 0; z_cons = 0; cur_lday = 0; nz_pend = False; tr_done = n_tr
@@ -1927,6 +1992,10 @@ def run_path(Pv, d0, d1, seed,
                 if jump < nxt:
                     nxt = jump
             # Wochenend-Wiederaufnahme: Sonntag 18:00 ist ohnehin ein neuer Tag
+            if we_genau:                                  # Forschung: vorgemerkte Wiederaufnahme jede Kerze pruefen
+                for k in range(NSLOT):
+                    if w_on[k]:
+                        nxt = p + 1
             if nxt <= p:
                 nxt = p + 1
             p = nxt
@@ -1935,6 +2004,18 @@ def run_path(Pv, d0, d1, seed,
             continue
         p += 1
 
+    if tage_an and n_day < out_day.shape[0]:                    # Forschung: letzter (evtl. unvollstaendiger) Tag
+        flt_e = 0.0
+        for k in range(NSLOT):
+            if p_on[k]:
+                flt_e += (p_last[k] - p_entry[k]) * p_dir[k] * p_lots[k] * mpp[p_sym[k]] + p_swap[k]
+        out_day[n_day, 0] = float(days[dayidx]); out_day[n_day, 1] = t_mode0; out_day[n_day, 2] = t_fak0
+        out_day[n_day, 3] = day_real; out_day[n_day, 4] = bal; out_day[n_day, 5] = bal + flt_e
+        out_day[n_day, 6] = min(t_eqmin, bal + flt_e); out_day[n_day, 7] = max(t_eqmax, bal + flt_e)
+        out_day[n_day, 8] = t_fltmin; out_day[n_day, 9] = day_start_bal; out_day[n_day, 10] = day_ref_plus
+        out_day[n_day, 11] = t_bust; out_day[n_day, 12] = t_pay; out_day[n_day, 13] = t_neu; out_day[n_day, 14] = peak
+        out_day[n_day, 15] = 1.0 if (day_had and day_real >= needday) else 0.0
+        n_day += 1
     st[26] = max_streak; st[29] = max_lday; st[31] = maxdd
     st[38] = gaps_max; st[39] = gaps_sum
     # offene Luecke bis zum Ende zaehlt fuer gaps_max
@@ -1981,8 +2062,10 @@ def smatrix(rows=None):
     return SM
 
 
-def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None, SM=None):
+def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None, SM=None, tage=False):
+    """tage=True (Forschung): zusaetzlich Tagesdatensaetze je Prop-Tag (Spalten KDN) unter 'tage'."""
     out = np.zeros((MAXEV, 6)); tr = np.zeros((MAXTR, NTRC)); st = np.zeros(len(ST))
+    od = np.full((len(mk.days) + 2 if tage else 1, KD), -1.0)
     if SM is None:
         SM = smatrix()
     if masks is None:
@@ -1999,7 +2082,10 @@ def run(mk, Pv, d0, d1, seed=0, skip=0.0, masks=None, GP=None, SM=None):
                       mk.nz["next"], mk.ev_nzeod,
                       masks[0], masks[1], masks[2],
                       g["ev"], g["str"], g["sym"], g["dir"], g["rd"], g["tp"], g["xev"], g["w"], g["next"], masks[3], GP, SM,
-                      out, tr, st)
+                      out, tr, st, od)
     d1c = min(d1, len(mk.days) - 1)
     yrs = (mk.days[d1c] - mk.days[d0]) / 365.25
-    return dict(st=st, ev=out[:ne].copy(), tr=tr[:nt].copy(), years=yrs)
+    res = dict(st=st, ev=out[:ne].copy(), tr=tr[:nt].copy(), years=yrs)
+    if tage:
+        res["tage"] = od[od[:, 0] >= 0].copy()
+    return res
