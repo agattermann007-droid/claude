@@ -36,9 +36,18 @@ Dieser Plan legt fest, was getestet wird, bevor ein Lauf startet. Nach deinem OK
 
 ---
 
-## 2. Entscheidungen, die ich von dir brauche
+## 2. Entscheidungen
 
-Zu jeder Frage steht meine Empfehlung. „OK, alle Empfehlungen“ reicht als Antwort.
+> **Entschieden am 14.10.2026:** Der Nutzer hat mit „ok, alles schritt für schritt was du denkst was mir am meisten netto pro monat bringt“ geantwortet. Damit gelten **alle Empfehlungen E1–E11**.
+>
+> **Zielgröße** ist ab jetzt **Netto pro Monat**: Auszahlungen (Anteil 80 %) minus Kosten neu gekaufter Konten (148,50 $ je verbranntem 10k-Konto, wie `fee` im Replikat). bpp ≤ 0,10 bleibt harte Nebenbedingung. Kriterium 2 in 3.4 ist entsprechend angepasst.
+>
+> Offen bleiben nur Angaben, die ich nicht selbst festlegen kann:
+> - Terminalpfad und Datenordner,
+> - Spezifikationen von XAG, Öl, BTC und der 3-fach-Swap-Tag von NAS,
+> - Kaufdatum des Kontos vor dem 21.09.2026 (E5).
+
+Zu jeder Frage steht meine Empfehlung.
 
 | Nr. | Frage | Optionen | Empfehlung |
 |---|---|---|---|
@@ -52,7 +61,7 @@ Zu jeder Frage steht meine Empfehlung. „OK, alle Empfehlungen“ reicht als An
 | **E8** | Paket-Installationen | hier: `numba==0.67.0` (+ `llvmlite==0.49.0`), `pytest==9.1.1` · Server: Python ≥ 3.10 x64, venv, `MetaTrader5==5.0.6180`, `numpy` (feste Version passend zur Python-Version) | bitte freigeben. Versionen sind mindestens 4 Wochen alt und mit dem installierten numpy 2.5.3 verträglich |
 | **E9** | Neue Familie bei offener V8-Position im selben Symbol | **streng:** nur, wenn das Symbol über alle Module flach ist · V8-Konvention (Hedging-Sperre, Budget, Risiko je Idee) | **streng** – entspricht Stufe 4 des Auftrags („Slot nur, wenn frei“, keine Parallelpositionen) |
 | **E10** | Alarmkanal des Sidecars | **a** nur MT5-Push über den EA (fällt aus, wenn das Terminal steht) · **b** a + ntfy.sh · **c** a + Telegram · **d** a + E-Mail | **b.** Ein Terminal-Ausfall braucht einen Kanal am Terminal vorbei; ntfy braucht kein Konto, das Thema wird nur lokal auf dem Server gespeichert |
-| **E11** | Datenübertragung zu mir | Google-Drive-Ordner · eigener Git-Branch mit ZIP | **Google Drive** (Upload im Browser des Servers; ich lese über den Drive-Connector). CSV-Dateien kommen nie ins Repo |
+| **E11** | Datenübertragung zu mir | Google-Drive-Ordner · eigener Git-Branch mit ZIP | **geändert am 14.10.2026: GitHub-Upload** in den Branch `daten-upload` (Weboberfläche, je Datei < 25 MB). Grund: Der Drive-Connector lädt höchstens 10 MB je Datei. Ich entpacke lokal; CSV-Dateien kommen nie in den Arbeitsbranch. Das Repository ist öffentlich → Empfehlung: vorher auf privat stellen. Anleitung: `research/DATEN_EXPORT.md` |
 
 Zusätzlich brauche ich zwei Angaben (keine Entscheidung): den **Pfad zu `terminal64.exe` des GFT-Terminals** und den **GFT-Datenordner** (`[MT5_DATENORDNER]`). Beides steht im MT5-Journal beim Start bzw. unter Datei → Dateiordner öffnen.
 
@@ -87,13 +96,13 @@ Gemäß E1. Gerechnet auf identischer Engine, identischen Daten und identischen 
   - Betrag: 80 %, Deckel 6 % für die ersten 2 Auszahlungen.
   - Danach Reset aufs Startkapital, neuer Boden.
   - Nach einer Pleite startet im selben Pfad ein neues Konto.
-- **Kennzahlen:** Auszahlungen/Jahr, **bpp** (verbrannte Konten je Auszahlung), Ø Auszahlung – je Blockgröße getrennt.
+- **Kennzahlen:** **Netto pro Monat** (Zielgröße), Auszahlungen/Jahr, **bpp** (verbrannte Konten je Auszahlung), Ø Auszahlung – je Blockgröße getrennt.
 - **Grenze:** Ein Tages-Bootstrap kann Zustandsregeln (Schutz gültiger Tage, Reife) nur in der Form abbilden, in der sie auf dem Originalpfad gewirkt haben. Als Gegenprobe rechne ich zusätzlich die **rollierenden Konten des Replikats** (eng6, wie in den V8-Berichten). Widersprechen sich beide, steht das im Bericht.
 
 ### 3.4 BESTANDEN nur, wenn alle sechs gelten
 Wie Auftrag Abschnitt 5:
 1. bpp ≤ 0,10.
-2. Mehr Auszahlungen/Jahr als die Baseline, in allen drei Blockgrößen.
+2. Mehr **Netto pro Monat** als die Baseline, in allen drei Blockgrößen. Entscheidung des Nutzers vom 14.10.2026; vorher: Auszahlungen/Jahr. Auszahlungen/Jahr werden weiter berichtet.
 3. Jedes Kalenderjahr positiv.
 4. Plateau: ±20 % auf jedem freien Parameter kippt das Netto-R-Vorzeichen nicht, und die Auszahlungen fallen höchstens 15 %.
 5. Blindlauf nicht schlechter als die Baseline im selben Fenster.
