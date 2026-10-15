@@ -172,12 +172,14 @@ def build(x, days, start_m, end_m, d, k=1.0, tgt_R=np.nan, w=None):
         w['d'] = d
     else:
         w['d'] = pd.Series(d).reindex(w.index)
-    w = w.dropna(subset=['p_sig', 'p_in', 'p_end', 'sigma', 'd'])
-    w = w[(w['d'] != 0) & (w['p_in'] == w['p_sig'] + 1) & (w['p_end'] >= w['p_in'])]
+    # nur Daten bis zur Signalkerze: Einstiegs- und Schlusskerze duerfen (auf abgeschnittenen Daten) noch fehlen
+    w = w.dropna(subset=['p_sig', 'sigma', 'd'])
+    w = w[w['d'] != 0]
+    w['i_last'] = w['p_end'].fillna(w['p_sig'])        # fehlt die Schlusskerze, verfaellt das Signal in qbt (-8)
     c = x['c'].to_numpy(float)
     ref = c[w['p_sig'].astype(int)]
     sig = pd.DataFrame({'i_sig': w['p_sig'].astype(np.int64).to_numpy(), 'd': w['d'].astype(np.int64).to_numpy(),
-                        'i_last': w['p_end'].astype(np.int64).to_numpy(), 'kind': 'market', 'tgt_R': tgt_R,
+                        'i_last': w['i_last'].astype(np.int64).to_numpy(), 'kind': 'market', 'tgt_R': tgt_R,
                         'sigma': w['sigma'].to_numpy(), 'day': w.index})
     sig['stop'] = ref * (1 - sig['d'] * k * sig['sigma'])
     return sig.reset_index(drop=True)
