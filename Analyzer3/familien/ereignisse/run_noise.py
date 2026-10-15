@@ -40,7 +40,7 @@ def main(phase, insts=('NAS100', 'US500')):
             cell = qbt.report_cell(x, tr[np.asarray(m)], per)
             name = f'N10_{sn}|{inst}|1R'
             ledger.log_variant(FAM, name, dict(rule='noise10', subset=sn, inst=inst, src='noise-1.0 Rekonstruktion; Filter Ereignistag'),
-                               cell, note=phase)
+                               cell, note='v2')
             for p, r in cell.iterrows():
                 rows.append(dict(variante=name, periode=p, trefferquote=r['tvs'], art_trefferquote='Target vor Stop',
                                  R=r['R'], R_pro_tag=r['R'] * r['per_day'], n=r['n'], per_day=r['per_day'], win=r['win'],

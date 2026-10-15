@@ -24,6 +24,8 @@ FAM = 'ereignisse'
 TARGETS = [0.5, 1.0, 2.0, np.nan]
 IDX = ['NAS100', 'US500']
 FX = ['XAUUSD', 'EURUSD', 'GBPUSD', 'AUDUSD', 'USDCAD', 'USDCHF']
+OIL = ['WTI', 'BRENT']
+NOTE = 'v2'   # Daten nach Uhrkorrektur (Neubau 15.10.2026 ~20:2x)
 
 # name: (Ereignis, Instrumente, Fenster (start, ende) NY-Minuten, Richtung, k, Quelle)
 #   Richtung: 'long' | ('cont'|'rev', a, b) = Vorzeichen der Rendite a->b fortsetzen bzw. umkehren
@@ -51,6 +53,14 @@ RULES = {
                 'Gegenrichtung 8:30-9:30 bis 15:00 (nach Train-Befund MOM930 gewaehlt, Spiegelregel)'),
     'FADE930_KEIN': ('kein', IDX, (570, 900), ('rev', 510, 570), 1.0,
                      'Kontrolle zu FADE930: gleiche Regel an Tagen ohne FOMC/CPI/NFP (ist der Effekt ereignisspezifisch?)'),
+    'EIA_CONT': ('eia', OIL, (('rel', 30), 870), ('cont', ('rel', 0), ('rel', 30)), 1.0,
+                 'Wen/Indriawan/Lien/Xu 2023 EJ: an EIA-Tagen sagt die Halbstunde ab Veroeffentlichung die Schluss-'
+                 'Halbstunde voraus (Momentum); Daytrade-Form: Richtung t..t+30 fortsetzen bis 14:30 (NYMEX-Settlement)'),
+    'EIA_CONT_LIT': ('eia', OIL, (930, 960), ('cont', ('rel', 0), ('rel', 30)), 1.0,
+                     'Wen/Indriawan/Lien/Xu 2023 EJ woertlich: Richtung t..t+30 -> letzte Halbstunde 15:30-16:00'),
+    'EIA_REV': ('eia', OIL, (('rel', 30), ('rel', 90)), ('rev', ('rel', 0), ('rel', 30)), 1.0,
+                'Li/Geman 2018 J. Energy Markets: Reaktion dauert ~25 min, danach schnelle Umkehr; '
+                'Gegenrichtung t..t+30 von t+30 bis t+90'),
     'FXMOM30': ('cpinfp', FX, (540, 720), ('cont', 510, 540), 1.0,
                 'Evans/Lyons 2008 JFE, Love/Payne 2008 JFQA: Order-Flow traegt News weiter; Richtung 8:30-9:00 -> 12:00'),
 }
@@ -60,11 +70,20 @@ def tname(t):
     return 'none' if np.isnan(t) else f'{t:g}R'
 
 
-def direction(x, days, spec):
+def res_m(v, tm):
+    """Fensterzeit: absolute NY-Minute oder ('rel', Minuten nach der Ereigniszeit tm)."""
+    return tm + v[1] if isinstance(v, tuple) else v
+
+
+def fmt_m(v):
+    return f't{v[1]:+d}' if isinstance(v, tuple) else f'{v // 60}:{v % 60:02d}'
+
+
+def direction(x, days, spec, tm=None):
     if spec == 'long':
         return 1
     mode, a, b = spec
-    r = ev.reaction(x, a, b)
+    r = ev.reaction(x, res_m(a, tm), res_m(b, tm))
     d = np.sign(r).fillna(0).astype(int)
     return d if mode == 'cont' else -d
 
@@ -95,19 +114,27 @@ def main(phase, only=None):
                 df = Q.load(inst, None, end, warmup_days=0)
                 cache[inst] = ev.prep(df, inst)
             x = cache[inst]
-            days = ev.event_days(evk) if evk != 'kein' else x.attrs['tdays'].difference(ev.event_days('any'))
-            w = ev.window_frame(x, a, b)
-            d = direction(x, days, spec)
+            if evk == 'kein':
+                groups = [(None, x.attrs['tdays'].difference(ev.event_days('any')))]
+            else:
+                et = ev.event_table(evk)
+                groups = [(int(tm), g.index) for tm, g in et.groupby('t_m')]
             for tg in TARGETS:
-                sig = ev.build(x, days, a, b, d, k=k, tgt_R=tg, w=w)
+                sigs = []
+                for tm, days in groups:
+                    a_, b_ = res_m(a, tm), res_m(b, tm)
+                    if b_ <= a_:
+                        continue
+                    sigs.append(ev.build(x, days, a_, b_, direction(x, days, spec, tm), k=k, tgt_R=tg))
+                sig = pd.concat(sigs, ignore_index=True)
                 res = qbt.simulate(x, sig, inst)
                 tr = qbt.trades_only(res)
                 per = periods(inst, phase)
                 cell = qbt.report_cell(x, tr, per)
                 name = f'{rn}|{inst}|{tname(tg)}'
-                params = dict(rule=rn, inst=inst, event=evk, win=f'{a // 60}:{a % 60:02d}-{b // 60}:{b % 60:02d} NY',
+                params = dict(rule=rn, inst=inst, event=evk, win=f'{fmt_m(a)}-{fmt_m(b)} NY',
                               dir=str(spec), stop=f'{k:g}*sigmaF20', tgt_R=None if np.isnan(tg) else tg, src=src)
-                ledger.log_variant(FAM, name, params, cell, note=phase)
+                ledger.log_variant(FAM, name, params, cell, note=NOTE)
                 for p, r in cell.iterrows():
                     rows.append(row_of(name, p, r, tg))
                 tr = tr.assign(rule=rn, tgt=tname(tg))

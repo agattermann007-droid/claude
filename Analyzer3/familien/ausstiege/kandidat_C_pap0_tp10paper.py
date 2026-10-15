@@ -6,7 +6,7 @@ Marke erlaubt (eine Position zur Zeit). Market zur naechsten Eroeffnung.
 Anfangsstop Bandmitte (R-Einheit). Ab der Kerze nach dem Einstieg Nachzieh-Stop nach dem Paper: Long max(UB, VWAP),
 Short min(LB, VWAP), nur an den Halbstunden-Marken neu gesetzt (dazwischen gilt der letzte Wert, nur nachziehen).
 Target (sichtbar) = 1R fuer 50 % der Position, Rest mit dem Nachzieh-Stop, Zeitausstieg 15:00 NY.
-Auswahl auf NAS100 Train 2021-23 als hoechstes R je Handelstag.
+Auswahl auf NAS100 Train 2021-23 als hoechstes R je Handelstag; US500 mit derselben Regel (knapp t 2,0 auf Train).
 
 Technik: qbt.simulate erlaubt nur eine Nachzieh-Spalte. Die Spalte 'tr_paper_dir' traegt deshalb an jeder Kerze den
 Paper-Stop in Richtung des juengsten Signals des Tages (Marken-Wert von max(UB,VWAP) bzw. min(LB,VWAP)). Solange eine
@@ -24,7 +24,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 import noise
 
 NAME = 'ausstiege-C: Paper-Einstieg ohne Filter, Stop Bandmitte + Paper-Nachzug max(UB,VWAP)/min(LB,VWAP), Teilziel 50% bei 1R, 15:00 NY'
-INSTRUMENTS = ['NAS100']
+# US500 nach der vorab festgelegten Regel (auswahl_train.json): Train R>0 mit t>=2 und 2024 R>0, ohne eigene Abstimmung.
+# Erfuellt erst auf den korrigierten Kerzen (v3): US500 Train +0,024 R, t 2,01; 2024 +0,039 R. Knapp.
+INSTRUMENTS = ['NAS100', 'US500']
 ENTRY = dict(grid=30, trend='none', one_per_day=False)
 TRAIL = 'tr_paper_dir'
 

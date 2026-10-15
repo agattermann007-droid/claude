@@ -66,6 +66,19 @@ def market_cal():
     return f
 
 
+def event_table(kind):
+    """Ereignistage mit Uhrzeit t_m (NY-Minute)."""
+    if kind == 'fomc':
+        return fomc()[['t_m']]
+    if kind == 'fomc_sep':
+        return fomc(sep_only=True)[['t_m']]
+    if kind in ('cpi', 'nfp', 'cpinfp'):
+        return macro(kind)
+    if kind == 'eia':
+        return eia()
+    raise ValueError(kind)
+
+
 def event_days(kind):
     if kind == 'fomc':
         return fomc().index

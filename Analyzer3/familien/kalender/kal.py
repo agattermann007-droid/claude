@@ -113,8 +113,10 @@ def window_frame(x, start_m, end_m):
     r = pd.Series(np.nan, index=tdays)
     r[ok] = c[w.loc[ok, 'p_end'].astype(int)] / o[w.loc[ok, 'p_in'].astype(int)] - 1
     r2 = (r ** 2).dropna()
-    sig = np.sqrt(r2.rolling(LOOKBACK, min_periods=LOOKBACK).mean().shift(1))
-    w['sigma'] = sig.reindex(tdays)
+    roll = r2.rolling(LOOKBACK, min_periods=LOOKBACK).mean()
+    # sigma fuer Tag D: letzter Wert strikt vor D (auch wenn D selbst noch keine Fensterrendite hat -> kausal)
+    sig = np.sqrt(roll.reindex(tdays, method='ffill').shift(1))
+    w['sigma'] = sig
     w['ret'] = r
     return w
 
