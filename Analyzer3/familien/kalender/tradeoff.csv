@@ -31,20 +31,20 @@ ONneg|NAS100|none,Train,0.4567,Gewinnquote,-0.0436,-0.0189,335,0.4328
 ONneg|NAS100|none,Nullmodell Train,0.4363,Gewinnquote,-0.0612,-0.0265,335,0.4328
 ONneg|NAS100|none,Val 2024,0.3826,Gewinnquote,-0.2139,-0.0942,115,0.4406
 ONneg|NAS100|none,Nullmodell Val 2024,0.407,Gewinnquote,-0.139,-0.0613,115,0.4406
-TOM|NAS100|0.5R,Train,0.6759,Target vor Stop,-0.0223,-0.0039,135,0.1744
-TOM|NAS100|0.5R,Nullmodell Train,0.7248,Target vor Stop,0.0281,0.0049,135,0.1744
+TOM|NAS100|0.5R,Train,0.6697,Target vor Stop,-0.0296,-0.0052,136,0.1757
+TOM|NAS100|0.5R,Nullmodell Train,0.7247,Target vor Stop,0.0261,0.0046,136,0.1757
 TOM|NAS100|0.5R,Val 2024,0.6923,Target vor Stop,0.007,0.0013,48,0.1839
 TOM|NAS100|0.5R,Nullmodell Val 2024,0.6615,Target vor Stop,-0.0485,-0.0089,48,0.1839
-TOM|NAS100|1R,Train,0.4941,Target vor Stop,0.0212,0.0037,135,0.1744
-TOM|NAS100|1R,Nullmodell Train,0.4975,Target vor Stop,0.0306,0.0053,135,0.1744
+TOM|NAS100|1R,Train,0.4884,Target vor Stop,0.0136,0.0024,136,0.1757
+TOM|NAS100|1R,Nullmodell Train,0.5018,Target vor Stop,0.034,0.006,136,0.1757
 TOM|NAS100|1R,Val 2024,0.5938,Target vor Stop,0.1493,0.0274,48,0.1839
 TOM|NAS100|1R,Nullmodell Val 2024,0.4697,Target vor Stop,-0.0011,-0.0002,48,0.1839
-TOM|NAS100|2R,Train,0.1042,Target vor Stop,0.0478,0.0083,135,0.1744
-TOM|NAS100|2R,Nullmodell Train,0.2115,Target vor Stop,0.066,0.0115,135,0.1744
+TOM|NAS100|2R,Train,0.102,Target vor Stop,0.0401,0.007,136,0.1757
+TOM|NAS100|2R,Nullmodell Train,0.2033,Target vor Stop,0.0599,0.0105,136,0.1757
 TOM|NAS100|2R,Val 2024,0.2778,Target vor Stop,0.197,0.0362,48,0.1839
 TOM|NAS100|2R,Nullmodell Val 2024,0.1319,Target vor Stop,0.0158,0.0029,48,0.1839
-TOM|NAS100|none,Train,0.5185,Gewinnquote,0.0385,0.0067,135,0.1744
-TOM|NAS100|none,Nullmodell Train,0.5023,Gewinnquote,0.0686,0.012,135,0.1744
+TOM|NAS100|none,Train,0.5147,Gewinnquote,0.0308,0.0054,136,0.1757
+TOM|NAS100|none,Nullmodell Train,0.5013,Gewinnquote,0.0631,0.0111,136,0.1757
 TOM|NAS100|none,Val 2024,0.5417,Gewinnquote,0.2115,0.0389,48,0.1839
 TOM|NAS100|none,Nullmodell Val 2024,0.5104,Gewinnquote,0.0364,0.0067,48,0.1839
 PREH|NAS100|0.5R,Train,0.7143,Target vor Stop,0.0665,0.0023,27,0.0349
@@ -79,52 +79,52 @@ OPEXW|NAS100|none,Train,0.5263,Gewinnquote,0.0773,0.0171,171,0.2209
 OPEXW|NAS100|none,Nullmodell Train,0.5026,Gewinnquote,0.0619,0.0137,171,0.2209
 OPEXW|NAS100|none,Val 2024,0.4138,Gewinnquote,-0.1372,-0.0305,58,0.2222
 OPEXW|NAS100|none,Nullmodell Val 2024,0.5113,Gewinnquote,0.0446,0.0099,58,0.2222
-ON|US500|0.5R,Train,0.6909,Target vor Stop,-0.0966,-0.0907,971,0.9391
-ON|US500|0.5R,Nullmodell Train,0.6662,Target vor Stop,-0.1203,-0.113,971,0.9391
+ON|US500|0.5R,Train,0.6899,Target vor Stop,-0.0976,-0.0917,972,0.94
+ON|US500|0.5R,Nullmodell Train,0.6657,Target vor Stop,-0.1206,-0.1134,972,0.94
 ON|US500|0.5R,Val 2024,0.6557,Target vor Stop,-0.195,-0.1883,252,0.9655
 ON|US500|0.5R,Nullmodell Val 2024,0.6647,Target vor Stop,-0.1885,-0.182,252,0.9655
-ON|US500|1R,Train,0.4899,Target vor Stop,-0.0668,-0.0628,971,0.9391
-ON|US500|1R,Nullmodell Train,0.4886,Target vor Stop,-0.0875,-0.0822,971,0.9391
+ON|US500|1R,Train,0.4889,Target vor Stop,-0.0678,-0.0637,972,0.94
+ON|US500|1R,Nullmodell Train,0.4835,Target vor Stop,-0.0929,-0.0873,972,0.94
 ON|US500|1R,Val 2024,0.4453,Target vor Stop,-0.1943,-0.1876,252,0.9655
 ON|US500|1R,Nullmodell Val 2024,0.4423,Target vor Stop,-0.2055,-0.1984,252,0.9655
-ON|US500|2R,Train,0.175,Target vor Stop,-0.0661,-0.062,971,0.9391
-ON|US500|2R,Nullmodell Train,0.2407,Target vor Stop,-0.0749,-0.0703,971,0.9391
+ON|US500|2R,Train,0.1745,Target vor Stop,-0.067,-0.063,972,0.94
+ON|US500|2R,Nullmodell Train,0.2437,Target vor Stop,-0.0747,-0.0702,972,0.94
 ON|US500|2R,Val 2024,0.1895,Target vor Stop,-0.1716,-0.1657,252,0.9655
 ON|US500|2R,Nullmodell Val 2024,0.169,Target vor Stop,-0.194,-0.1873,252,0.9655
-ON|US500|none,Train,0.4449,Gewinnquote,-0.0545,-0.0512,971,0.9391
-ON|US500|none,Nullmodell Train,0.4038,Gewinnquote,-0.0493,-0.0463,971,0.9391
+ON|US500|none,Train,0.4444,Gewinnquote,-0.0555,-0.0522,972,0.94
+ON|US500|none,Nullmodell Train,0.4028,Gewinnquote,-0.05,-0.047,972,0.94
 ON|US500|none,Val 2024,0.4008,Gewinnquote,-0.1532,-0.1479,252,0.9655
 ON|US500|none,Nullmodell Val 2024,0.393,Gewinnquote,-0.1795,-0.1733,252,0.9655
-ONneg|US500|0.5R,Train,0.663,Target vor Stop,-0.1114,-0.0469,435,0.4207
-ONneg|US500|0.5R,Nullmodell Train,0.6655,Target vor Stop,-0.1221,-0.0513,435,0.4207
+ONneg|US500|0.5R,Train,0.6611,Target vor Stop,-0.1135,-0.0479,436,0.4217
+ONneg|US500|0.5R,Nullmodell Train,0.6667,Target vor Stop,-0.1193,-0.0503,436,0.4217
 ONneg|US500|0.5R,Val 2024,0.6484,Target vor Stop,-0.2158,-0.0926,112,0.4291
 ONneg|US500|0.5R,Nullmodell Val 2024,0.6627,Target vor Stop,-0.1945,-0.0835,112,0.4291
-ONneg|US500|1R,Train,0.4818,Target vor Stop,-0.0804,-0.0338,435,0.4207
-ONneg|US500|1R,Nullmodell Train,0.4829,Target vor Stop,-0.0923,-0.0388,435,0.4207
+ONneg|US500|1R,Train,0.48,Target vor Stop,-0.0826,-0.0348,436,0.4217
+ONneg|US500|1R,Nullmodell Train,0.4851,Target vor Stop,-0.0902,-0.038,436,0.4217
 ONneg|US500|1R,Val 2024,0.4605,Target vor Stop,-0.2103,-0.0903,112,0.4291
 ONneg|US500|1R,Nullmodell Val 2024,0.443,Target vor Stop,-0.2159,-0.0926,112,0.4291
-ONneg|US500|2R,Train,0.1882,Target vor Stop,-0.0746,-0.0314,435,0.4207
-ONneg|US500|2R,Nullmodell Train,0.234,Target vor Stop,-0.0823,-0.0346,435,0.4207
+ONneg|US500|2R,Train,0.1872,Target vor Stop,-0.0767,-0.0324,436,0.4217
+ONneg|US500|2R,Nullmodell Train,0.2343,Target vor Stop,-0.0828,-0.0349,436,0.4217
 ONneg|US500|2R,Val 2024,0.16,Target vor Stop,-0.1959,-0.0841,112,0.4291
 ONneg|US500|2R,Nullmodell Val 2024,0.1871,Target vor Stop,-0.1908,-0.0819,112,0.4291
-ONneg|US500|none,Train,0.446,Gewinnquote,-0.0526,-0.0221,435,0.4207
-ONneg|US500|none,Nullmodell Train,0.4044,Gewinnquote,-0.0348,-0.0146,435,0.4207
+ONneg|US500|none,Train,0.445,Gewinnquote,-0.0548,-0.0231,436,0.4217
+ONneg|US500|none,Nullmodell Train,0.4037,Gewinnquote,-0.0338,-0.0143,436,0.4217
 ONneg|US500|none,Val 2024,0.4018,Gewinnquote,-0.1748,-0.075,112,0.4291
 ONneg|US500|none,Nullmodell Val 2024,0.3978,Gewinnquote,-0.1738,-0.0746,112,0.4291
-TOM|US500|0.5R,Train,0.7123,Target vor Stop,0.0231,0.0041,185,0.1789
-TOM|US500|0.5R,Nullmodell Train,0.6985,Target vor Stop,0.0013,0.0002,185,0.1789
+TOM|US500|0.5R,Train,0.7143,Target vor Stop,0.0256,0.0046,186,0.1799
+TOM|US500|0.5R,Nullmodell Train,0.7008,Target vor Stop,0.0033,0.0006,186,0.1799
 TOM|US500|0.5R,Val 2024,0.6341,Target vor Stop,-0.0438,-0.0081,48,0.1839
 TOM|US500|0.5R,Nullmodell Val 2024,0.6591,Target vor Stop,-0.0523,-0.0096,48,0.1839
-TOM|US500|1R,Train,0.5534,Target vor Stop,0.1169,0.0209,185,0.1789
-TOM|US500|1R,Nullmodell Train,0.4734,Target vor Stop,0.0081,0.0015,185,0.1789
+TOM|US500|1R,Train,0.5534,Target vor Stop,0.1136,0.0204,186,0.1799
+TOM|US500|1R,Nullmodell Train,0.475,Target vor Stop,0.0124,0.0022,186,0.1799
 TOM|US500|1R,Val 2024,0.5,Target vor Stop,0.0014,0.0003,48,0.1839
 TOM|US500|1R,Nullmodell Val 2024,0.4639,Target vor Stop,-0.0228,-0.0042,48,0.1839
-TOM|US500|2R,Train,0.1091,Target vor Stop,0.1215,0.0217,185,0.1789
-TOM|US500|2R,Nullmodell Train,0.1786,Target vor Stop,0.0158,0.0028,185,0.1789
+TOM|US500|2R,Train,0.1091,Target vor Stop,0.1182,0.0213,186,0.1799
+TOM|US500|2R,Nullmodell Train,0.1792,Target vor Stop,0.0186,0.0034,186,0.1799
 TOM|US500|2R,Val 2024,0.1905,Target vor Stop,0.0829,0.0152,48,0.1839
 TOM|US500|2R,Nullmodell Val 2024,0.1648,Target vor Stop,-0.0143,-0.0026,48,0.1839
-TOM|US500|none,Train,0.5459,Gewinnquote,0.1286,0.023,185,0.1789
-TOM|US500|none,Nullmodell Train,0.4812,Gewinnquote,0.0136,0.0024,185,0.1789
+TOM|US500|none,Train,0.543,Gewinnquote,0.1252,0.0225,186,0.1799
+TOM|US500|none,Nullmodell Train,0.4817,Gewinnquote,0.0181,0.0033,186,0.1799
 TOM|US500|none,Val 2024,0.4792,Gewinnquote,0.0742,0.0136,48,0.1839
 TOM|US500|none,Nullmodell Val 2024,0.4634,Gewinnquote,0.0046,0.0008,48,0.1839
 PREH|US500|0.5R,Train,0.75,Target vor Stop,0.0642,0.0022,36,0.0348
@@ -175,52 +175,52 @@ ONbig|NAS100|none,Train,0.4275,Gewinnquote,-0.043,-0.0077,138,0.1783
 ONbig|NAS100|none,Nullmodell Train,0.4327,Gewinnquote,-0.072,-0.0128,138,0.1783
 ONbig|NAS100|none,Val 2024,0.3548,Gewinnquote,-0.1227,-0.0146,31,0.1188
 ONbig|NAS100|none,Nullmodell Val 2024,0.4036,Gewinnquote,-0.1477,-0.0175,31,0.1188
-TOM+PREH|NAS100|0.5R,Train,0.6911,Target vor Stop,-0.0016,-0.0003,152,0.1964
-TOM+PREH|NAS100|0.5R,Nullmodell Train,0.7241,Target vor Stop,0.0267,0.0053,152,0.1964
+TOM+PREH|NAS100|0.5R,Train,0.6855,Target vor Stop,-0.0082,-0.0016,153,0.1977
+TOM+PREH|NAS100|0.5R,Nullmodell Train,0.7214,Target vor Stop,0.0229,0.0045,153,0.1977
 TOM+PREH|NAS100|0.5R,Val 2024,0.6744,Target vor Stop,-0.0193,-0.004,54,0.2069
 TOM+PREH|NAS100|0.5R,Nullmodell Val 2024,0.6654,Target vor Stop,-0.0408,-0.0084,54,0.2069
-TOM+PREH|NAS100|1R,Train,0.5106,Target vor Stop,0.0577,0.0113,152,0.1964
-TOM+PREH|NAS100|1R,Nullmodell Train,0.5022,Target vor Stop,0.0391,0.0077,152,0.1964
+TOM+PREH|NAS100|1R,Train,0.5053,Target vor Stop,0.0507,0.01,153,0.1977
+TOM+PREH|NAS100|1R,Nullmodell Train,0.5025,Target vor Stop,0.0381,0.0075,153,0.1977
 TOM+PREH|NAS100|1R,Val 2024,0.5833,Target vor Stop,0.1256,0.026,54,0.2069
 TOM+PREH|NAS100|1R,Nullmodell Val 2024,0.4907,Target vor Stop,0.0144,0.003,54,0.2069
-TOM+PREH|NAS100|2R,Train,0.1154,Target vor Stop,0.0864,0.017,152,0.1964
-TOM+PREH|NAS100|2R,Nullmodell Train,0.2039,Target vor Stop,0.0627,0.0123,152,0.1964
+TOM+PREH|NAS100|2R,Train,0.1132,Target vor Stop,0.0792,0.0157,153,0.1977
+TOM+PREH|NAS100|2R,Nullmodell Train,0.1978,Target vor Stop,0.0604,0.0119,153,0.1977
 TOM+PREH|NAS100|2R,Val 2024,0.25,Target vor Stop,0.1668,0.0345,54,0.2069
 TOM+PREH|NAS100|2R,Nullmodell Val 2024,0.1524,Target vor Stop,0.0268,0.0056,54,0.2069
-TOM+PREH|NAS100|none,Train,0.5395,Gewinnquote,0.0886,0.0174,152,0.1964
-TOM+PREH|NAS100|none,Nullmodell Train,0.5091,Gewinnquote,0.0736,0.0145,152,0.1964
+TOM+PREH|NAS100|none,Train,0.5359,Gewinnquote,0.0815,0.0161,153,0.1977
+TOM+PREH|NAS100|none,Nullmodell Train,0.5075,Gewinnquote,0.0701,0.0139,153,0.1977
 TOM+PREH|NAS100|none,Val 2024,0.537,Gewinnquote,0.1797,0.0372,54,0.2069
 TOM+PREH|NAS100|none,Nullmodell Val 2024,0.5155,Gewinnquote,0.0479,0.0099,54,0.2069
-ONbig|US500|0.5R,Train,0.6371,Target vor Stop,-0.1184,-0.0153,134,0.1296
-ONbig|US500|0.5R,Nullmodell Train,0.6713,Target vor Stop,-0.1073,-0.0139,134,0.1296
+ONbig|US500|0.5R,Train,0.632,Target vor Stop,-0.1251,-0.0163,135,0.1306
+ONbig|US500|0.5R,Nullmodell Train,0.6732,Target vor Stop,-0.1078,-0.0141,135,0.1306
 ONbig|US500|0.5R,Val 2024,0.5556,Target vor Stop,-0.2943,-0.0203,18,0.069
 ONbig|US500|0.5R,Nullmodell Val 2024,0.6765,Target vor Stop,-0.1745,-0.012,18,0.069
-ONbig|US500|1R,Train,0.4904,Target vor Stop,-0.0636,-0.0082,134,0.1296
-ONbig|US500|1R,Nullmodell Train,0.4769,Target vor Stop,-0.0872,-0.0113,134,0.1296
+ONbig|US500|1R,Train,0.4857,Target vor Stop,-0.0707,-0.0092,135,0.1306
+ONbig|US500|1R,Nullmodell Train,0.4818,Target vor Stop,-0.0831,-0.0109,135,0.1306
 ONbig|US500|1R,Val 2024,0.4706,Target vor Stop,-0.1557,-0.0107,18,0.069
 ONbig|US500|1R,Nullmodell Val 2024,0.4425,Target vor Stop,-0.2078,-0.0143,18,0.069
-ONbig|US500|2R,Train,0.25,Target vor Stop,-0.0389,-0.005,134,0.1296
-ONbig|US500|2R,Nullmodell Train,0.2337,Target vor Stop,-0.0706,-0.0092,134,0.1296
+ONbig|US500|2R,Train,0.2468,Target vor Stop,-0.0462,-0.006,135,0.1306
+ONbig|US500|2R,Nullmodell Train,0.2258,Target vor Stop,-0.0721,-0.0094,135,0.1306
 ONbig|US500|2R,Val 2024,0.3077,Target vor Stop,-0.0282,-0.0019,18,0.069
 ONbig|US500|2R,Nullmodell Val 2024,0.1552,Target vor Stop,-0.2189,-0.0151,18,0.069
-ONbig|US500|none,Train,0.4403,Gewinnquote,0.0565,0.0073,134,0.1296
-ONbig|US500|none,Nullmodell Train,0.4069,Gewinnquote,-0.0315,-0.0041,134,0.1296
+ONbig|US500|none,Train,0.437,Gewinnquote,0.0485,0.0063,135,0.1306
+ONbig|US500|none,Nullmodell Train,0.4106,Gewinnquote,-0.0354,-0.0046,135,0.1306
 ONbig|US500|none,Val 2024,0.3889,Gewinnquote,0.2208,0.0152,18,0.069
 ONbig|US500|none,Nullmodell Val 2024,0.3838,Gewinnquote,-0.1797,-0.0124,18,0.069
-TOM+PREH|US500|0.5R,Train,0.7212,Target vor Stop,0.0351,0.0071,209,0.2021
-TOM+PREH|US500|0.5R,Nullmodell Train,0.7,Target vor Stop,0.0012,0.0002,209,0.2021
+TOM+PREH|US500|0.5R,Train,0.7229,Target vor Stop,0.0373,0.0076,210,0.2031
+TOM+PREH|US500|0.5R,Nullmodell Train,0.6994,Target vor Stop,0.0021,0.0004,210,0.2031
 TOM+PREH|US500|0.5R,Val 2024,0.617,Target vor Stop,-0.0689,-0.0143,54,0.2069
 TOM+PREH|US500|0.5R,Nullmodell Val 2024,0.6604,Target vor Stop,-0.0446,-0.0092,54,0.2069
-TOM+PREH|US500|1R,Train,0.5446,Target vor Stop,0.122,0.0246,209,0.2021
-TOM+PREH|US500|1R,Nullmodell Train,0.4808,Target vor Stop,0.0178,0.0036,209,0.2021
+TOM+PREH|US500|1R,Train,0.5446,Target vor Stop,0.119,0.0242,210,0.2031
+TOM+PREH|US500|1R,Nullmodell Train,0.4835,Target vor Stop,0.0198,0.004,210,0.2031
 TOM+PREH|US500|1R,Val 2024,0.4737,Target vor Stop,-0.0187,-0.0039,54,0.2069
 TOM+PREH|US500|1R,Nullmodell Val 2024,0.4625,Target vor Stop,-0.017,-0.0035,54,0.2069
-TOM+PREH|US500|2R,Train,0.1148,Target vor Stop,0.1316,0.0266,209,0.2021
-TOM+PREH|US500|2R,Nullmodell Train,0.1797,Target vor Stop,0.0235,0.0047,209,0.2021
+TOM+PREH|US500|2R,Train,0.1148,Target vor Stop,0.1287,0.0261,210,0.2031
+TOM+PREH|US500|2R,Nullmodell Train,0.1831,Target vor Stop,0.0279,0.0057,210,0.2031
 TOM+PREH|US500|2R,Val 2024,0.1667,Target vor Stop,0.0611,0.0126,54,0.2069
 TOM+PREH|US500|2R,Nullmodell Val 2024,0.1621,Target vor Stop,-0.0129,-0.0027,54,0.2069
-TOM+PREH|US500|none,Train,0.5502,Gewinnquote,0.1394,0.0282,209,0.2021
-TOM+PREH|US500|none,Nullmodell Train,0.4857,Gewinnquote,0.0295,0.006,209,0.2021
+TOM+PREH|US500|none,Train,0.5476,Gewinnquote,0.1364,0.0277,210,0.2031
+TOM+PREH|US500|none,Nullmodell Train,0.4874,Gewinnquote,0.0348,0.0071,210,0.2031
 TOM+PREH|US500|none,Val 2024,0.4815,Gewinnquote,0.0534,0.0111,54,0.2069
 TOM+PREH|US500|none,Nullmodell Val 2024,0.4699,Gewinnquote,0.0176,0.0036,54,0.2069
 TOM+PREH_hw|NAS100|0.5R,Train,0.6875,Target vor Stop,-0.0157,-0.0016,77,0.0995

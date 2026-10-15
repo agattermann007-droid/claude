@@ -109,7 +109,7 @@ def sig_mim(x, pred='r1', H=30, tgt_R=np.nan, tp1=False):
     f['d'] = d
     g = f[f['d'].notna() & (f['d'] != 0) & f['isig'].notna() & f['sigma_H'].notna() & f['ilast'].notna()
           & (f['sigma_H'] > 0)].copy()
-    g = g[g['ilast'] > g['isig']]
+    # kein Filter ilast > isig: auf abgeschnittenen Daten ist das Fensterende noch nicht da (qbt markiert solche Faelle als -8)
     sig = pd.DataFrame({'i_sig': g['isig'].astype(np.int64).to_numpy(), 'd': g['d'].astype(np.int64).to_numpy(),
                         'sday': g.index.to_numpy()})
     sig['stop'] = g['csig'].to_numpy() * (1 - sig['d'].to_numpy() * g['sigma_H'].to_numpy())
