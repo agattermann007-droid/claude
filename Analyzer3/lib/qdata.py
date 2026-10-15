@@ -177,11 +177,13 @@ def src_oanda(instr):
     return to_m5(m1)
 
 
-def src_histdata_fs(sym, utc_offset_hours=-5):
-    """HistData M1 aus FutureSharks (Semikolon, 'YYYYMMDD HHMMSS'), deklariert EST ohne Sommerzeit."""
+def src_histdata_fs(sym):
+    """HistData M1 aus FutureSharks (Semikolon, 'YYYYMMDD HHMMSS'). Deklariert ist EST ohne Sommerzeit, tatsaechlich ist es
+    bis 2018 New-York-Ortszeit MIT Sommerzeit (geprueft GRXEUR gegen Pedram GER40 2015-18: in allen Sommermonaten 1 h,
+    Korrelation 1,000; deckt sich mit DEADBAND/extdata fuer NSXUSD). Serverzeit = NY-Ortszeit + 7 h."""
     fs = sorted(glob.glob(os.path.join(RAW, 'fs/pyfinancialdata/data/stocks/histdata', sym, '*.csv')))
     d = pd.concat([pd.read_csv(f, sep=';', header=None, names=['t', 'o', 'h', 'l', 'c', 'v']) for f in fs])
-    idx = fixed_offset_to_server(pd.to_datetime(d['t'], format='%Y%m%d %H%M%S'), utc_offset_hours)
+    idx = pd.DatetimeIndex(pd.to_datetime(d['t'], format='%Y%m%d %H%M%S')) + pd.Timedelta(hours=7)
     m1 = pd.DataFrame({'o': d.o.values, 'h': d.h.values, 'l': d.l.values, 'c': d.c.values, 'v': d.v.values * 0.0}, index=idx)
     m1 = m1[~m1.index.duplicated()]
     return to_m5(m1)
