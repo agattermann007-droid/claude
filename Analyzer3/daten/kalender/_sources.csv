@@ -1,0 +1,13 @@
+code,repo,commit,local,used
+JK,https://github.com/marekjarocinski/jkshocks_update_fed,f788aef7d573f87f28b70ffc3763e73c4886a53f,/home/user/data/raw/cal__marekjarocinski__jkshocks_update_fed,"source_data/fomc_surprises_jk.csv (FOMC announcement date+time, Bloomberg)"
+RR,https://github.com/returnandrisk/r-code,4c558f99d0353e9cdb84834aad8bfa9922559e26,/home/user/data/raw/cal__returnandrisk__r-code,"fomcdates_1936_2018.csv (Fed website scrape: meeting dates, scheduled, pressconf)"
+PFW,https://github.com/hackingthemarkets/pyfedwatch,aa6d69bf1ecd92eec185791e71fa35e5424dc6ba,/home/user/data/raw/cal__hackingthemarkets__pyfedwatch,"data/fomc/fomc_data.xlsx (rate-decision dates/times, UTC-5)"
+INV,https://github.com/systamental/cryptodatapy,0cc1490632e8a9e8750408b82240eb1f6bb1f8dd,/home/user/data/raw/cal__systamental__cryptodatapy,"tests/data/ip_econ_cal.csv (investing.com calendar dump 1970..2022-09-21, UTC)"
+FF,https://github.com/ehsanrs2/forexfactory-scraper,3fefefd14307df704629b4db85e23275c36c97e3,/home/user/data/raw/cal__ehsanrs2__forexfactory-scraper,"high_impact_events_calendar.csv (ForexFactory high impact 2020-01..2026-01-30, UTC)"
+BJ,https://github.com/borisjoffe/FOMC-dates.js,7af82fd4c591c92031d08cc737a8037a27482db3,/home/user/data/raw/cal__borisjoffe__FOMC-dates.js,dates.csv (FOMC 2021-2024)
+FP,https://github.com/helivan-research/fomc-personas,71d220bfa303acfbb3ff4db860887c16f32b186e,/home/user/data/raw/cal__helivan-research__fomc-personas,fomc_personas/macro.py FOMC_MEETINGS 2018-2025 + LIVE_DECISIONS 2026-2027; paper/.cache/fomc_votes/* (statements scraped through 2026-09-16)
+VN,https://gitlab.com/vaughnn.noah-portfolio/market-aware.git,9f165bf271224f1a5ab6a1fe9e9e34ac181ba81f,/home/user/data/raw/cal__gitlab__vaughnn.noah-portfolio__market-aware,data/fomc_meetings_2000_2027.json (cross-check only; contains errors)
+LEAN,https://github.com/QuantConnect/Lean,154e50720c430c14c83669d2ba7f9b715f0e76d2,/home/user/data/raw/cal__QuantConnect__Lean,Data/market-hours/market-hours-database.json (NYSE holidays/early closes cross-check)
+PMC,pypi:pandas_market_calendars,5.5.0,,NYSE schedule (primary)
+XC,pypi:exchange_calendars,4.13.2,,XNYS sessions/early closes (cross-check)
+WEB,"WebSearch results (bls.gov schedule pages, usinflationcalculator, therighttrader, fedratecalc, Reuters/BOE Report, EIA schedule page)",as of 2026-10-15,,CPI/NFP Feb-Dec 2026 dates; EIA 2023-2026 holiday-week overrides

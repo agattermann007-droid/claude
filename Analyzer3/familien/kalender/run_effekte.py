@@ -70,7 +70,7 @@ def main(phase):
                 name = f'{rn}|{inst}|{tname(tg)}'
                 params = dict(rule=rn, inst=inst, win=f'{a // 60}:{a % 60:02d}-{b // 60}:{b % 60:02d} NY', stop='1*sigmaF20',
                               tgt_R=None if np.isnan(tg) else tg, src=src)
-                ledger.log_variant(FAM, name, params, cell, note=phase)
+                ledger.log_variant(FAM, name, params, cell, note='v2')
                 for p, r in cell.iterrows():
                     art = 'Gewinnquote' if np.isnan(tg) else 'Target vor Stop'
                     rows.append(dict(variante=name, periode=p, trefferquote=(r['win'] if np.isnan(tg) else r['tvs']),

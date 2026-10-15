@@ -19,6 +19,12 @@ import common as C
 import ledger
 import varianten as V
 
+# v2: Lauf mit qdata ohne Vorlauf-Kerzen vor dev_start (Aenderung in lib/qdata.py um 19:15); v1-Zeilen im Ledger
+# stammen aus dem Lauf davor (Vorlauf 60 Tage vor dev_start) und sind ueberholt.
+# v3: Lauf auf korrigierten Kerzendateien (ts4-Uhr zeitweise 1 h daneben, US500 2020-03-08..2020-11-01 und 2021-03-14..04-09,
+# NAS100 2021-03-14..04-08). v1/v2-Zeilen sind ueberholt.
+NOTE = 'v3'
+
 
 def hit_metric(ex, s, tp1vs):
     if not np.isnan(ex.get('tgt', np.nan)):
@@ -49,7 +55,7 @@ def run_inst(inst, phase, log=True):
         name = f'{inst}|{V.label(entry, exn)}'
         if log:
             ledger.log_variant(C.FAMILIE, name, dict(inst=inst, entry=entry, **{k: v for k, v in ex.items()}), tab,
-                               note=f'tp1vs={tp1vs:.4f}' if not np.isnan(tp1vs) else '')
+                               note=NOTE + (f' tp1vs={tp1vs:.4f}' if not np.isnan(tp1vs) else ''))
         r = dict(inst=inst, variante=V.label(entry, exn), entry=entry, exit=exn, periode=pname,
                  has_target=V.has_target(ex), trefferquote=hit, art_trefferquote=art, tp1vs=tp1vs,
                  R_pro_tag=s['R'] * s['per_day'])

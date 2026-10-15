@@ -34,7 +34,7 @@ COST = {
     'NAS100': 0.0001, 'US500': 0.0001, 'US30': 0.00012, 'US2000': 0.0003,
     'GER40': 0.0001, 'UK100': 0.0002, 'FRA40': 0.0002, 'ESTX50': 0.0003, 'JPN225': 0.0003, 'AUS200': 0.0003,
     'XAUUSD': 0.00015, 'XAGUSD': 0.0006, 'WTI': 0.0006, 'BRENT': 0.0006,
-    'BTCUSD': 0.0008, 'ETHUSD': 0.0008,
+    'BTCUSD': 0.0008, 'ETHUSD': 0.0008, 'HK50': 0.0003,
     'EURUSD': 0.00011, 'GBPUSD': 0.00015, 'AUDUSD': 0.00015, 'USDCAD': 0.00015, 'USDCHF': 0.00018,
 }
 
@@ -138,13 +138,30 @@ def clean(df):
 
 # ---------------------------------------------------------------- Rohquellen
 
-def src_ts4(sym):
+# ts4-Uhrfehler (Broker zeitweise fest UTC+2 statt NY+7), bestimmt mit ts4_fix.py gegen Pedram-UTC (Tageskorrelation
+# 0,97-0,996 im richtigen Versatz); in diesen Fenstern wird auf das ts4-Label 1 h addiert. Ein-Tages-Ausreisser ignoriert.
+TS4_PLUS1 = {
+    'US100': [('2021-03-14', '2021-04-08 12:00')],
+    'US500': [('2020-03-08', '2020-11-01'), ('2021-03-14', '2021-04-09 12:00')],
+    'XAUUSD': [('2020-03-08', '2020-11-01'), ('2021-03-14', '2021-04-07 12:00')],
+    **{fx: [('2021-01-27', '2021-02-08 04:00')] for fx in ('EURUSD', 'GBPUSD', 'AUDUSD', 'USDCAD', 'USDCHF')},
+}
+
+
+def src_ts4(sym, fix=True):
     f = os.path.join(RAW, 'ts4', f'{sym}_M5.csv')
     d = pd.read_csv(f)
     d.columns = [c.strip().lower() for c in d.columns]
     idx = pd.to_datetime(d.iloc[:, 0])
     out = pd.DataFrame({'o': d.iloc[:, 1].values, 'h': d.iloc[:, 2].values, 'l': d.iloc[:, 3].values,
                         'c': d.iloc[:, 4].values, 'v': d.iloc[:, 5].values}, index=idx)
+    if fix:
+        t = out.index.to_series()
+        for a, b in TS4_PLUS1.get(sym, []):
+            m = (t >= pd.Timestamp(a)) & (t < pd.Timestamp(b))
+            t[m] = t[m] + pd.Timedelta(hours=1)
+        out.index = pd.DatetimeIndex(t.values)
+        out = out[~out.index.duplicated(keep='last')].sort_index()
     return out
 
 
@@ -196,3 +213,27 @@ def build(inst, parts):
     os.makedirs(M5DIR, exist_ok=True)
     df.to_parquet(os.path.join(M5DIR, inst + '.parquet'))
     return df
+
+
+def src_q(sym, a=None, b=None):
+    """Pedram007z/BackTest-Platform @364d4848 (Branch market-data), eigener Decoder pedram_decode.py, M1 UTC Bid (Krypto: Binance Last)."""
+    d = pd.read_parquet(os.path.join(RAW, 'q__Pedram', 'decoded', f'{sym}_M1_UTC.parquet'))
+    if a is not None:
+        d = d[d.index >= pd.Timestamp(a)]
+    if b is not None:
+        d = d[d.index < pd.Timestamp(b)]
+    d = d.copy()
+    d['v'] = 0.0
+    d.index = utc_to_server(d.index)
+    return to_m5(d[~d.index.duplicated()])
+
+
+def src_pedram(sym, decoded_dir=None):
+    """Pedram007z/BackTest-Platform (M1, Bid, UTC laut README), dekodiert als Parquet (ts, open, high, low, close)."""
+    decoded_dir = decoded_dir or os.path.join(RAW, 'Pedram007z__BackTest-Platform', 'decoded')
+    d = pd.read_parquet(os.path.join(decoded_dir, f'{sym}_M1_UTC_bid.parquet'))
+    t = pd.DatetimeIndex(d['ts']).tz_convert('UTC').tz_localize(None)
+    m1 = pd.DataFrame({'o': d['open'].values, 'h': d['high'].values, 'l': d['low'].values, 'c': d['close'].values, 'v': 0.0},
+                      index=utc_to_server(t))
+    m1 = m1[~m1.index.duplicated()].sort_index()
+    return to_m5(m1)
