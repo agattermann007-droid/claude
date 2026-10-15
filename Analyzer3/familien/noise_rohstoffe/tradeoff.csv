@@ -1,0 +1,375 @@
+variante,periode,trefferquote,art_trefferquote,R,R_pro_tag,n,per_day
+N10_end|AUDUSD,Train,0.5043,Target vor Stop,-0.0394,-0.0137,363,0.3487
+N10_480|AUDUSD,Train,0.4921,Target vor Stop,-0.0518,-0.0181,363,0.3487
+PAPS_B|AUDUSD,Train,0.6882,Teilziel vor Stop,-0.0488,-0.0214,456,0.438
+MIM_r1_none|AUDUSD,Train,0.4082,Gewinnquote,-0.0976,-0.096,1024,0.9837
+MIM_r1_t10|AUDUSD,Train,0.5006,Target vor Stop,-0.1353,-0.1331,1024,0.9837
+MIM_r1_t05|AUDUSD,Train,0.6619,Target vor Stop,-0.1634,-0.1608,1024,0.9837
+MIM_r1_B|AUDUSD,Train,0.6619,Teilziel vor Stop,-0.1343,-0.1321,1024,0.9837
+MIM_r1r12_none|AUDUSD,Train,0.4024,Gewinnquote,-0.0989,-0.0482,507,0.487
+MIM_rod_none|AUDUSD,Train,0.4105,Gewinnquote,-0.1117,-0.1103,1028,0.9875
+MIM60_r1_none|AUDUSD,Train,0.417,Gewinnquote,-0.0516,-0.0507,1024,0.9837
+MIM_r1_hv_none|AUDUSD,Train,0.4009,Gewinnquote,-0.0863,-0.0356,429,0.4121
+N10_end|BRENT,Train,0.5289,Target vor Stop,0.0046,0.0017,327,0.3593
+N10_480|BRENT,Train,0.5378,Target vor Stop,0.0105,0.0038,327,0.3593
+PAPS_B|BRENT,Train,0.6826,Teilziel vor Stop,-0.0218,-0.0101,423,0.4648
+MIM_r1_none|BRENT,Train,0.375,Gewinnquote,-0.2221,-0.2168,888,0.9758
+MIM_r1_t10|BRENT,Train,0.4575,Target vor Stop,-0.2194,-0.2141,888,0.9758
+MIM_r1_t05|BRENT,Train,0.6442,Target vor Stop,-0.219,-0.2137,888,0.9758
+MIM_r1_B|BRENT,Train,0.6442,Teilziel vor Stop,-0.2141,-0.209,888,0.9758
+MIM_r1r12_none|BRENT,Train,0.3775,Gewinnquote,-0.2102,-0.1046,453,0.4978
+MIM_rod_none|BRENT,Train,0.3746,Gewinnquote,-0.2304,-0.2251,889,0.9769
+MIM60_r1_none|BRENT,Train,0.4061,Gewinnquote,-0.097,-0.0947,889,0.9769
+MIM_r1_hv_none|BRENT,Train,0.376,Gewinnquote,-0.1957,-0.0789,367,0.4033
+N10_end|BTCUSD,Train,0.6515,Target vor Stop,0.0539,0.015,290,0.2778
+N10_480|BTCUSD,Train,0.6167,Target vor Stop,0.0717,0.0199,290,0.2778
+PAPS_B|BTCUSD,Train,0.8057,Teilziel vor Stop,0.0323,0.0105,339,0.3247
+MIM_r1_none|BTCUSD,Train,0.3369,Gewinnquote,-0.3148,-0.3106,1030,0.9866
+MIM_r1_t10|BTCUSD,Train,0.4655,Target vor Stop,-0.3217,-0.3174,1030,0.9866
+MIM_r1_t05|BTCUSD,Train,0.6609,Target vor Stop,-0.3232,-0.3188,1030,0.9866
+MIM_r1_B|BTCUSD,Train,0.6609,Teilziel vor Stop,-0.3003,-0.2963,1030,0.9866
+MIM_r1r12_none|BTCUSD,Train,0.33,Gewinnquote,-0.3428,-0.1642,500,0.4789
+MIM_rod_none|BTCUSD,Train,0.3437,Gewinnquote,-0.2715,-0.2686,1033,0.9895
+MIM60_r1_none|BTCUSD,Train,0.3476,Gewinnquote,-0.2387,-0.2355,1030,0.9866
+MIM_r1_hv_none|BTCUSD,Train,0.3717,Gewinnquote,-0.2725,-0.0997,382,0.3659
+N10_end|ETHUSD,Train,0.5081,Target vor Stop,-0.0307,-0.0083,283,0.2711
+N10_480|ETHUSD,Train,0.5346,Target vor Stop,0.0001,0.0,283,0.2711
+PAPS_B|ETHUSD,Train,0.7512,Teilziel vor Stop,0.02,0.0065,338,0.3238
+MIM_r1_none|ETHUSD,Train,0.3806,Gewinnquote,-0.1918,-0.1892,1030,0.9866
+MIM_r1_t10|ETHUSD,Train,0.5023,Target vor Stop,-0.2225,-0.2195,1030,0.9866
+MIM_r1_t05|ETHUSD,Train,0.6663,Target vor Stop,-0.2622,-0.2587,1030,0.9866
+MIM_r1_B|ETHUSD,Train,0.6663,Teilziel vor Stop,-0.2373,-0.2341,1030,0.9866
+MIM_r1r12_none|ETHUSD,Train,0.3696,Gewinnquote,-0.2087,-0.1011,506,0.4847
+MIM_rod_none|ETHUSD,Train,0.3775,Gewinnquote,-0.1754,-0.1735,1033,0.9895
+MIM60_r1_none|ETHUSD,Train,0.3796,Gewinnquote,-0.1724,-0.1701,1030,0.9866
+MIM_r1_hv_none|ETHUSD,Train,0.3664,Gewinnquote,-0.2484,-0.0935,393,0.3764
+N10_end|EURUSD,Train,0.4845,Target vor Stop,-0.0674,-0.0245,378,0.3631
+N10_480|EURUSD,Train,0.4856,Target vor Stop,-0.0601,-0.0218,378,0.3631
+PAPS_B|EURUSD,Train,0.6785,Teilziel vor Stop,-0.0725,-0.0343,493,0.4736
+MIM_r1_none|EURUSD,Train,0.3928,Gewinnquote,-0.1384,-0.1364,1026,0.9856
+MIM_r1_t10|EURUSD,Train,0.5065,Target vor Stop,-0.1459,-0.1438,1026,0.9856
+MIM_r1_t05|EURUSD,Train,0.6785,Target vor Stop,-0.1537,-0.1514,1026,0.9856
+MIM_r1_B|EURUSD,Train,0.6785,Teilziel vor Stop,-0.1496,-0.1475,1026,0.9856
+MIM_r1r12_none|EURUSD,Train,0.3883,Gewinnquote,-0.1605,-0.0814,528,0.5072
+MIM_rod_none|EURUSD,Train,0.3788,Gewinnquote,-0.1456,-0.1436,1027,0.9866
+MIM60_r1_none|EURUSD,Train,0.4357,Gewinnquote,-0.0674,-0.0664,1026,0.9856
+MIM_r1_hv_none|EURUSD,Train,0.3756,Gewinnquote,-0.1782,-0.0715,418,0.4015
+N10_end|GBPUSD,Train,0.5234,Target vor Stop,-0.0141,-0.0046,337,0.3237
+N10_480|GBPUSD,Train,0.516,Target vor Stop,-0.0231,-0.0075,337,0.3237
+PAPS_B|GBPUSD,Train,0.6844,Teilziel vor Stop,-0.0334,-0.0146,454,0.4361
+MIM_r1_none|GBPUSD,Train,0.4109,Gewinnquote,-0.1361,-0.1343,1027,0.9866
+MIM_r1_t10|GBPUSD,Train,0.5013,Target vor Stop,-0.1593,-0.1572,1027,0.9866
+MIM_r1_t05|GBPUSD,Train,0.6718,Target vor Stop,-0.1753,-0.173,1027,0.9866
+MIM_r1_B|GBPUSD,Train,0.6718,Teilziel vor Stop,-0.1565,-0.1544,1027,0.9866
+MIM_r1r12_none|GBPUSD,Train,0.4148,Gewinnquote,-0.1145,-0.0594,540,0.5187
+MIM_rod_none|GBPUSD,Train,0.3934,Gewinnquote,-0.1581,-0.1559,1027,0.9866
+MIM60_r1_none|GBPUSD,Train,0.4255,Gewinnquote,-0.0576,-0.0568,1027,0.9866
+MIM_r1_hv_none|GBPUSD,Train,0.4115,Gewinnquote,-0.115,-0.0481,435,0.4179
+N10_end|USDCAD,Train,0.422,Target vor Stop,-0.1617,-0.0629,405,0.389
+N10_480|USDCAD,Train,0.4227,Target vor Stop,-0.1871,-0.0728,405,0.389
+PAPS_B|USDCAD,Train,0.6577,Teilziel vor Stop,-0.0824,-0.0394,498,0.4784
+MIM_r1_none|USDCAD,Train,0.3918,Gewinnquote,-0.1596,-0.1573,1026,0.9856
+MIM_r1_t10|USDCAD,Train,0.5025,Target vor Stop,-0.1893,-0.1866,1026,0.9856
+MIM_r1_t05|USDCAD,Train,0.674,Target vor Stop,-0.1969,-0.1941,1026,0.9856
+MIM_r1_B|USDCAD,Train,0.674,Teilziel vor Stop,-0.1712,-0.1687,1026,0.9856
+MIM_r1r12_none|USDCAD,Train,0.3845,Gewinnquote,-0.2142,-0.106,515,0.4947
+MIM_rod_none|USDCAD,Train,0.3774,Gewinnquote,-0.1809,-0.1786,1028,0.9875
+MIM60_r1_none|USDCAD,Train,0.4493,Gewinnquote,-0.0574,-0.0566,1026,0.9856
+MIM_r1_hv_none|USDCAD,Train,0.3636,Gewinnquote,-0.1892,-0.078,429,0.4121
+N10_end|USDCHF,Train,0.4627,Target vor Stop,-0.1341,-0.0509,395,0.3794
+N10_480|USDCHF,Train,0.4664,Target vor Stop,-0.1282,-0.0486,395,0.3794
+PAPS_B|USDCHF,Train,0.6552,Teilziel vor Stop,-0.1531,-0.0735,500,0.4803
+MIM_r1_none|USDCHF,Train,0.3743,Gewinnquote,-0.2184,-0.2153,1026,0.9856
+MIM_r1_t10|USDCHF,Train,0.4858,Target vor Stop,-0.2328,-0.2294,1026,0.9856
+MIM_r1_t05|USDCHF,Train,0.6588,Target vor Stop,-0.2456,-0.2421,1026,0.9856
+MIM_r1_B|USDCHF,Train,0.6588,Teilziel vor Stop,-0.2336,-0.2302,1026,0.9856
+MIM_r1r12_none|USDCHF,Train,0.3748,Gewinnquote,-0.2219,-0.1081,507,0.487
+MIM_rod_none|USDCHF,Train,0.3817,Gewinnquote,-0.1963,-0.1937,1027,0.9866
+MIM60_r1_none|USDCHF,Train,0.3752,Gewinnquote,-0.1732,-0.1707,1026,0.9856
+MIM_r1_hv_none|USDCHF,Train,0.3732,Gewinnquote,-0.1701,-0.0683,418,0.4015
+N10_end|WTI,Train,0.5397,Target vor Stop,0.0158,0.0043,249,0.2739
+N10_480|WTI,Train,0.5362,Target vor Stop,0.0119,0.0033,249,0.2739
+PAPS_B|WTI,Train,0.7487,Teilziel vor Stop,0.0157,0.0048,280,0.308
+MIM_r1_none|WTI,Train,0.3417,Gewinnquote,-0.2868,-0.2752,872,0.9593
+MIM_r1_t10|WTI,Train,0.438,Target vor Stop,-0.2716,-0.2606,872,0.9593
+MIM_r1_t05|WTI,Train,0.6081,Target vor Stop,-0.2766,-0.2654,872,0.9593
+MIM_r1_B|WTI,Train,0.6081,Teilziel vor Stop,-0.2759,-0.2647,872,0.9593
+MIM_r1r12_none|WTI,Train,0.3558,Gewinnquote,-0.2468,-0.1167,430,0.473
+MIM_rod_none|WTI,Train,0.3682,Gewinnquote,-0.2178,-0.2083,869,0.956
+MIM60_r1_none|WTI,Train,0.3637,Gewinnquote,-0.2046,-0.1974,877,0.9648
+MIM_r1_hv_none|WTI,Train,0.3128,Gewinnquote,-0.3266,-0.1286,358,0.3938
+N10_end|XAGUSD,Train,0.4513,Target vor Stop,-0.1129,-0.0312,251,0.2761
+N10_480|XAGUSD,Train,0.4545,Target vor Stop,-0.0995,-0.0275,251,0.2761
+PAPS_B|XAGUSD,Train,0.6919,Teilziel vor Stop,-0.0839,-0.0263,285,0.3135
+MIM_r1_none|XAGUSD,Train,0.3265,Gewinnquote,-0.4277,-0.4122,876,0.9637
+MIM_r1_t10|XAGUSD,Train,0.5044,Target vor Stop,-0.3707,-0.3573,876,0.9637
+MIM_r1_t05|XAGUSD,Train,0.677,Target vor Stop,-0.3774,-0.3637,876,0.9637
+MIM_r1_B|XAGUSD,Train,0.677,Teilziel vor Stop,-0.4033,-0.3887,876,0.9637
+MIM_r1r12_none|XAGUSD,Train,0.3126,Gewinnquote,-0.422,-0.2168,467,0.5138
+MIM_rod_none|XAGUSD,Train,0.3565,Gewinnquote,-0.3672,-0.3546,878,0.9659
+MIM60_r1_none|XAGUSD,Train,0.3573,Gewinnquote,-0.2839,-0.278,890,0.9791
+MIM_r1_hv_none|XAGUSD,Train,0.2959,Gewinnquote,-0.4732,-0.1759,338,0.3718
+N10_end|XAUUSD,Train,0.4453,Target vor Stop,-0.0509,-0.0142,289,0.2787
+N10_480|XAUUSD,Train,0.4539,Target vor Stop,-0.0653,-0.0182,289,0.2787
+PAPS_B|XAUUSD,Train,0.7077,Teilziel vor Stop,-0.0129,-0.004,323,0.3115
+MIM_r1_none|XAUUSD,Train,0.3475,Gewinnquote,-0.2495,-0.2437,1013,0.9769
+MIM_r1_t10|XAUUSD,Train,0.4622,Target vor Stop,-0.2603,-0.2543,1013,0.9769
+MIM_r1_t05|XAUUSD,Train,0.6415,Target vor Stop,-0.2541,-0.2482,1013,0.9769
+MIM_r1_B|XAUUSD,Train,0.6415,Teilziel vor Stop,-0.2506,-0.2448,1013,0.9769
+MIM_r1r12_none|XAUUSD,Train,0.3769,Gewinnquote,-0.1924,-0.0965,520,0.5014
+MIM_rod_none|XAUUSD,Train,0.3442,Gewinnquote,-0.2798,-0.2736,1014,0.9778
+MIM60_r1_none|XAUUSD,Train,0.3967,Gewinnquote,-0.1515,-0.1492,1021,0.9846
+MIM_r1_hv_none|XAUUSD,Train,0.3308,Gewinnquote,-0.2959,-0.1138,399,0.3848
+N10_end|P_alle,Train,0.495,Target vor Stop,-0.0563,-0.1772,3284,3.1456
+N10_end|P_sel,Train,0.5652,Target vor Stop,0.0243,0.0202,866,0.8295
+N10_end|K_Metalle,Train,0.4481,Target vor Stop,-0.0798,-0.0413,540,0.5172
+N10_end|K_Oel,Train,0.5328,Target vor Stop,0.0095,0.0052,576,0.5517
+N10_end|K_BTC,Train,0.6515,Target vor Stop,0.0539,0.015,290,0.2778
+N10_end|K_FX,Train,0.4771,Target vor Stop,-0.0868,-0.1561,1878,1.7989
+N10_480|P_alle,Train,0.494,Target vor Stop,-0.0586,-0.1843,3284,3.1456
+N10_480|P_sel,Train,0.5624,Target vor Stop,0.0314,0.0261,866,0.8295
+N10_480|K_Metalle,Train,0.4542,Target vor Stop,-0.0812,-0.042,540,0.5172
+N10_480|K_Oel,Train,0.5373,Target vor Stop,0.0111,0.0061,576,0.5517
+N10_480|K_BTC,Train,0.6167,Target vor Stop,0.0717,0.0199,290,0.2778
+N10_480|K_FX,Train,0.474,Target vor Stop,-0.0936,-0.1683,1878,1.7989
+PAPS_B|P_alle,Train,0.694,Teilziel vor Stop,-0.0525,-0.2038,4051,3.8803
+PAPS_B|P_sel,Train,0.7799,Teilziel vor Stop,0.0248,0.0147,619,0.5929
+PAPS_B|K_Metalle,Train,0.7003,Teilziel vor Stop,-0.0462,-0.0269,608,0.5824
+PAPS_B|K_Oel,Train,0.7089,Teilziel vor Stop,-0.0069,-0.0046,703,0.6734
+PAPS_B|K_BTC,Train,0.8057,Teilziel vor Stop,0.0323,0.0105,339,0.3247
+PAPS_B|K_FX,Train,0.6723,Teilziel vor Stop,-0.0794,-0.1827,2401,2.2998
+MIM_r1_none|P_alle,Train,0.3716,Gewinnquote,-0.2211,-2.0771,9808,9.3946
+MIM_r1_none|P_sel,Train,,Gewinnquote,,0.0,0,0.0
+MIM_r1_none|K_Metalle,Train,0.3377,Gewinnquote,-0.3322,-0.601,1889,1.8094
+MIM_r1_none|K_Oel,Train,0.3585,Gewinnquote,-0.2542,-0.4285,1760,1.6858
+MIM_r1_none|K_BTC,Train,0.3369,Gewinnquote,-0.3148,-0.3106,1030,0.9866
+MIM_r1_none|K_FX,Train,0.3956,Gewinnquote,-0.15,-0.737,5129,4.9128
+MIM_r1_t10|P_alle,Train,0.4836,Target vor Stop,-0.228,-2.1422,9808,9.3946
+MIM_r1_t10|P_sel,Train,,Target vor Stop,,0.0,0,0.0
+MIM_r1_t10|K_Metalle,Train,0.4821,Target vor Stop,-0.3115,-0.5636,1889,1.8094
+MIM_r1_t10|K_Oel,Train,0.4479,Target vor Stop,-0.2453,-0.4135,1760,1.6858
+MIM_r1_t10|K_BTC,Train,0.4655,Target vor Stop,-0.3217,-0.3174,1030,0.9866
+MIM_r1_t10|K_FX,Train,0.4994,Target vor Stop,-0.1725,-0.8477,5129,4.9128
+MIM_r1_t05|P_alle,Train,0.6584,Target vor Stop,-0.2361,-2.2181,9808,9.3946
+MIM_r1_t05|P_sel,Train,,Target vor Stop,,0.0,0,0.0
+MIM_r1_t05|K_Metalle,Train,0.6581,Target vor Stop,-0.3113,-0.5632,1889,1.8094
+MIM_r1_t05|K_Oel,Train,0.6265,Target vor Stop,-0.2476,-0.4173,1760,1.6858
+MIM_r1_t05|K_BTC,Train,0.6609,Target vor Stop,-0.3232,-0.3188,1030,0.9866
+MIM_r1_t05|K_FX,Train,0.669,Target vor Stop,-0.187,-0.9187,5129,4.9128
+MIM_r1_B|P_alle,Train,0.6584,Teilziel vor Stop,-0.2258,-2.121,9808,9.3946
+MIM_r1_B|P_sel,Train,,Teilziel vor Stop,,0.0,0,0.0
+MIM_r1_B|K_Metalle,Train,0.658,Teilziel vor Stop,-0.3214,-0.5816,1889,1.8094
+MIM_r1_B|K_Oel,Train,0.6263,Teilziel vor Stop,-0.2447,-0.4126,1760,1.6858
+MIM_r1_B|K_BTC,Train,0.6609,Teilziel vor Stop,-0.3003,-0.2963,1030,0.9866
+MIM_r1_B|K_FX,Train,0.669,Teilziel vor Stop,-0.1691,-0.8306,5129,4.9128
+MIM_r1r12_none|P_alle,Train,0.3729,Gewinnquote,-0.2193,-1.0435,4967,4.7577
+MIM_r1r12_none|P_sel,Train,,Gewinnquote,,0.0,0,0.0
+MIM_r1r12_none|K_Metalle,Train,0.3465,Gewinnquote,-0.3011,-0.2846,987,0.9454
+MIM_r1r12_none|K_Oel,Train,0.3669,Gewinnquote,-0.228,-0.1929,883,0.8458
+MIM_r1r12_none|K_BTC,Train,0.33,Gewinnquote,-0.3428,-0.1642,500,0.4789
+MIM_r1r12_none|K_FX,Train,0.3931,Gewinnquote,-0.1616,-0.4019,2597,2.4875
+MIM_rod_none|P_alle,Train,0.3732,Gewinnquote,-0.2133,-2.0066,9820,9.4061
+MIM_rod_none|P_sel,Train,,Gewinnquote,,0.0,0,0.0
+MIM_rod_none|K_Metalle,Train,0.3499,Gewinnquote,-0.3203,-0.5805,1892,1.8123
+MIM_rod_none|K_Oel,Train,0.3714,Gewinnquote,-0.2242,-0.3775,1758,1.6839
+MIM_rod_none|K_BTC,Train,0.3437,Gewinnquote,-0.2715,-0.2686,1033,0.9895
+MIM_rod_none|K_FX,Train,0.3884,Gewinnquote,-0.1585,-0.7799,5137,4.9205
+MIM60_r1_none|P_alle,Train,0.3983,Gewinnquote,-0.1359,-1.2803,9836,9.4215
+MIM60_r1_none|P_sel,Train,,Gewinnquote,,0.0,0,0.0
+MIM60_r1_none|K_Metalle,Train,0.3783,Gewinnquote,-0.2132,-0.3902,1911,1.8305
+MIM60_r1_none|K_Oel,Train,0.3851,Gewinnquote,-0.1504,-0.2544,1766,1.6916
+MIM60_r1_none|K_BTC,Train,0.3476,Gewinnquote,-0.2387,-0.2355,1030,0.9866
+MIM60_r1_none|K_FX,Train,0.4205,Gewinnquote,-0.0814,-0.4001,5129,4.9128
+MIM_r1_hv_none|P_alle,Train,0.3635,Gewinnquote,-0.2227,-0.8473,3973,3.8056
+MIM_r1_hv_none|P_sel,Train,,Gewinnquote,,0.0,0,0.0
+MIM_r1_hv_none|K_Metalle,Train,0.3148,Gewinnquote,-0.3772,-0.2663,737,0.7059
+MIM_r1_hv_none|K_Oel,Train,0.3448,Gewinnquote,-0.2603,-0.1808,725,0.6944
+MIM_r1_hv_none|K_BTC,Train,0.3717,Gewinnquote,-0.2725,-0.0997,382,0.3659
+MIM_r1_hv_none|K_FX,Train,0.3852,Gewinnquote,-0.1474,-0.3006,2129,2.0393
+N10_end|AUDUSD,Val 2024,0.4717,Target vor Stop,-0.1112,-0.0352,83,0.3168
+N10_480|AUDUSD,Val 2024,0.4643,Target vor Stop,-0.123,-0.039,83,0.3168
+PAPS_B|AUDUSD,Val 2024,0.6623,Teilziel vor Stop,-0.1082,-0.0405,98,0.374
+MIM_r1_none|AUDUSD,Val 2024,0.4231,Gewinnquote,-0.1224,-0.1215,260,0.9924
+MIM_r1_t10|AUDUSD,Val 2024,0.5942,Target vor Stop,-0.042,-0.0417,260,0.9924
+MIM_r1_t05|AUDUSD,Val 2024,0.7673,Target vor Stop,-0.0722,-0.0717,260,0.9924
+MIM_r1_B|AUDUSD,Val 2024,0.7673,Teilziel vor Stop,-0.0971,-0.0964,260,0.9924
+MIM_r1r12_none|AUDUSD,Val 2024,0.3629,Gewinnquote,-0.2065,-0.0977,124,0.4733
+MIM_rod_none|AUDUSD,Val 2024,0.3846,Gewinnquote,-0.2392,-0.2374,260,0.9924
+MIM60_r1_none|AUDUSD,Val 2024,0.3731,Gewinnquote,-0.2048,-0.2032,260,0.9924
+MIM_r1_hv_none|AUDUSD,Val 2024,0.381,Gewinnquote,-0.1625,-0.0651,105,0.4008
+N10_end|BRENT,Val 2024,0.4085,Target vor Stop,-0.1906,-0.0708,97,0.3716
+N10_480|BRENT,Val 2024,0.4156,Target vor Stop,-0.2421,-0.09,97,0.3716
+PAPS_B|BRENT,Val 2024,0.6471,Teilziel vor Stop,-0.1607,-0.0751,122,0.4674
+MIM_r1_none|BRENT,Val 2024,0.407,Gewinnquote,-0.1519,-0.1502,258,0.9885
+MIM_r1_t10|BRENT,Val 2024,0.5445,Target vor Stop,-0.1417,-0.1401,258,0.9885
+MIM_r1_t05|BRENT,Val 2024,0.6979,Target vor Stop,-0.1885,-0.1863,258,0.9885
+MIM_r1_B|BRENT,Val 2024,0.6979,Teilziel vor Stop,-0.1562,-0.1544,258,0.9885
+MIM_r1r12_none|BRENT,Val 2024,0.4237,Gewinnquote,-0.0991,-0.0448,118,0.4521
+MIM_rod_none|BRENT,Val 2024,0.4341,Gewinnquote,-0.111,-0.1097,258,0.9885
+MIM60_r1_none|BRENT,Val 2024,0.3668,Gewinnquote,-0.1712,-0.1699,259,0.9923
+MIM_r1_hv_none|BRENT,Val 2024,0.422,Gewinnquote,-0.0635,-0.0265,109,0.4176
+N10_end|BTCUSD,Val 2024,0.6111,Target vor Stop,0.0999,0.0282,74,0.2824
+N10_480|BTCUSD,Val 2024,0.5814,Target vor Stop,0.0421,0.0119,74,0.2824
+PAPS_B|BTCUSD,Val 2024,0.7705,Teilziel vor Stop,0.0418,0.0142,89,0.3397
+MIM_r1_none|BTCUSD,Val 2024,0.4389,Gewinnquote,-0.1598,-0.1598,262,1.0
+MIM_r1_t10|BTCUSD,Val 2024,0.5569,Target vor Stop,-0.1824,-0.1824,262,1.0
+MIM_r1_t05|BTCUSD,Val 2024,0.7333,Target vor Stop,-0.2119,-0.2119,262,1.0
+MIM_r1_B|BTCUSD,Val 2024,0.7333,Teilziel vor Stop,-0.1861,-0.1861,262,1.0
+MIM_r1r12_none|BTCUSD,Val 2024,0.3969,Gewinnquote,-0.1754,-0.0877,131,0.5
+MIM_rod_none|BTCUSD,Val 2024,0.4427,Gewinnquote,-0.0943,-0.0943,262,1.0
+MIM60_r1_none|BTCUSD,Val 2024,0.3855,Gewinnquote,-0.1428,-0.1428,262,1.0
+MIM_r1_hv_none|BTCUSD,Val 2024,0.4356,Gewinnquote,-0.16,-0.0617,101,0.3855
+N10_end|ETHUSD,Val 2024,0.6061,Target vor Stop,0.0756,0.0208,72,0.2748
+N10_480|ETHUSD,Val 2024,0.6136,Target vor Stop,0.091,0.025,72,0.2748
+PAPS_B|ETHUSD,Val 2024,0.8,Teilziel vor Stop,0.0223,0.0077,91,0.3473
+MIM_r1_none|ETHUSD,Val 2024,0.3893,Gewinnquote,-0.1013,-0.1013,262,1.0
+MIM_r1_t10|ETHUSD,Val 2024,0.5482,Target vor Stop,-0.177,-0.177,262,1.0
+MIM_r1_t05|ETHUSD,Val 2024,0.7109,Target vor Stop,-0.2241,-0.2241,262,1.0
+MIM_r1_B|ETHUSD,Val 2024,0.7109,Teilziel vor Stop,-0.1729,-0.1729,262,1.0
+MIM_r1r12_none|ETHUSD,Val 2024,0.3385,Gewinnquote,-0.147,-0.073,130,0.4962
+MIM_rod_none|ETHUSD,Val 2024,0.4084,Gewinnquote,-0.0297,-0.0297,262,1.0
+MIM60_r1_none|ETHUSD,Val 2024,0.355,Gewinnquote,-0.1208,-0.1208,262,1.0
+MIM_r1_hv_none|ETHUSD,Val 2024,0.3558,Gewinnquote,-0.3385,-0.1344,104,0.3969
+N10_end|EURUSD,Val 2024,0.54,Target vor Stop,-0.025,-0.0079,83,0.3168
+N10_480|EURUSD,Val 2024,0.5517,Target vor Stop,-0.0021,-0.0007,83,0.3168
+PAPS_B|EURUSD,Val 2024,0.7237,Teilziel vor Stop,-0.0554,-0.0224,106,0.4046
+MIM_r1_none|EURUSD,Val 2024,0.4,Gewinnquote,-0.1441,-0.143,260,0.9924
+MIM_r1_t10|EURUSD,Val 2024,0.5805,Target vor Stop,-0.0909,-0.0902,260,0.9924
+MIM_r1_t05|EURUSD,Val 2024,0.7161,Target vor Stop,-0.1555,-0.1543,260,0.9924
+MIM_r1_B|EURUSD,Val 2024,0.7161,Teilziel vor Stop,-0.142,-0.1409,260,0.9924
+MIM_r1r12_none|EURUSD,Val 2024,0.3468,Gewinnquote,-0.2506,-0.1186,124,0.4733
+MIM_rod_none|EURUSD,Val 2024,0.3769,Gewinnquote,-0.2001,-0.1986,260,0.9924
+MIM60_r1_none|EURUSD,Val 2024,0.3885,Gewinnquote,-0.1417,-0.1406,260,0.9924
+MIM_r1_hv_none|EURUSD,Val 2024,0.3465,Gewinnquote,-0.1964,-0.0757,101,0.3855
+N10_end|GBPUSD,Val 2024,0.5079,Target vor Stop,-0.074,-0.0268,95,0.3626
+N10_480|GBPUSD,Val 2024,0.5211,Target vor Stop,-0.0888,-0.0322,95,0.3626
+PAPS_B|GBPUSD,Val 2024,0.7071,Teilziel vor Stop,-0.0871,-0.0425,128,0.4885
+MIM_r1_none|GBPUSD,Val 2024,0.3846,Gewinnquote,-0.2051,-0.2035,260,0.9924
+MIM_r1_t10|GBPUSD,Val 2024,0.5314,Target vor Stop,-0.2032,-0.2016,260,0.9924
+MIM_r1_t05|GBPUSD,Val 2024,0.7004,Target vor Stop,-0.2235,-0.2218,260,0.9924
+MIM_r1_B|GBPUSD,Val 2024,0.7004,Teilziel vor Stop,-0.2054,-0.2038,260,0.9924
+MIM_r1r12_none|GBPUSD,Val 2024,0.3803,Gewinnquote,-0.297,-0.161,142,0.542
+MIM_rod_none|GBPUSD,Val 2024,0.3629,Gewinnquote,-0.289,-0.2857,259,0.9885
+MIM60_r1_none|GBPUSD,Val 2024,0.4115,Gewinnquote,-0.0881,-0.0875,260,0.9924
+MIM_r1_hv_none|GBPUSD,Val 2024,0.4141,Gewinnquote,-0.0861,-0.0325,99,0.3779
+N10_end|USDCAD,Val 2024,0.4783,Target vor Stop,-0.1566,-0.0604,101,0.3855
+N10_480|USDCAD,Val 2024,0.4865,Target vor Stop,-0.1623,-0.0626,101,0.3855
+PAPS_B|USDCAD,Val 2024,0.6522,Teilziel vor Stop,-0.1853,-0.0842,119,0.4542
+MIM_r1_none|USDCAD,Val 2024,0.3205,Gewinnquote,-0.3272,-0.3235,259,0.9885
+MIM_r1_t10|USDCAD,Val 2024,0.5751,Target vor Stop,-0.2196,-0.2171,259,0.9885
+MIM_r1_t05|USDCAD,Val 2024,0.7238,Target vor Stop,-0.2435,-0.2408,259,0.9885
+MIM_r1_B|USDCAD,Val 2024,0.7238,Teilziel vor Stop,-0.2667,-0.2636,259,0.9885
+MIM_r1r12_none|USDCAD,Val 2024,0.2266,Gewinnquote,-0.5372,-0.2624,128,0.4885
+MIM_rod_none|USDCAD,Val 2024,0.2808,Gewinnquote,-0.4588,-0.4553,260,0.9924
+MIM60_r1_none|USDCAD,Val 2024,0.3436,Gewinnquote,-0.2994,-0.2959,259,0.9885
+MIM_r1_hv_none|USDCAD,Val 2024,0.2752,Gewinnquote,-0.4998,-0.2079,109,0.416
+N10_end|USDCHF,Val 2024,0.4444,Target vor Stop,-0.1653,-0.0524,83,0.3168
+N10_480|USDCHF,Val 2024,0.45,Target vor Stop,-0.1412,-0.0447,83,0.3168
+PAPS_B|USDCHF,Val 2024,0.6582,Teilziel vor Stop,-0.0353,-0.0139,103,0.3931
+MIM_r1_none|USDCHF,Val 2024,0.3885,Gewinnquote,-0.1996,-0.198,260,0.9924
+MIM_r1_t10|USDCHF,Val 2024,0.555,Target vor Stop,-0.1898,-0.1883,260,0.9924
+MIM_r1_t05|USDCHF,Val 2024,0.735,Target vor Stop,-0.1893,-0.1878,260,0.9924
+MIM_r1_B|USDCHF,Val 2024,0.735,Teilziel vor Stop,-0.1888,-0.1874,260,0.9924
+MIM_r1r12_none|USDCHF,Val 2024,0.3362,Gewinnquote,-0.3549,-0.1572,116,0.4427
+MIM_rod_none|USDCHF,Val 2024,0.3346,Gewinnquote,-0.3204,-0.318,260,0.9924
+MIM60_r1_none|USDCHF,Val 2024,0.3538,Gewinnquote,-0.3089,-0.3065,260,0.9924
+MIM_r1_hv_none|USDCHF,Val 2024,0.3737,Gewinnquote,-0.2127,-0.0804,99,0.3779
+N10_end|WTI,Val 2024,0.6364,Target vor Stop,0.1192,0.0343,75,0.2874
+N10_480|WTI,Val 2024,0.6304,Target vor Stop,0.0988,0.0284,75,0.2874
+PAPS_B|WTI,Val 2024,0.7941,Teilziel vor Stop,0.0224,0.008,93,0.3563
+MIM_r1_none|WTI,Val 2024,0.3992,Gewinnquote,-0.2702,-0.2671,258,0.9885
+MIM_r1_t10|WTI,Val 2024,0.5026,Target vor Stop,-0.2534,-0.2504,258,0.9885
+MIM_r1_t05|WTI,Val 2024,0.6639,Target vor Stop,-0.2793,-0.2761,258,0.9885
+MIM_r1_B|WTI,Val 2024,0.6639,Teilziel vor Stop,-0.3017,-0.2982,258,0.9885
+MIM_r1r12_none|WTI,Val 2024,0.408,Gewinnquote,-0.3024,-0.1448,125,0.4789
+MIM_rod_none|WTI,Val 2024,0.3876,Gewinnquote,-0.2497,-0.2469,258,0.9885
+MIM60_r1_none|WTI,Val 2024,0.3398,Gewinnquote,-0.2924,-0.2901,259,0.9923
+MIM_r1_hv_none|WTI,Val 2024,0.3868,Gewinnquote,-0.2588,-0.1051,106,0.4061
+N10_end|XAGUSD,Val 2024,0.4167,Target vor Stop,-0.154,-0.0531,90,0.3448
+N10_480|XAGUSD,Val 2024,0.4386,Target vor Stop,-0.1737,-0.0599,90,0.3448
+PAPS_B|XAGUSD,Val 2024,0.6056,Teilziel vor Stop,-0.158,-0.0605,100,0.3831
+MIM_r1_none|XAGUSD,Val 2024,0.298,Gewinnquote,-0.4622,-0.4516,255,0.977
+MIM_r1_t10|XAGUSD,Val 2024,0.5297,Target vor Stop,-0.3983,-0.3891,255,0.977
+MIM_r1_t05|XAGUSD,Val 2024,0.6805,Target vor Stop,-0.4397,-0.4295,255,0.977
+MIM_r1_B|XAGUSD,Val 2024,0.6805,Teilziel vor Stop,-0.4608,-0.4502,255,0.977
+MIM_r1r12_none|XAGUSD,Val 2024,0.2373,Gewinnquote,-0.6065,-0.2742,118,0.4521
+MIM_rod_none|XAGUSD,Val 2024,0.2941,Gewinnquote,-0.4964,-0.485,255,0.977
+MIM60_r1_none|XAGUSD,Val 2024,0.3373,Gewinnquote,-0.3064,-0.2994,255,0.977
+MIM_r1_hv_none|XAGUSD,Val 2024,0.2826,Gewinnquote,-0.5092,-0.1795,92,0.3525
+N10_end|XAUUSD,Val 2024,0.5143,Target vor Stop,-0.0496,-0.0154,81,0.3103
+N10_480|XAUUSD,Val 2024,0.5,Target vor Stop,-0.0653,-0.0203,81,0.3103
+PAPS_B|XAUUSD,Val 2024,0.7419,Teilziel vor Stop,-0.0235,-0.0088,98,0.3755
+MIM_r1_none|XAUUSD,Val 2024,0.3938,Gewinnquote,-0.1466,-0.1455,259,0.9923
+MIM_r1_t10|XAUUSD,Val 2024,0.5,Target vor Stop,-0.1641,-0.1629,259,0.9923
+MIM_r1_t05|XAUUSD,Val 2024,0.6491,Target vor Stop,-0.2197,-0.218,259,0.9923
+MIM_r1_B|XAUUSD,Val 2024,0.6491,Teilziel vor Stop,-0.1886,-0.1872,259,0.9923
+MIM_r1r12_none|XAUUSD,Val 2024,0.363,Gewinnquote,-0.1871,-0.0968,135,0.5172
+MIM_rod_none|XAUUSD,Val 2024,0.3861,Gewinnquote,-0.1098,-0.109,259,0.9923
+MIM60_r1_none|XAUUSD,Val 2024,0.3861,Gewinnquote,-0.1759,-0.1745,259,0.9923
+MIM_r1_hv_none|XAUUSD,Val 2024,0.375,Gewinnquote,-0.2025,-0.0745,96,0.3678
+N10_end|P_alle,Val 2024,0.4933,Target vor Stop,-0.0788,-0.2591,862,3.2901
+N10_end|P_sel,Val 2024,0.5232,Target vor Stop,-0.0088,-0.0082,246,0.9389
+N10_end|K_Metalle,Val 2024,0.4578,Target vor Stop,-0.1046,-0.0682,171,0.6527
+N10_end|K_Oel,Val 2024,0.4957,Target vor Stop,-0.0555,-0.0364,172,0.6565
+N10_end|K_BTC,Val 2024,0.6111,Target vor Stop,0.0999,0.0282,74,0.2824
+N10_end|K_FX,Val 2024,0.4879,Target vor Stop,-0.1076,-0.1827,445,1.6985
+N10_480|P_alle,Val 2024,0.4966,Target vor Stop,-0.0937,-0.3084,862,3.2901
+N10_480|P_sel,Val 2024,0.5181,Target vor Stop,-0.0527,-0.0494,246,0.9389
+N10_480|K_Metalle,Val 2024,0.466,Target vor Stop,-0.1223,-0.0799,171,0.6527
+N10_480|K_Oel,Val 2024,0.4959,Target vor Stop,-0.0934,-0.0613,172,0.6565
+N10_480|K_BTC,Val 2024,0.5814,Target vor Stop,0.0421,0.0119,74,0.2824
+N10_480|K_FX,Val 2024,0.4953,Target vor Stop,-0.1055,-0.1791,445,1.6985
+PAPS_B|P_alle,Val 2024,0.6933,Teilziel vor Stop,-0.0807,-0.3253,1056,4.0305
+PAPS_B|P_sel,Val 2024,0.7826,Teilziel vor Stop,0.0319,0.0222,182,0.6947
+PAPS_B|K_Metalle,Val 2024,0.6731,Teilziel vor Stop,-0.0915,-0.0691,198,0.7557
+PAPS_B|K_Oel,Val 2024,0.7107,Teilziel vor Stop,-0.0815,-0.0669,215,0.8206
+PAPS_B|K_BTC,Val 2024,0.7705,Teilziel vor Stop,0.0418,0.0142,89,0.3397
+PAPS_B|K_FX,Val 2024,0.6815,Teilziel vor Stop,-0.0962,-0.2035,554,2.1145
+MIM_r1_none|P_alle,Val 2024,0.3856,Gewinnquote,-0.2184,-2.1597,2591,9.8893
+MIM_r1_none|P_sel,Val 2024,,Gewinnquote,,0.0,0,0.0
+MIM_r1_none|K_Metalle,Val 2024,0.3463,Gewinnquote,-0.3032,-0.5948,514,1.9618
+MIM_r1_none|K_Oel,Val 2024,0.4031,Gewinnquote,-0.211,-0.4156,516,1.9695
+MIM_r1_none|K_BTC,Val 2024,0.4389,Gewinnquote,-0.1598,-0.1598,262,1.0
+MIM_r1_none|K_FX,Val 2024,0.3834,Gewinnquote,-0.1996,-0.9894,1299,4.958
+MIM_r1_t10|P_alle,Val 2024,0.5473,Target vor Stop,-0.1881,-1.8604,2591,9.8893
+MIM_r1_t10|P_sel,Val 2024,,Target vor Stop,,0.0,0,0.0
+MIM_r1_t10|K_Metalle,Val 2024,0.5154,Target vor Stop,-0.2803,-0.5499,514,1.9618
+MIM_r1_t10|K_Oel,Val 2024,0.5234,Target vor Stop,-0.1975,-0.389,516,1.9695
+MIM_r1_t10|K_BTC,Val 2024,0.5569,Target vor Stop,-0.1824,-0.1824,262,1.0
+MIM_r1_t10|K_FX,Val 2024,0.5673,Target vor Stop,-0.1491,-0.739,1299,4.958
+MIM_r1_t05|P_alle,Val 2024,0.7069,Target vor Stop,-0.2219,-2.194,2591,9.8893
+MIM_r1_t05|P_sel,Val 2024,,Target vor Stop,,0.0,0,0.0
+MIM_r1_t05|K_Metalle,Val 2024,0.6652,Target vor Stop,-0.3288,-0.6451,514,1.9618
+MIM_r1_t05|K_Oel,Val 2024,0.6808,Target vor Stop,-0.2339,-0.4606,516,1.9695
+MIM_r1_t05|K_BTC,Val 2024,0.7333,Target vor Stop,-0.2119,-0.2119,262,1.0
+MIM_r1_t05|K_FX,Val 2024,0.7286,Target vor Stop,-0.1768,-0.8764,1299,4.958
+MIM_r1_B|P_alle,Val 2024,0.7069,Teilziel vor Stop,-0.2188,-2.1641,2591,9.8893
+MIM_r1_B|P_sel,Val 2024,,Teilziel vor Stop,,0.0,0,0.0
+MIM_r1_B|K_Metalle,Val 2024,0.6647,Teilziel vor Stop,-0.3237,-0.635,514,1.9618
+MIM_r1_B|K_Oel,Val 2024,0.6809,Teilziel vor Stop,-0.2289,-0.4509,516,1.9695
+MIM_r1_B|K_BTC,Val 2024,0.7333,Teilziel vor Stop,-0.1861,-0.1861,262,1.0
+MIM_r1_B|K_FX,Val 2024,0.7286,Teilziel vor Stop,-0.1799,-0.8921,1299,4.958
+MIM_r1r12_none|P_alle,Val 2024,0.3489,Gewinnquote,-0.2998,-1.4431,1261,4.813
+MIM_r1r12_none|P_sel,Val 2024,,Gewinnquote,,0.0,0,0.0
+MIM_r1r12_none|K_Metalle,Val 2024,0.3043,Gewinnquote,-0.3827,-0.3696,253,0.9656
+MIM_r1r12_none|K_Oel,Val 2024,0.4156,Gewinnquote,-0.2036,-0.1889,243,0.9275
+MIM_r1r12_none|K_BTC,Val 2024,0.3969,Gewinnquote,-0.1754,-0.0877,131,0.5
+MIM_r1r12_none|K_FX,Val 2024,0.3312,Gewinnquote,-0.3293,-0.7969,634,2.4198
+MIM_rod_none|P_alle,Val 2024,0.3686,Gewinnquote,-0.2565,-2.5362,2591,9.8893
+MIM_rod_none|P_sel,Val 2024,,Gewinnquote,,0.0,0,0.0
+MIM_rod_none|K_Metalle,Val 2024,0.3405,Gewinnquote,-0.3016,-0.5917,514,1.9618
+MIM_rod_none|K_Oel,Val 2024,0.4109,Gewinnquote,-0.1804,-0.3552,516,1.9695
+MIM_rod_none|K_BTC,Val 2024,0.4427,Gewinnquote,-0.0943,-0.0943,262,1.0
+MIM_rod_none|K_FX,Val 2024,0.348,Gewinnquote,-0.3015,-1.495,1299,4.958
+MIM60_r1_none|P_alle,Val 2024,0.3687,Gewinnquote,-0.2129,-2.1069,2593,9.8969
+MIM60_r1_none|P_sel,Val 2024,,Gewinnquote,,0.0,0,0.0
+MIM60_r1_none|K_Metalle,Val 2024,0.3619,Gewinnquote,-0.2406,-0.4721,514,1.9618
+MIM60_r1_none|K_Oel,Val 2024,0.3533,Gewinnquote,-0.2318,-0.4583,518,1.9771
+MIM60_r1_none|K_BTC,Val 2024,0.3855,Gewinnquote,-0.1428,-0.1428,262,1.0
+MIM60_r1_none|K_FX,Val 2024,0.3741,Gewinnquote,-0.2085,-1.0338,1299,4.958
+MIM_r1_hv_none|P_alle,Val 2024,0.3697,Gewinnquote,-0.2338,-0.9074,1017,3.8817
+MIM_r1_hv_none|P_sel,Val 2024,,Gewinnquote,,0.0,0,0.0
+MIM_r1_hv_none|K_Metalle,Val 2024,0.3298,Gewinnquote,-0.3526,-0.253,188,0.7176
+MIM_r1_hv_none|K_Oel,Val 2024,0.4047,Gewinnquote,-0.1598,-0.1311,215,0.8206
+MIM_r1_hv_none|K_BTC,Val 2024,0.4356,Gewinnquote,-0.16,-0.0617,101,0.3855
+MIM_r1_hv_none|K_FX,Val 2024,0.3567,Gewinnquote,-0.2358,-0.4617,513,1.958

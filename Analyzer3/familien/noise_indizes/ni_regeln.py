@@ -17,7 +17,7 @@ def make_signals(x, rule):
     """x aus sitzung.prepare. Einstieg E0 = noise-1.0 (M30 ab Eroeffnung+30 min, Noise-Area 14, SMA20-Filter, Stop Bandmitte)."""
     if rule == 'N10_480':
         sig = noise.signals(x, grid=30, trend='cprev', one_per_day=True, stop_mode='mid', tgt_R=1.0)
-        sig['i_last'] = np.minimum(sig['i_sig'] + 96, len(x) - 1)
+        sig['i_last'] = noise.last_by_clock(x, sig['i_sig'], 480)   # 480 min nach Uhrzeit (nicht 96 Kerzen)
     elif rule == 'N10_EOD':
         sig = noise.signals(x, grid=30, trend='cprev', one_per_day=True, stop_mode='mid', tgt_R=1.0)
     elif rule == 'A':

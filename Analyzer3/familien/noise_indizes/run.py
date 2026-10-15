@@ -65,7 +65,11 @@ def portfolio(trs, days, null_cells):
                 n_inst=trs['inst'].nunique())
 
 
-def main(phase):
+K_NULL = 100   # Nullmodell der berichteten Zellen (Hinweis Koordinator: K 20 ist um etwa 0,014 R verrauscht)
+NOTE = 'v2: N10_480 nach Uhrzeit (noise.last_by_clock), Null K=100'
+
+
+def main(phase, K=K_NULL):
     end = {'train': '2024-01-01', 'val': '2025-01-01', 'info25': '2026-01-01'}[phase]
     pname = {'train': 'Train', 'val': 'Val 2024', 'info25': 'info 2025'}[phase]
     cells, trades, sessdays = [], [], {}
@@ -82,15 +86,17 @@ def main(phase):
             sigdays[rule][inst] = pd.DatetimeIndex(st[(st >= a) & (st < b)].normalize().unique())
             tr = qbt.trades_only(qbt.simulate(x, sig, inst))
             tr = tr[(tr['t_entry'] >= a) & (tr['t_entry'] < b)].copy()
-            cell = qbt.report_cell(x, tr, periods(inst, phase))
+            cell = qbt.report_cell(x, tr, periods(inst, phase), K=K)
             r = cell.iloc[0].to_dict()
+            if phase == 'train':   # Auswahl S1 vorab mit Nullmodell K 20, seed 7 festgelegt (REGELN.md)
+                r['null_R_k20'] = qbt.report_cell(x, tr, periods(inst, phase), K=20, seed=7).iloc[0]['null_R'] if len(tr) else np.nan
             r.update(inst=inst, rule=rule, period=pname, cost_R=(tr['R_gross'] - tr['R']).mean() if len(tr) else np.nan,
                      risk_pct=tr['risk_pct'].median() if len(tr) else np.nan,
                      tp1vs=tp1_vs_stop(x, tr, inst) if rule == 'B' else np.nan)
             r['R_day'] = r['R'] * r['per_day'] if r['n'] else 0.0
             cells.append(r)
             ledger.log_variant(FAMILIE, f'{rule}|{inst}', dict(rule=rule, inst=inst, entry='noise-1.0 E0', sess=list(map(str, S.SESS[inst]))),
-                               cell, note=f'{phase}; Zelle Instrument x Regel')
+                               cell, note=f'{phase}; Zelle Instrument x Regel; {NOTE}')
             tr['rule'] = rule
             trades.append(tr[['inst', 'rule', 'i_sig', 't_sig', 't_entry', 't_exit', 'd', 'E', 'stop', 'X', 'risk_pct', 'R_gross', 'R', 'code']])
             print(f'{phase} {inst:7s} {rule:8s} n {int(r["n"]):4d} /Tag {r["per_day"]:.2f} TvS {r["tvs"]:.2f} R {r["R"]:+.3f} '
@@ -104,7 +110,11 @@ def main(phase):
     fsel = os.path.join(HIER, 'auswahl_train.json')
     if phase == 'train':
         sel = {rule: [i for i in S.INSTRUMENTS
+                      if ((C.rule == rule) & (C.inst == i) & (C.R > 0) & (C.R > C.null_R_k20)).any()] for rule in RG.RULES}
+        alt = {rule: [i for i in S.INSTRUMENTS
                       if ((C.rule == rule) & (C.inst == i) & (C.R > 0) & (C.R > C.null_R)).any()] for rule in RG.RULES}
+        print('Auswahl S1 (Null K20, vorab):', sel)
+        print('zum Vergleich mit Null K' + str(K) + ':', alt, '-> gleich' if alt == sel else '-> ABWEICHEND')
         json.dump(sel, open(fsel, 'w'), indent=1)
     sel = json.load(open(fsel))
     alldays = pd.DatetimeIndex(sorted(set().union(*[set(v) for v in sessdays.values()])))
@@ -122,7 +132,7 @@ def main(phase):
             prow.append(p)
             tab = pd.DataFrame([p], index=[pname])
             ledger.log_variant(FAMILIE, f'PF_{rule}_{sname}', dict(rule=rule, auswahl=sname, insts=insts), tab,
-                               note=f'{phase}; Portfolio, Tag = Serverdatum')
+                               note=f'{phase}; Portfolio, Tag = Serverdatum; {NOTE}')
     P = pd.DataFrame(prow)
     P.to_csv(os.path.join(HIER, f'portfolio_{phase}.csv'), index=False)
     pd.set_option('display.width', 250)

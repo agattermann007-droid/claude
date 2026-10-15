@@ -1,0 +1,69 @@
+{
+ "erstellt": "nach Train-Lauf 1/1b, vor dem Blick auf 2024",
+ "P_sel": {
+  "MIM60_r1_none": [],
+  "MIM_r1_B": [],
+  "MIM_r1_hv_none": [],
+  "MIM_r1_none": [],
+  "MIM_r1_t05": [],
+  "MIM_r1_t10": [],
+  "MIM_r1r12_none": [],
+  "MIM_rod_none": [],
+  "N10_480": [
+   "BRENT",
+   "BTCUSD",
+   "WTI"
+  ],
+  "N10_end": [
+   "BRENT",
+   "BTCUSD",
+   "WTI"
+  ],
+  "PAPS_B": [
+   "BTCUSD",
+   "WTI"
+  ]
+ },
+ "kandidatenregel": "Train R>0, max(t, t_day)>=2, t gegen Null>=2; Prioritaet R/Tag",
+ "zellen_erfuellt": [],
+ "kandidaten": [],
+ "beste_train_zellen_info": [
+  {
+   "zelle": "N10_480|BTCUSD",
+   "R": 0.072,
+   "t": 1.51,
+   "t_vs_null": 3.05
+  },
+  {
+   "zelle": "N10_end|BTCUSD",
+   "R": 0.054,
+   "t": 1.27,
+   "t_vs_null": 2.93
+  },
+  {
+   "zelle": "PAPS_B|BTCUSD",
+   "R": 0.032,
+   "t": 0.9,
+   "t_vs_null": 2.73
+  },
+  {
+   "zelle": "N10_480|P_sel",
+   "R": 0.031,
+   "t": 1.1,
+   "t_vs_null": 2.89
+  },
+  {
+   "zelle": "PAPS_B|P_sel",
+   "R": 0.025,
+   "t": 0.98,
+   "t_vs_null": 3.15
+  },
+  {
+   "zelle": "N10_end|P_sel",
+   "R": 0.024,
+   "t": 0.91,
+   "t_vs_null": 2.89
+  }
+ ],
+ "entscheid": "Keine Zelle erfuellt die Kandidatenregel auf Train. 2024 wird einmal nur zur Berichterstattung gerechnet; danach keine Aenderungen."
+}
