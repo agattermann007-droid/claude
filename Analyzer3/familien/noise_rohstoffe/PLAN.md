@@ -17,7 +17,7 @@ Datenabdeckung je Uhrzeit angesehen (keine Renditen).
 ## Regeln (für alle Instrumente gleich, nicht je Instrument abgestimmt)
 Noise-Area (Zarattini/Aziz/Barbon 2024; `lib/noise.py`):
 - **N10_end**: noise-1.0 unverändert (M30-Raster ab Eröffnung+30, Lookback 14, SMA20-Filter Vortagesschluss, erster Trade des Tages, Stop Bandmitte, Ziel 1R), Zeitausstieg Fensterende.
-- **N10_480**: dieselben Signale, Bewertung nach 480 min (`i_sig + 96`), nur zum Vergleich.
+- **N10_480**: dieselben Signale, Bewertung nach 480 min (ab Train-Lauf 1b nach Uhrzeit, `noise.last_by_clock`; zuerst fälschlich 96 Kerzen), nur zum Vergleich.
 - **PAPS_B**: Kandidat B der Familie ausstiege: alle M30-Signale mit SMA20-Filter, Wiedereinstieg nach Ausstieg, Stop Bandmitte, Teilziel 50 % bei 0,5R, danach Break-even, Rest ohne Ziel bis Fensterende.
 
 Market intraday momentum (MIM):
@@ -40,3 +40,12 @@ Market intraday momentum (MIM):
 Eine Zelle (Instrument oder Portfolio × Regel) kommt in Frage, wenn: Train R netto > 0, t ≥ 2 (Trade- oder Tages-Cluster-t) und t gegen Null ≥ 2.
 Unter den Kandidaten in Frage: höchstens 3, Priorität nach Train R/Tag (Ziel 4). Bei Gleichstand wird die Zelle mit Trefferquote ≥ 60 % bevorzugt.
 Festhalten in `auswahl_train.json` vor dem Lauf auf 2024. Danach 2024 einmal. Kandidat nur, wenn 2024 R netto > 0, sonst verworfen.
+
+## Nachtrag nach Train-Lauf 1 (vor jedem Blick auf 2024)
+Befund Train: In der Regression der letzten halben Stunde auf r1 ist die Korrelation bei XAU (+0,10), XAG (+0,15),
+GBPUSD (+0,10) und USDCAD (+0,07) positiv, mit t > 2. Der reine Vorzeichen-Trade verdient aber brutto nur 0,2–0,7 bp
+je Trade, bei Kosten von 1,5–6 bp. Der Zusammenhang kommt aus Tagen mit großer Bewegung. Gao et al. 2018 (und Wen et
+al. 2021 für Öl) berichten ebenfalls, dass die Vorhersagbarkeit an volatilen Tagen stärker ist.
+Deshalb gibt es eine einzige zusätzliche Regel, datengetrieben und so gekennzeichnet:
+- **MIM_r1_hv_none**: wie MIM_r1_none, aber nur an Tagen mit |r1| > Mittel von |r1| der letzten 14 Sitzungen
+  (k = 1, Lookback 14 wie überall). Sie zählt als eigene Variante und muss dieselbe Kandidatenregel erfüllen.

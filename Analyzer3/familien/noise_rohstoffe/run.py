@@ -57,7 +57,7 @@ def run_inst(inst, per_key, rules=None):
         tab2 = tab.copy()
         tab2['tvs'] = r['tvs']
         ledger.log_variant(FAMILIE, f'{rule}|{inst}', {'rule': rule, 'inst': inst, 'sess': nr.SESS[inst]}, tab2,
-                           note=f'Trefferquote={art}; cost_R={r["cost_R"]:.3f}')
+                           note=f'Trefferquote={art}; cost_R={r["cost_R"]:.3f}' + ('; 480 min nach Uhrzeit (last_by_clock)' if rule == 'N10_480' else ''))
         tr['rule'] = rule
         tr['null_R_cell'] = r.get('null_R', np.nan)
         trades.append(tr)
@@ -66,14 +66,28 @@ def run_inst(inst, per_key, rules=None):
 
 if __name__ == '__main__':
     per_key = sys.argv[1]
-    insts = sys.argv[2:] or (nr.INSTS + nr.CHECK)
+    args = sys.argv[2:]
+    rules = None
+    if args and args[0].startswith('--rules='):
+        rules = args[0].split('=', 1)[1].split(',')
+        args = args[1:]
+    insts = args or (nr.INSTS + nr.CHECK)
     outdir = os.path.join(HERE, 'out')
     os.makedirs(outdir, exist_ok=True)
     for inst in insts:
         t0 = time.time()
-        cells, tr = run_inst(inst, per_key)
-        cells.to_csv(os.path.join(outdir, f'zellen_{per_key}_{inst}.csv'), index=False)
+        cells, tr = run_inst(inst, per_key, rules)
         keep = ['rule', 'inst', 'i_sig', 'd', 'stop', 'E', 'X', 'R_gross', 'R', 'code', 't_entry', 't_exit', 'risk_pct',
                 'null_R_cell', 'tgt_R']
-        tr[[k for k in keep if k in tr.columns]].to_parquet(os.path.join(outdir, f'trades_{per_key}_{inst}.parquet'))
+        tr = tr[[k for k in keep if k in tr.columns]]
+        fc = os.path.join(outdir, f'zellen_{per_key}_{inst}.csv')
+        ft = os.path.join(outdir, f'trades_{per_key}_{inst}.parquet')
+        if rules and os.path.exists(fc):   # nur diese Regeln ersetzen
+            old_c, old_t = pd.read_csv(fc), pd.read_parquet(ft)
+            cells = pd.concat([old_c[~old_c['rule'].isin(rules)], cells])
+            tr = pd.concat([old_t[~old_t['rule'].isin(rules)], tr])
+        order = {r: k for k, r in enumerate(nr.RULES)}
+        cells = cells.sort_values('rule', key=lambda s: s.map(order), kind='stable')
+        cells.to_csv(fc, index=False)
+        tr.to_parquet(ft)
         print(f'{inst} fertig {time.time() - t0:.0f}s', flush=True)

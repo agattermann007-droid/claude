@@ -38,8 +38,8 @@ def prepare(df, inst):
 def sig_n10(x, mode='end'):
     """noise-1.0 unveraendert; mode 'end' = Zeitausstieg Fensterende, '480' = i_sig + 96 Kerzen."""
     sig = noise.signals(x, grid=30, trend='cprev', one_per_day=True, stop_mode='mid', tgt_R=1.0)
-    if mode == '480':
-        sig['i_last'] = np.minimum(sig['i_sig'] + 96, len(x) - 1)
+    if mode == '480':   # Uhrzeit statt 96 Kerzen (Korrektur lib/noise.py: kein Halten uebers Wochenende)
+        sig['i_last'] = noise.last_by_clock(x, sig['i_sig'], 480)
     return sig
 
 
@@ -92,7 +92,7 @@ def mim_frame(x, H=30, lookback=14):
     return f
 
 
-def sig_mim(x, pred='r1', H=30, tgt_R=np.nan, tp1=False):
+def sig_mim(x, pred='r1', H=30, tgt_R=np.nan, tp1=False, hv=False):
     """MIM: Richtung = Vorzeichen des Praediktors, Einstieg Fensterende - H (Market zur naechsten Eroeffnung),
     Stop = sigma_H, Ziel tgt_R (NaN = kein Ziel), Zeitausstieg Fensterende.
     pred: 'r1' (Vortagesschluss -> Eroeffnung+30), 'r1r12' (beide gleiches Vorzeichen), 'rod' (Vortagesschluss -> Ende-30)."""
@@ -107,6 +107,9 @@ def sig_mim(x, pred='r1', H=30, tgt_R=np.nan, tp1=False):
     else:
         raise ValueError(pred)
     f['d'] = d
+    if hv:   # nur Tage mit |r1| ueber dem Mittel der letzten 14 Sitzungen (ohne heute)
+        a1 = f['r1'].abs()
+        f.loc[~(a1 > a1.rolling(14, min_periods=10).mean().shift(1)), 'd'] = 0
     g = f[f['d'].notna() & (f['d'] != 0) & f['isig'].notna() & f['sigma_H'].notna() & f['ilast'].notna()
           & (f['sigma_H'] > 0)].copy()
     # kein Filter ilast > isig: auf abgeschnittenen Daten ist das Fensterende noch nicht da (qbt markiert solche Faelle als -8)
@@ -135,4 +138,5 @@ RULES = {
     'MIM_r1r12_none': (lambda x: sig_mim(x, 'r1r12', 30), 'Gewinnquote'),
     'MIM_rod_none': (lambda x: sig_mim(x, 'rod', 30), 'Gewinnquote'),
     'MIM60_r1_none': (lambda x: sig_mim(x, 'r1', 60), 'Gewinnquote'),
+    'MIM_r1_hv_none': (lambda x: sig_mim(x, 'r1', 30, hv=True), 'Gewinnquote'),   # Nachtrag nach Train-Lauf 1
 }
