@@ -46,7 +46,21 @@ def tage_t(tr):
     return s.mean() / (s.std(ddof=1) / np.sqrt(len(s))) if len(s) > 2 and s.std(ddof=1) > 0 else np.nan
 
 
+TROCKEN = False
+
+
+def zeitraum(inst, a, b):
+    """'DEV_START' als Grenze = Beginn der Entwicklungsdaten dieses Instruments (gesperrter Vorzeitraum endet dort).
+    Im Trockenlauf wird der Beginn auf dev_start gekappt (gesperrte Kerzen bleiben zu)."""
+    a = Q.dev_start(inst) if a == 'DEV_START' else pd.Timestamp(a)
+    b = Q.dev_start(inst) if b == 'DEV_START' else pd.Timestamp(b)
+    if TROCKEN:
+        a = max(a, Q.dev_start(inst))
+    return a, b
+
+
 def rechne(mod, inst, a, b, override=None):
+    a, b = zeitraum(inst, a, b)
     df = Q.load(inst, a, b, warmup_days=90)
     ev = df[(df.index >= pd.Timestamp(a)) & (df.index < pd.Timestamp(b))]
     if len(ev) < 1000:
@@ -65,8 +79,8 @@ def rechne(mod, inst, a, b, override=None):
 
 
 def main():
-    global KRIT, OUT
-    trocken = '--trocken' in sys.argv
+    global KRIT, OUT, TROCKEN
+    trocken = TROCKEN = '--trocken' in sys.argv
     if trocken:   # Probelauf auf dev-Daten: eigene Kriteriendatei, keine Sperre oeffnen
         KRIT = sys.argv[sys.argv.index('--trocken') + 1]
         OUT = os.path.join(ROOT, 'ergebnisse', 'trocken')
@@ -105,7 +119,8 @@ def main():
                     if tr is None:
                         zellen.append({'kandidat': k['name'], 'inst': inst, 'zeitraum': name, 'fehler': 'keine/zu wenige Daten'})
                         continue
-                    cell = qbt.report_cell(x, tr, {name: (a, b)}, K=100, seed=11).iloc[0].to_dict()
+                    a_i, b_i = zeitraum(inst, a, b)
+                    cell = qbt.report_cell(x, tr, {name: (a_i, b_i)}, K=100, seed=11).iloc[0].to_dict()
                     cell.update({'kandidat': k['name'], 'inst': inst, 'zeitraum': name,
                                  'erster_tag': str(ev.index[0].date()), 'letzter_tag': str(ev.index[-1].date())})
                     zellen.append(cell)

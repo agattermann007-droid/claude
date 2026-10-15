@@ -1,10 +1,16 @@
 {
- "kriterien_sha256": "c2fe531f5ac0fe726e4dae4e62afa3638ec952a585939f69550de2e4c5c2c921",
- "start": "2026-10-15T20:12:17.942577+00:00",
+ "kriterien_sha256": "f3209c1e10695e345ef2f68e08583de28ebc1e717caa122541dd5312e8a31368",
+ "start": "2026-10-15T20:27:20.516439+00:00",
  "kandidaten": [
   "noise-1.0",
-  "ausstiege-C",
-  "ereignis-fade930"
+  "aus-A",
+  "aus-B",
+  "aus-C",
+  "ni-A_s1",
+  "ni-B_s1",
+  "ni-n10eod_s1",
+  "ev-fade930",
+  "kal-tom-preh"
  ],
- "ende": "2026-10-15T20:12:28.517678+00:00"
+ "ende": "2026-10-15T20:30:37.024322+00:00"
 }
