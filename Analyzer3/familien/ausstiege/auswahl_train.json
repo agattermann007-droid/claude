@@ -1,0 +1,8 @@
+{
+ "zeitpunkt": "2026-10-15T19:12:46Z",
+ "hinweis": "Auswahl nur auf NAS100 Train 2021-2023, vor dem ersten Blick auf 2024. Filter: R>0, t>=2 (Trade oder Tag), t_vs_null>=2, sichtbares Ziel (fest oder Teilziel), Zeitausstieg 15:00 (keine 480-min-Varianten).",
+ "A_hoechstes_R_je_Trade": "N10_t15_15",
+ "B_beste_Trefferquote_ab_60": "PAPS_tp05_be",
+ "C_hoechstes_R_je_Tag": "PAP0_tp10_paper",
+ "US500": "nur Robustheit; aufgenommen nur, wenn dieselbe Regel auf US500 Train R>0 mit t>=2 und 2024 R>0 zeigt (Train: keine der drei erfuellt t>=2)"
+}

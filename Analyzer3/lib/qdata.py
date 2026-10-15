@@ -82,6 +82,8 @@ def load(inst, eval_start=None, eval_end=None, warmup_days=60):
     check_range(inst, a, b)
     df = _read(inst)
     lo = a - pd.Timedelta(days=warmup_days)
+    if not lock_open():
+        lo = max(lo, dev_start(inst))      # auch zum Aufwaermen keine gesperrten Kerzen vor der Freigabe
     df = df[(df.index >= lo) & (df.index < b)].copy()
     df.attrs['inst'] = inst
     df.attrs['eval_start'] = a
