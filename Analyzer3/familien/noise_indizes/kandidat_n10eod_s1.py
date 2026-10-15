@@ -2,8 +2,8 @@
 
 Einstieg wie noise-1.0 (Zarattini/Aziz/Barbon 2024, 'Beat the Market'): M30-Raster ab 30 min nach lokaler Kassaeroeffnung,
 Schluss ausserhalb der Noise-Area (Lookback 14), Trendfilter Vortagesschluss gegen SMA20 der Sitzungsschluesse, Market zur
-naechsten Eroeffnung, Stop Bandmitte. Ausstieg: Ziel 1R; Zeitausstieg zum letzten Ausstieg der Sitzung (sitzung.SESS).
-Regel 'N10_EOD' aus regeln.py. Sitzungen und Mittagspausen (JPN225 11:30-12:30 Tokio, HK50 12:00-13:00 Hongkong) in sitzung.py.
+naechsten Eroeffnung, Stop Bandmitte. Ausstieg: Ziel 1R; Zeitausstieg zum letzten Ausstieg der Sitzung (ni_sitzung.SESS).
+Regel 'N10_EOD' aus ni_regeln.py. Sitzungen und Mittagspausen (JPN225 11:30-12:30 Tokio, HK50 12:00-13:00 Hongkong) in ni_sitzung.py.
 Instrumente nach vorab festgelegter Regel S1 (Train R netto > 0 und > Nullmodell-R) gewaehlt, siehe REGELN.md.
 """
 import os
@@ -11,8 +11,8 @@ import sys
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HIER)
-import sitzung  # noqa: E402
-import regeln  # noqa: E402
+import ni_sitzung as sitzung  # noqa: E402
+import ni_regeln as regeln  # noqa: E402
 
 NAME = 'noise_indizes-n10eod_s1: noise-1.0-Einstieg je lokaler Kassasitzung, Regel N10_EOD, Auswahl S1'
 INSTRUMENTS = ['NAS100', 'US500', 'JPN225', 'HK50']

@@ -30,5 +30,5 @@ for v in dict.fromkeys(d['variante']):
     tv = lambda r, k: '–' if r['art_trefferquote'] == 'Gewinnquote' else f(r[k], pct=True)
     lines.append(f"| {v} | {int(a.n)} | {a.per_day:.2f} | {tv(a,'tvs')} | {f(a.win,pct=True)} | {f(a.R)} | {a.t:+.1f} | {tv(a,'null_tvs')} | {f(a.null_win,pct=True)} | {f(a.null_R)} | "
                  f"{int(b.n)} | {tv(b,'tvs')} | {f(b.win,pct=True)} | {f(b.R)} | {b.t:+.1f} | {tv(b,'null_tvs')} | {f(b.null_win,pct=True)} | {f(b.null_R)} |")
-pass
+open(os.path.join(H, '_tabelle.md'), 'w').write(chr(10).join(lines) + chr(10))
 print('\n'.join(lines))

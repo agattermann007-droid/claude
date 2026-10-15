@@ -157,7 +157,10 @@ def build(x, day_mask, start_m=570, end_m=900, k=1.0, tgt_R=np.nan, d=1, early_c
         ps = int(ps)
         pe = _last_in_day(x, day, e, xm)
         if pe is None or pe <= ps:
-            continue
+            if ps == len(x) - 1:      # Daten enden an der Signalkerze (Live/abgeschnitten): Ausstieg liegt in der Zukunft
+                pe = ps + 1
+            else:
+                continue
         rows.append(dict(i_sig=ps, d=d, stop=c[ps] * (1 - d * k * sg), tgt_R=tgt_R, i_last=pe, kind='market',
                          sday=day, sigma=sg))
     out = pd.DataFrame(rows)

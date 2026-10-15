@@ -12,7 +12,7 @@ import pandas as pd
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HIER)
-import sitzung as S  # noqa: E402
+import ni_sitzung as S  # noqa: E402
 import qdata as Q  # noqa: E402
 
 

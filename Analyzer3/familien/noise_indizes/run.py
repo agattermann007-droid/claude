@@ -2,6 +2,7 @@
 
 Aufruf: python3 -W ignore run.py train      (Train = dev-Start .. 2023-12-31, legt die Auswahl S1 fest)
         python3 -W ignore run.py val        (Val 2024, einmal; nutzt die Auswahl aus auswahl_train.json)
+        python3 -W ignore run.py info25     (2025, nur Information, entscheidet nichts)
 """
 import json
 import os
@@ -12,8 +13,8 @@ import pandas as pd
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HIER)
-import sitzung as S  # noqa: E402
-import regeln as RG  # noqa: E402
+import ni_sitzung as S  # noqa: E402
+import ni_regeln as RG  # noqa: E402
 import qbt  # noqa: E402
 import qdata as Q  # noqa: E402
 import ledger  # noqa: E402
@@ -25,6 +26,8 @@ COLS = ['n', 'per_day', 'days_cov', 'tvs', 'win', 'R', 't', 't_day', 'time_exit'
 def periods(inst, phase):
     if phase == 'train':
         return {'Train': (str(Q.dev_start(inst).date()), '2024-01-01')}
+    if phase == 'info25':
+        return {'info 2025': ('2025-01-01', '2026-01-01')}
     return {'Val 2024': ('2024-01-01', '2025-01-01')}
 
 
@@ -63,8 +66,8 @@ def portfolio(trs, days, null_cells):
 
 
 def main(phase):
-    end = '2024-01-01' if phase == 'train' else '2025-01-01'
-    pname = 'Train' if phase == 'train' else 'Val 2024'
+    end = {'train': '2024-01-01', 'val': '2025-01-01', 'info25': '2026-01-01'}[phase]
+    pname = {'train': 'Train', 'val': 'Val 2024', 'info25': 'info 2025'}[phase]
     cells, trades, sessdays = [], [], {}
     sigdays = {r: {} for r in RG.RULES}
     for inst in S.INSTRUMENTS:

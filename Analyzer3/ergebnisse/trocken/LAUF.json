@@ -1,0 +1,10 @@
+{
+ "kriterien_sha256": "c2fe531f5ac0fe726e4dae4e62afa3638ec952a585939f69550de2e4c5c2c921",
+ "start": "2026-10-15T20:12:17.942577+00:00",
+ "kandidaten": [
+  "noise-1.0",
+  "ausstiege-C",
+  "ereignis-fade930"
+ ],
+ "ende": "2026-10-15T20:12:28.517678+00:00"
+}

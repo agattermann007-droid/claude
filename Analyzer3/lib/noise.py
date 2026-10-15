@@ -87,5 +87,12 @@ def noise10_signals(x):
     M30-Raster ab 10:00 bis vor 15:00 NY, Schluss ausserhalb der Noise-Area, Trendfilter Vortagesschluss gegen SMA20,
     erster Trade des Tages, Stop Bandmitte, Ziel 1R, Bewertung nach 480 min (wie bewerte() in Alex' Harness)."""
     sig = signals(x, grid=30, trend='cprev', one_per_day=True, stop_mode='mid', tgt_R=1.0)
-    sig['i_last'] = np.minimum(sig['i_sig'] + 96, len(x) - 1)
+    sig['i_last'] = last_by_clock(x, sig['i_sig'], 480)
     return sig
+
+
+def last_by_clock(x, i_sig, minutes):
+    """Letzte Kerze, deren Schluss <= Signalzeit + minutes (Uhrzeit, nicht Kerzenzahl: kein Halten uebers Wochenende)."""
+    idx = x.index.values
+    t_end = idx[np.asarray(i_sig)] + np.timedelta64(5 + minutes - 5, 'm')   # Kerzenbeginn <= Signalschluss + minutes - 5
+    return np.searchsorted(idx, t_end, side='right') - 1

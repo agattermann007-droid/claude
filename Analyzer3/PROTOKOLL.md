@@ -22,8 +22,23 @@ Stand 15.10.2026. Ziel: Setups finden, die Alex' Zielprofil näher kommen als no
 - Standard-Tabelle je Zelle: `qbt.report_cell(x, trades, {'Train': ..., 'Val 2024': ...})`.
 
 ## Referenz noise-1.0 (Rekonstruktion, `lib/noise.py: noise10_signals`)
-Das Original-Script lag in dieser Sitzung nicht vor. Rekonstruiert: M30-Raster 10:00–14:30 NY, Schluss außerhalb der Noise-Area (Lookback 14), Trendfilter Vortagesschluss gegen SMA20, erster Trade des Tages, Stop Bandmitte, Ziel 1R, Bewertung nach 480 min.
-Ergebnis NAS100: Train 2021–23 57 % / +0,11 R (n 226), 2024 58 % / +0,15 R (n 68), 2025 57 % / +0,12 R (n 62); 0,24–0,29 Trades je Handelstag. Gemeldet: 54/60/57 % und +0,10/+0,17/+0,15 R.
+Das Original-Script lag in dieser Sitzung nicht vor. Nachgebaut ist folgende Regel:
+- M30-Raster 10:00–14:30 NY; Signal, wenn eine M30-Kerze außerhalb der Noise-Area schließt (Lookback 14).
+- Trendfilter: Vortagesschluss gegen SMA20.
+- Nur der erste Trade des Tages.
+- Stop in der Bandmitte, Ziel 1R.
+- Bewertung nach 480 min Uhrzeit (`last_by_clock`). Seit 15.10. abends korrigiert; vorher zählte der Nachbau 96 Kerzen, sodass Freitags-Trades übers Wochenende liefen.
+Ergebnis NAS100 nach Uhr- und Datenkorrektur:
+
+| Zeitraum | n | Target vor Stop | R netto | t |
+|---|---|---|---|---|
+| Train 2021–23 | 226 | 55,7 % | +0,102 | 1,88 |
+| 2024 | 68 | 56,1 % | +0,123 | 1,25 |
+| 2025 | 62 | 53,8 % | +0,097 | |
+
+- 0,24–0,29 Trades je Handelstag.
+- Nullmodell (K = 100): Train −0,017 R, 2024 ±0,000 R.
+- Gemeldet: 54/60/57 % und +0,10/+0,17/+0,15 R.
 
 ## Disziplin
 - Wenige, runde Parameter (z. B. 0,5 / 1 / 2 R; 14 / 20 Tage; 30-min-Raster). Literaturregeln vor eigenen Erfindungen; Quelle nennen.

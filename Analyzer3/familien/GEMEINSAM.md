@@ -12,8 +12,8 @@ Ziel des Teams: Setups finden, die Alex' Zielprofil näher kommen als die laufen
 Daytrades (Stunden, keine Scalps, keine Übernacht-Positionen über das Sitzungsende hinaus als Ziel). Alex gibt "setup" ein und bekommt Entry (Market oder Pending), Stop, Target.
 
 ## Maßstab noise-1.0 (Rekonstruktion, NAS100)
-Train 2021–23: n 226, 0,29 Trades/Tag, Target vor Stop 57 %, +0,11 R, t 2,0; Nullmodell 49 % / −0,04 R.
-Val 2024: n 68, 0,26/Tag, 58 %, +0,15 R, t 1,5; Nullmodell 53 % / +0,04 R.
+Train 2021–23: n 226, 0,29 Trades/Tag, Target vor Stop 56 %, +0,10 R, t 1,9; Nullmodell (K=100) 50 % / −0,02 R.
+Val 2024: n 68, 0,26/Tag, 56 %, +0,12 R, t 1,3; Nullmodell 50 % / ±0,00 R. (Stand nach Uhr- und 480-min-Korrektur.)
 
 ## Pflicht
 - Lies zuerst `/home/user/claude/Analyzer3/PROTOKOLL.md`, dann `lib/qdata.py`, `lib/qbt.py`, `lib/noise.py`, `lib/ledger.py`, `familien/referenz/kandidat_noise10.py`.

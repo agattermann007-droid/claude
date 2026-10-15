@@ -14,8 +14,8 @@ import pandas as pd
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HIER)
 sys.path.insert(0, os.path.join(HIER, '..', '..', 'lib'))
-import sitzung as S  # noqa: E402
-import regeln as RG  # noqa: E402
+import ni_sitzung as S  # noqa: E402
+import ni_regeln as RG  # noqa: E402
 import qbt  # noqa: E402
 import qdata as Q  # noqa: E402
 import noise  # noqa: E402
