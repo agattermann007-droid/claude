@@ -1,0 +1,219 @@
+1a2,38
+> //|  DEADBAND V11  -  Build 11.00, 15.10.2026                        |
+> //|  BUILD 11.00: HANDEL WIE 10.00 + TESTSCHALTER NEUE TICK-MODULE   |
+> //|  Kein neuer Strom, keine Einstellung hat die Pruefung bestanden  |
+> //|  (Auswahl 2022-23, dann besser in 2024-26 UND 2016-21, 0 Busts). |
+> //|  Voreinstellung = handelsgleich 10.00. Neu im Code:              |
+> //|  1) SR-Marken erweitert (SrEintrag): Symbol je Marke, Stop-Puffer|
+> //|     x ATR oder x Markenspanne, Ziel CRV/Range-Mitte/Gegenseite,  |
+> //|     CRV und Risiko je Marke, Range-Filter, Bindung an den        |
+> //|     Portfolio-Waechter. SrListe: 12 Felder (wie 9.00) oder 19.   |
+> //|  2) V11TickFades (aus): N1030/N1100 als Tick-Fades SRT1030/1100, |
+> //|     M5-Versionen nur virtuell. Replikat (16 Stoerungen, Ausz./J):|
+> //|     2022 +1,2, 2023 +1,9, 2017-20 +0,6, aber 2024-25 -0,6 und    |
+> //|     1 Bust -> verworfen, nur fuer den Tester (Echte Ticks).      |
+> //|  3) V11GoldPdf (aus): Gold 18:30-2:00 NY unter Vortagstief und   |
+> //|     zurueck -> Long, Ziel 3 R, 0,25 %. Replikat: 2023 +2,2 und   |
+> //|     2024-25 +1,0 Ausz./J, 2022 und 2017-20 beim Geld neutral;    |
+> //|     OANDA-Gold 2010-16 ohne Vorteil (2014-15 negativ) = Drift.   |
+> //|  Replikat v11 (neu gebaut: M1, Schlupf 1/4 Spread, rollierende   |
+> //|  1-Jahres-Konten alle 7 Tage, 16 gepaarte Stoerungen), Ausz./J   |
+> //|  und $/J (Anteil nach Gebuehr), V8 -> V10/V11:                   |
+> //|    Start 2022    9,2 -> 12,0  |  1531 -> 2288 $                  |
+> //|    Start 2023   11,4 -> 13,1  |  2354 -> 2542 $                  |
+> //|    2024-25       8,4 ->  7,9  |  1759 -> 1670 $ (SR nicht besser)|
+> //|    2017-20       5,0 ->  5,5  |   939 -> 1025 $  0 Busts ueberall|
+> //|  GETESTET UND VERWORFEN (Bericht DEADBAND_V11_Bericht.md):       |
+> //|    Bestaetigungs-Einstieg (+0,1..0,3 R, Hypothese "Move vorbei"),|
+> //|    Tick-Fades, 4.608 Sweep-Varianten Gold/NAS (8 Kandidaten auf  |
+> //|    Kontoebene), Gold-Vortagestief GPDF, SR-Risiko 0,15-0,35      |
+> //|    (kein Plateau, ab 0,30 Busts), Abschluss-Ernte 0,2/0,5 R und  |
+> //|    10 % Reserve, Serien-Stopp 2/4, ohne Schutz gueltiger Tage,   |
+> //|    RSI21-Schutz bis 12/14 Uhr, Gewinn-Ernte ab 0,5 R.            |
+> //|  RUECKFALL = 10.00: V11TickFades=false, V11GoldPdf=false (Vorein-|
+> //|    stellung). DEADBAND_V10.mq5 bleibt unveraendert.              |
+> //|  NICHT KOMPILIERT ERSTELLT - vor dem Einsatz im MetaEditor       |
+> //|  kompilieren und im Strategietester (Echte Ticks) pruefen.       |
+> //+------------------------------------------------------------------+
+> //+------------------------------------------------------------------+
+311c348
+< #property version   "10.00"
+---
+> #property version   "11.00"
+602a640,643
+> input group             "=== 11.00: Testschalter neue Tick-Module (Voreinstellung aus = handelsgleich 10.00) ==="
+> input bool   V11TickFades     = false;      // 11.00 TEST: N1030 und N1100 als Tick-Fades SRT1030/SRT1100 (Einstieg im Tick beim Ruecklauf in die Range statt am Open nach dem M5-Schluss; nur bei live Fade-Regime). Die M5-Module N1030/N1100 rechnen dann nur virtuell (Portfolio-Waechter). Replikat: 2022/2023/2017-20 besser, 2024-25 schlechter, 1 Bust in 16 Stoerungen - erst im Tester (Echte Ticks) pruefen
+> input bool   V11GoldPdf       = false;      // 11.00 TEST: Modul SRGPDF - Gold faellt 18:30-2:00 NY unter das Tief des Vortags (18:00-17:00) und kehrt zurueck -> Long, Stop 0,15 ATR unter dem Extrem, Ziel 3 R, Ausstieg 8:00 NY. Replikat: 2023-25 besser, auf OANDA-Daten 2010-16 ohne Vorteil (Gold-Baisse 2014-15 negativ) - nur Tester
+> input double V11GoldPdfRisk   = 0.25;       // 11.00: Risiko je SRGPDF-Trade in % vom Startsaldo (x Pufferkurve)
+687c728
+< #define MAXFADE 18            // 6.00: Fade-Module (7.10: 10 Listenplaetze + Spike-Modul; 8.00: + LW + XA; 8.10: + TD; 9.00: + 4 SR-Marken) (vor der ersten Verwendung in AbschlussErntePruefen)
+---
+> #define MAXFADE 22            // 6.00: Fade-Module (7.10: 10 Listenplaetze + Spike-Modul; 8.00: + LW + XA; 8.10: + TD; 9.00: + 4 SR-Marken; 11.00: + 3 Testmodule) (vor der ersten Verwendung in AbschlussErntePruefen)
+5635a5677,5679
+>    int      srSmode, srTmode;     // 11.00 SR: Stop-Puffer 0 = x ATR, 1 = x Markenspanne | Ziel 0 = CRV, 1 = Mitte, 2 = Gegenseite
+>    double   srCrv, srMx;          // 11.00 SR: CRV der Marke (0 = SrCRV), Markenspanne hoechstens srMx x ATR (0 = ohne)
+>    bool     srGuard;              // 11.00 SR: nur bei live Fade-Regime (Portfolio-Waechter) handeln
+5717c5761
+<       F[m].aus = FadeNameInListe(F[m].name, FadeAus);
+---
+>       F[m].aus = FadeNameInListe(F[m].name, FadeAus) || (V11TickFades && FadeNameInListe(F[m].name, "N1030;N1100"));   // 11.00: Tick-Version handelt
+5738a5783
+>    if(V11TickFades || V11GoldPdf) V11Anlegen();                               // 11.00: Testmodule (Voreinstellung aus)
+5860a5906,5955
+> // 11.00: eine SR-Marke anlegen. smode 0 = Stop sb x ATR jenseits des Sweep-Extrems (9.00), 1 = sb x Markenspanne (Fade-Stil,
+> //        Mindeststop nur SrMinStopSpreads). tmode 0 = Ziel crv x Stopabstand (crv 0 = SrCRV), 1 = Mitte der Marke, 2 = Gegenseite.
+> //        mx > 0: Markenspanne hoechstens mx x ATR(D1). guard: nur handeln, solange der Portfolio-Waechter der Fades live ist.
+> //        Mit smode 0, tmode 0, crv 0, risk SrRiskPct, mx 0, guard false = SR wie 9.00/10.00.
+> bool SrEintrag(const string nm, const int k, const int la, const int lb, const int loff, const int w0, const int w1, const int xx,
+>                const double sd, const double md, const double rb, const double sb, const int dir,
+>                const int smode, const int tmode, const double crv, const double risk, const double mx, const bool guard)
+>   {
+>    if(nFade >= MAXFADE) { PrintFormat("DEADBAND4: SR - kein Platz (schon %d Module) - Marke %s AUS", nFade, nm); return false; }
+>    if(k < 0 || k >= nSym) { PrintFormat("DEADBAND4: SR-Marke %s - Symbol nicht in der SymbolList - AUS", nm); return false; }
+>    double pt = SymbolInfoDouble(S[k].sym, SYMBOL_POINT);
+>    if(pt <= 0.0) { PrintFormat("DEADBAND4: SR-Marke %s - Symbol ohne Point - AUS", nm); return false; }
+>    if(la >= lb || la < -420 || lb > 1020 || (loff != 0 && loff != -1) || lb + loff*1440 > w0 || w0 < -360 || w1 < w0 + 5 || w1 > 990
+>       || xx < w1 + 5 || xx > 1000 || sd < 0.0 || md <= sd || rb < 0.0 || sb < 0.0 || (dir != 1 && dir != -1)
+>       || smode < 0 || smode > 1 || tmode < 0 || tmode > 2 || crv < 0.0 || risk <= 0.0 || risk > 1.0 || mx < 0.0)
+>      { PrintFormat("DEADBAND4: SR-Marke %s ungueltig (la < lb, -420 <= la, lb <= 1020, loff 0/-1, Marke endet vor w0, -360 <= w0, w0 + 5 <= w1 <= 990, w1 + 5 <= x <= 1000, 0 <= sd < md, rb >= 0, sb >= 0, dir 1/-1, smode 0/1, tmode 0-2, crv >= 0, 0 < Risiko <= 1, mx >= 0) - AUS", nm); return false; }
+>    for(int q=0;q<nFade;q++) if(F[q].name == nm) { PrintFormat("DEADBAND4: SR-Name %s doppelt - AUS", nm); return false; }
+>    int m = nFade;
+>    F[m].k = k; F[m].r0 = w0; F[m].L = w1 - w0; F[m].tlen = 5; F[m].xoff = xx - (w1 + 5); F[m].buf = sb; F[m].tgt = 0;
+>    F[m].dir = dir; F[m].mx = 99.0; F[m].name = nm; F[m].pt = pt;
+>    F[m].aus = FadeNameInListe(F[m].name, FadeAus);
+>    F[m].schutzFrei = FadeNameInListe(F[m].name, GueltigSchutzFrei);
+>    F[m].gridAus = true;
+>    F[m].day = -1; F[m].nbar = 0; F[m].hh = 0.0; F[m].ll = 0.0; F[m].rng = 0.0; F[m].exHi = 0.0; F[m].exLo = 0.0;
+>    F[m].ready = false; F[m].done = false; F[m].skip = false; F[m].vOn = false; F[m].vDir = 0;
+>    F[m].vEnt = 0.0; F[m].vSl = 0.0; F[m].vTp = 0.0; F[m].vRd = 0.0; F[m].vBar = 0; F[m].vX = 0;
+>    for(int q=0;q<FADEHIST;q++) { F[m].hist[q] = 0.0; F[m].histT[q] = 0; }
+>    F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = true; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;   // keine Historie, kein eigener Waechter
+>    F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
+>    F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
+>    F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;
+>    F[m].spike = false; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
+>    F[m].typ = 5; F[m].riskPct = risk; F[m].minBuf = 0.0;
+>    F[m].lwPH = 0.0; F[m].lwPL = 0.0; F[m].lwCH = -DBL_MAX; F[m].lwCL = DBL_MAX; F[m].lwPN = 0; F[m].lwCN = 0;
+>    F[m].tdLetzt = -1; F[m].tdVor = -1; F[m].tdRefTag = -1; F[m].tdRef = 0.0;
+>    F[m].srLa = la; F[m].srLb = lb; F[m].srLoff = loff; F[m].srSd = sd; F[m].srMd = md; F[m].srRb = rb;
+>    F[m].srSt = 0; F[m].srEx = 0.0; F[m].srTag = -1;
+>    F[m].srSmode = smode; F[m].srTmode = tmode; F[m].srCrv = crv; F[m].srMx = mx; F[m].srGuard = guard;   // 11.00
+>    nFade++;
+>    return true;
+>   }
+> 
+> // 11.00: Symbol-Index aus einem Namensteil (wie SrSymbol), -1 = nicht in der SymbolList
+> int SrSymIndex(const string teil)
+>   {
+>    string sy = teil; StringTrimLeft(sy); StringTrimRight(sy); StringToUpper(sy);
+>    for(int q=0;q<nSym && StringLen(sy) > 0;q++) { string u = S[q].sym; StringToUpper(u); if(StringFind(u, sy) >= 0) return q; }
+>    return -1;
+>   }
+> 
+5863,5865c5958
+<    string sy = SrSymbol; StringTrimLeft(sy); StringTrimRight(sy); StringToUpper(sy);
+<    int k = -1;
+<    for(int q=0;q<nSym && StringLen(sy) > 0;q++) { string u = S[q].sym; StringToUpper(u); if(StringFind(u, sy) >= 0) { k = q; break; } }
+---
+>    int k = SrSymIndex(SrSymbol);
+5878d5970
+<       if(nFade >= MAXFADE) { PrintFormat("DEADBAND4: 9.00 SR - kein Platz (schon %d Module) - Marke %s AUS", nFade, x); continue; }
+5880c5972,5973
+<       if(nf != 12) { PrintFormat("DEADBAND4: 9.00 SrListe Eintrag %d hat %d statt 12 Felder (Name,la,lb,loff,w0,w1,x,sd,md,rb,sb,dir): %s - AUS", i+1, nf, x); continue; }
+---
+>       if(nf != 12 && nf != 19)
+>         { PrintFormat("DEADBAND4: SrListe Eintrag %d hat %d statt 12 bzw. 19 Felder (Name,la,lb,loff,w0,w1,x,sd,md,rb,sb,dir[,Symbol,smode,tmode,crv,Risiko,mx,Waechter]): %s - AUS", i+1, nf, x); continue; }
+5886,5913c5979,5987
+<       string nm = "SR" + f[0];
+<       if(la >= lb || la < -420 || lb > 1020 || (loff != 0 && loff != -1) || lb + loff*1440 > w0 || w0 < -360 || w1 < w0 + 5 || w1 > 990
+<          || xx < w1 + 5 || xx > 1000 || sd < 0.0 || md <= sd || rb < 0.0 || sb < 0.0 || (dir != 1 && dir != -1))
+<         { PrintFormat("DEADBAND4: 9.00 SrListe Eintrag %d ungueltig (la < lb, -420 <= la, lb <= 1020, loff 0/-1, Marke endet vor w0, -360 <= w0, w0 + 5 <= w1 <= 990, w1 + 5 <= x <= 1000, 0 <= sd < md, rb >= 0, sb >= 0, dir 1/-1): %s - AUS", i+1, x); continue; }
+<       bool doppelt = false;
+<       for(int q=0;q<nFade;q++) if(F[q].name == nm) doppelt = true;
+<       if(doppelt) { PrintFormat("DEADBAND4: 9.00 Name %s doppelt - AUS", nm); continue; }
+<       int m = nFade;
+<       F[m].k = k; F[m].r0 = w0; F[m].L = w1 - w0; F[m].tlen = 5; F[m].xoff = xx - (w1 + 5); F[m].buf = sb; F[m].tgt = 0;
+<       F[m].dir = dir; F[m].mx = 99.0; F[m].name = nm; F[m].pt = pt;
+<       F[m].aus = FadeNameInListe(F[m].name, FadeAus);
+<       F[m].schutzFrei = FadeNameInListe(F[m].name, GueltigSchutzFrei);
+<       F[m].gridAus = true;
+<       F[m].day = -1; F[m].nbar = 0; F[m].hh = 0.0; F[m].ll = 0.0; F[m].rng = 0.0; F[m].exHi = 0.0; F[m].exLo = 0.0;
+<       F[m].ready = false; F[m].done = false; F[m].skip = false; F[m].vOn = false; F[m].vDir = 0;
+<       F[m].vEnt = 0.0; F[m].vSl = 0.0; F[m].vTp = 0.0; F[m].vRd = 0.0; F[m].vBar = 0; F[m].vX = 0;
+<       for(int q=0;q<FADEHIST;q++) { F[m].hist[q] = 0.0; F[m].histT[q] = 0; }
+<       F[m].nh = 0; F[m].ph = 0; F[m].nSig = 0; F[m].histFertig = true; F[m].histFehl = 0; F[m].histVersuch = 0; F[m].histAb = 0;   // keine Historie, kein Waechter
+<       F[m].lastBar = 0; F[m].sigHeute = 0; F[m].einHeute = 0; F[m].liveDay = -1; F[m].liveGoal = 0.0;
+<       F[m].logZeit = 0; F[m].tpVersuch = 0; F[m].schlussVersuch = 0; F[m].nGrid = 0;
+<       F[m].t1Tk = 0; F[m].t1Chk = 0; F[m].t1Versuch = 0; F[m].nT1 = 0;
+<       F[m].spike = false; F[m].spP0 = 0.0; F[m].spDir = 0; F[m].spA = 0.0; F[m].spGoal = 0.0;
+<       F[m].typ = 5; F[m].riskPct = SrRiskPct; F[m].minBuf = 0.0;
+<       F[m].lwPH = 0.0; F[m].lwPL = 0.0; F[m].lwCH = -DBL_MAX; F[m].lwCL = DBL_MAX; F[m].lwPN = 0; F[m].lwCN = 0;
+<       F[m].tdLetzt = -1; F[m].tdVor = -1; F[m].tdRefTag = -1; F[m].tdRef = 0.0;
+<       F[m].srLa = la; F[m].srLb = lb; F[m].srLoff = loff; F[m].srSd = sd; F[m].srMd = md; F[m].srRb = rb;
+<       F[m].srSt = 0; F[m].srEx = 0.0; F[m].srTag = -1;
+<       nFade++;
+---
+>       int kk = k, smode = 0, tmode = 0; double crv = 0.0, risk = SrRiskPct, mx = 0.0; bool guard = false;
+>       if(nf == 19)                                                              // 11.00: erweitertes Format
+>         {
+>          if(StringLen(f[12]) > 0 && f[12] != "-") kk = SrSymIndex(f[12]);
+>          smode = (int)StringToInteger(f[13]); tmode = (int)StringToInteger(f[14]); crv = StringToDouble(f[15]);
+>          double rr = StringToDouble(f[16]); if(rr > 0.0) risk = rr;
+>          mx = StringToDouble(f[17]); guard = (StringToInteger(f[18]) != 0);
+>         }
+>       SrEintrag("SR" + f[0], kk, la, lb, loff, w0, w1, xx, sd, md, rb, sb, dir, smode, tmode, crv, risk, mx, guard);
+5917a5992,6010
+> // 11.00: Testmodule (Voreinstellung aus). Parameter = Replikat v11 (cand11.py): Tick-Fades wie die Listen-Fades N1030/N1100
+> //        (Range, Fenster, Ausstieg, Stop-Puffer x Range, Ziel Mitte/Gegenseite, Range <= 0,6 ATR, Risiko FadeRiskPct,
+> //        Durchbruch ab 0,6 ATR jenseits der Range), Gold-Vortagestief GPDF.
+> void V11Anlegen()
+>   {
+>    if(V11TickFades)
+>      {
+>       int k = SrSymIndex("NAS");
+>       SrEintrag("SRT1030", k, 630, 750, 0, 750, 810, 930, 0.0, 0.6, 0.0, 0.3, 1, 1, 1, 0.0, FadeRiskPct, 0.6, true);
+>       SrEintrag("SRT1100", k, 660, 750, 0, 750, 810, 1000, 0.0, 0.6, 0.0, 0.6, 1, 1, 2, 0.0, FadeRiskPct, 0.6, true);
+>       PrintFormat("DEADBAND4: 11.00 TEST Tick-Fades SRT1030/SRT1100 AN (Risiko %.2f %%, nur bei live Fade-Regime) - N1030/N1100 rechnen nur virtuell", FadeRiskPct);
+>      }
+>    if(V11GoldPdf)
+>      {
+>       SrEintrag("SRGPDF", SrSymIndex("XAU"), -360, 1020, -1, -330, 120, 480, 0.0, 0.6, 0.0, 0.15, 1, 0, 0, 3.0, V11GoldPdfRisk, 0.0, false);
+>       PrintFormat("DEADBAND4: 11.00 TEST Gold-Vortagestief SRGPDF AN (Fenster 18:30-2:00 NY, Ziel 3 R, Risiko %.2f %%)", V11GoldPdfRisk);
+>      }
+>   }
+> 
+5975a6069,6074
+>       if(F[m].srMx > 0.0 && hi - lo > F[m].srMx*a)                             // 11.00: Range-Filter (Tick-Fades wie mx der Fade-Liste)
+>         {
+>          F[m].skip = true;
+>          PrintFormat("DEADBAND4 %s SR %s: Markenspanne %.2f ATR > %.2f ATR - heute kein Signal", s, FadeName(m), (hi - lo)/a, F[m].srMx);
+>          return;
+>         }
+6016,6017c6115,6117
+<    double st = (d > 0 ? F[m].srEx - F[m].buf*A : F[m].srEx + sp + F[m].buf*A);
+<    double minD = MathMax(SrMinStopSpreads*sp, SrMinStopATR*A) + 2.0*F[m].pt;   // + 2 Punkte: Rundung des Stops, FadeMinStopSpreads in FadeLive
+---
+>    double sbuf = (F[m].srSmode == 1 ? F[m].buf*F[m].rng : F[m].buf*A);        // 11.00: Stop-Puffer x Markenspanne (Fade-Stil) oder x ATR
+>    double st = (d > 0 ? F[m].srEx - sbuf : F[m].srEx + sp + sbuf);
+>    double minD = MathMax(SrMinStopSpreads*sp, (F[m].srSmode == 1 ? 0.0 : SrMinStopATR)*A) + 2.0*F[m].pt;   // + 2 Punkte: Rundung des Stops, FadeMinStopSpreads in FadeLive (11.00: Fade-Stil nur Spreads)
+6020c6120,6126
+<    double goal = ent + d*SrCRV*rd;
+---
+>    double crv = (F[m].srCrv > 0.0 ? F[m].srCrv : SrCRV);                       // 11.00: CRV je Marke
+>    double goal = (F[m].srTmode == 1 ? 0.5*(F[m].hh + F[m].ll) : (F[m].srTmode == 2 ? (d > 0 ? F[m].hh : F[m].ll) : ent + d*crv*rd));   // 11.00: Mitte/Gegenseite
+>    if(rd <= 0.0 || (goal - ent)*d <= 0.0)
+>      {
+>       PrintFormat("DEADBAND4 %s SR %s: Kurs schon jenseits des Ziels %.*f - kein Einstieg", s, FadeName(m), dg, goal);
+>       return;
+>      }
+6030c6136
+<                (d > 0 ? "LONG" : "SHORT"), dg, st, rd/A, dg, goal, SrCRV, FadeUhr(xm));
+---
+>                (d > 0 ? "LONG" : "SHORT"), dg, st, rd/A, dg, goal, (goal - ent)*d/rd, FadeUhr(xm));   // 11.00: tatsaechliches CRV
+6453a6560
+>    if(F[m].typ == 5 && F[m].srGuard) return FadeRegimeLive(tSig);              // 11.00: Tick-Fades nur bei live Fade-Regime (Portfolio-Waechter)
+7017c7124,7125
+<       goal = po + d*SrCRV*MathAbs(po - slAlt);
+---
+>       if(F[m].srTmode == 0) goal = po + d*(F[m].srCrv > 0.0 ? F[m].srCrv : SrCRV)*MathAbs(po - slAlt);   // 11.00: CRV je Marke
+>       else if(F[m].day == Dt && F[m].hh > 0.0 && F[m].ll > 0.0) goal = (F[m].srTmode == 1 ? 0.5*(F[m].hh + F[m].ll) : (d > 0 ? F[m].hh : F[m].ll));

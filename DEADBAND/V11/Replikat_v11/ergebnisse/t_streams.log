@@ -1,0 +1,67 @@
+S0830  2016-21: n    23  WR  87.0%  PF  2.52  E +0.199 R  Summe    +4.6 R
+S0830  2022-23: n    25  WR  88.0%  PF  3.23  E +0.268 R  Summe    +6.7 R
+S0830  2024-26: n    22  WR  86.4%  PF  3.46  E +0.236 R  Summe    +5.2 R
+S0830  2022-25: n    47  WR  87.2%  PF  3.32  E +0.253 R  Summe   +11.9 R
+LW     2016-21: n  1051  WR  32.5%  PF  1.21  E +0.136 R  Summe  +143.1 R
+LW     2022-23: n   354  WR  38.1%  PF  1.46  E +0.282 R  Summe   +99.8 R
+LW     2024-26: n   431  WR  36.4%  PF  1.42  E +0.254 R  Summe  +109.7 R
+LW     2022-25: n   761  WR  36.9%  PF  1.44  E +0.267 R  Summe  +203.6 R
+XA     2016-21: n   660  WR  48.9%  PF  1.14  E +0.024 R  Summe   +16.1 R
+XA     2022-23: n   249  WR  47.4%  PF  1.22  E +0.036 R  Summe    +8.9 R
+XA     2024-26: n   305  WR  53.8%  PF  1.49  E +0.084 R  Summe   +25.5 R
+XA     2022-25: n   531  WR  50.7%  PF  1.32  E +0.055 R  Summe   +29.1 R
+TD     2016-21: n   162  WR  48.1%  PF  1.07  E +0.015 R  Summe    +2.4 R
+TD     2022-23: n    34  WR  67.6%  PF  2.58  E +0.242 R  Summe    +8.2 R
+TD     2024-26: n    63  WR  50.8%  PF  1.04  E +0.008 R  Summe    +0.5 R
+TD     2022-25: n    94  WR  57.4%  PF  1.53  E +0.098 R  Summe    +9.2 R
+SRIB   2016-21: n   669  WR  38.0%  PF  1.12  E +0.076 R  Summe   +50.7 R
+SRIB   2022-23: n   269  WR  42.0%  PF  1.33  E +0.200 R  Summe   +53.9 R
+SRIB   2024-26: n   292  WR  40.1%  PF  1.18  E +0.113 R  Summe   +33.0 R
+SRIB   2022-25: n   549  WR  41.2%  PF  1.25  E +0.154 R  Summe   +84.8 R
+SRPRE  2016-21: n   898  WR  37.1%  PF  1.19  E +0.119 R  Summe  +107.1 R
+SRPRE  2022-23: n   302  WR  35.8%  PF  1.14  E +0.094 R  Summe   +28.3 R
+SRPRE  2024-26: n   328  WR  39.0%  PF  1.31  E +0.188 R  Summe   +61.8 R
+SRPRE  2022-25: n   613  WR  37.2%  PF  1.21  E +0.137 R  Summe   +83.9 R
+SRH12  2016-21: n   682  WR  38.0%  PF  1.11  E +0.070 R  Summe   +47.5 R
+SRH12  2022-23: n   237  WR  40.1%  PF  1.25  E +0.155 R  Summe   +36.8 R
+SRH12  2024-26: n   271  WR  38.7%  PF  1.14  E +0.085 R  Summe   +23.0 R
+SRH12  2022-25: n   488  WR  38.9%  PF  1.17  E +0.105 R  Summe   +51.1 R
+SRPDN  2016-21: n   226  WR  48.2%  PF  1.22  E +0.097 R  Summe   +22.0 R
+SRPDN  2022-23: n   106  WR  41.5%  PF  1.02  E +0.008 R  Summe    +0.8 R
+SRPDN  2024-26: n   112  WR  46.4%  PF  1.38  E +0.173 R  Summe   +19.4 R
+SRPDN  2022-25: n   209  WR  44.0%  PF  1.18  E +0.088 R  Summe   +18.4 R
+N1030  2016-21: n    90  WR  45.6%  PF  0.64  E -0.182 R  Summe   -16.4 R  live 0.07
+N1030  2022-23: n    46  WR  67.4%  PF  1.82  E +0.276 R  Summe   +12.7 R  live 0.65
+N1030  2024-26: n    54  WR  66.7%  PF  1.59  E +0.191 R  Summe   +10.3 R  live 1.00
+N1330  2016-21: n   250  WR  71.2%  PF  0.89  E -0.021 R  Summe    -5.3 R  live 0.08
+N1330  2022-23: n    99  WR  76.8%  PF  1.40  E +0.064 R  Summe    +6.4 R  live 0.64
+N1330  2024-26: n   121  WR  80.2%  PF  1.88  E +0.099 R  Summe   +11.9 R  live 1.00
+X0630  2016-21: n   318  WR  55.0%  PF  0.91  E -0.031 R  Summe    -9.9 R  live 0.07
+X0630  2022-23: n   105  WR  67.6%  PF  1.26  E +0.074 R  Summe    +7.8 R  live 0.73
+X0630  2024-26: n   126  WR  63.5%  PF  1.19  E +0.062 R  Summe    +7.8 R  live 1.00
+X0400  2016-21: n   165  WR  51.5%  PF  0.59  E -0.207 R  Summe   -34.1 R  live 0.06
+X0400  2022-23: n    70  WR  61.4%  PF  1.02  E +0.009 R  Summe    +0.6 R  live 0.64
+X0400  2024-26: n    79  WR  64.6%  PF  1.25  E +0.093 R  Summe    +7.4 R  live 1.00
+N1800  2016-21: n   155  WR  53.5%  PF  0.86  E -0.053 R  Summe    -8.2 R  live 0.07
+N1800  2022-23: n    64  WR  60.9%  PF  1.06  E +0.019 R  Summe    +1.2 R  live 0.72
+N1800  2024-26: n    53  WR  64.2%  PF  1.36  E +0.105 R  Summe    +5.6 R  live 1.00
+N0930  2016-21: n    82  WR  48.8%  PF  0.87  E -0.050 R  Summe    -4.1 R  live 0.02
+N0930  2022-23: n    50  WR  54.0%  PF  1.32  E +0.123 R  Summe    +6.1 R  live 0.64
+N0930  2024-26: n    58  WR  67.2%  PF  2.15  E +0.277 R  Summe   +16.1 R  live 1.00
+N1100  2016-21: n   143  WR  51.0%  PF  1.11  E +0.046 R  Summe    +6.5 R  live 0.08
+N1100  2022-23: n    71  WR  57.7%  PF  1.37  E +0.152 R  Summe   +10.8 R  live 0.66
+N1100  2024-26: n    79  WR  55.7%  PF  1.58  E +0.189 R  Summe   +14.9 R  live 1.00
+N1300  2016-21: n   201  WR  65.2%  PF  0.90  E -0.029 R  Summe    -5.8 R  live 0.07
+N1300  2022-23: n    84  WR  69.0%  PF  1.36  E +0.087 R  Summe    +7.3 R  live 0.65
+N1300  2024-26: n    97  WR  75.3%  PF  1.61  E +0.117 R  Summe   +11.4 R  live 1.00
+X0300S 2016-21: n   141  WR  39.7%  PF  0.48  E -0.318 R  Summe   -44.8 R  live 0.10
+X0300S 2022-23: n    68  WR  57.4%  PF  1.26  E +0.095 R  Summe    +6.5 R  live 0.84
+X0300S 2024-26: n    68  WR  57.4%  PF  1.36  E +0.138 R  Summe    +9.4 R  live 1.00
+X1000S 2016-21: n   128  WR  39.8%  PF  0.62  E -0.190 R  Summe   -24.3 R  live 0.05
+X1000S 2022-23: n    47  WR  61.7%  PF  1.26  E +0.092 R  Summe    +4.3 R  live 0.62
+X1000S 2024-26: n    57  WR  52.6%  PF  1.09  E +0.031 R  Summe    +1.8 R  live 1.00
+FADES alle 2016-21: n  1673  WR  54.6%  PF  0.77  E -0.088 R  Summe  -146.5 R | nur live: n   116  WR  59.5%  PF  0.95  E -0.018 R  Summe    -2.0 R
+FADES alle 2022-23: n   704  WR  64.5%  PF  1.29  E +0.091 R  Summe   +63.7 R | nur live: n   481  WR  66.7%  PF  1.46  E +0.131 R  Summe   +63.1 R
+FADES alle 2024-26: n   792  WR  66.0%  PF  1.44  E +0.122 R  Summe   +96.4 R | nur live: n   792  WR  66.0%  PF  1.44  E +0.122 R  Summe   +96.4 R
+FADES alle 2022-25: n  1452  WR  65.7%  PF  1.38  E +0.112 R  Summe  +162.1 R | nur live: n  1229  WR  66.8%  PF  1.47  E +0.131 R  Summe  +161.4 R
+4s
