@@ -192,7 +192,7 @@ def modul_lauf(typ, r0, L, tlen, xoff, buf, tgt, mdir, mx, p1, p2, p3, p4, tgtmo
     vT1 = 0.0; vT1Done = False; vAcc = 0.0
     spP0 = 0.0; spDir = 0; spA = 0.0; spGoal = 0.0
     lwPH = 0.0; lwPL = 0.0; lwCH = -1e300; lwCL = 1e300; lwPN = 0; lwCN = 0
-    tdLetzt = -1; tdVor = -1; tdRefTag = -1; tdRef = 0.0
+    tdLetzt = -1; tdVor = -1; tdRefTag = -1; tdRef = 0.0; tdRefTag0 = -1; tdRef0 = 0.0
     for i in range(n - 1):
         t = ny[i]; tn = ny[i + 1]
         # 1) virtueller Trade
@@ -439,6 +439,8 @@ def modul_lauf(typ, r0, L, tlen, xoff, buf, tgt, mdir, mx, p1, p2, p3, p4, tgtmo
                 tdVor = tdLetzt; tdLetzt = Db
             mb = t - Db * 1440
             if mb < schluss and mb >= schluss - 60:
+                if Db != tdRefTag:                       # V9: Referenz des Vortags merken (Einstieg im Referenzfenster, SM 15:30)
+                    tdRefTag0 = tdRefTag; tdRef0 = tdRef
                 tdRefTag = Db; tdRef = c[i]
             Dn = tn // 1440
             if tn - Dn * 1440 != r0:
@@ -449,14 +451,15 @@ def modul_lauf(typ, r0, L, tlen, xoff, buf, tgt, mdir, mx, p1, p2, p3, p4, tgtmo
             rs, re, te, xm = _fadezeiten(r0, L, tlen, xoff, Dn)
             day = Dn
             vor = tdVor if tdLetzt == Dn else tdLetzt
-            if vor < 0 or tdRefTag != vor:
+            ref = tdRef if tdRefTag == vor else (tdRef0 if tdRefTag0 == vor else -1.0)
+            if vor < 0 or ref < 0.0:
                 continue
             if tn >= xm:
                 continue
             a0 = _atr_at(d1key, atrj, Dn * 1440 + r0)
             if not (a0 > 0.0):
                 continue
-            rr = c[i] - tdRef
+            rr = c[i] - ref
             if abs(rr) < minatr * a0 or rr == 0.0:
                 continue
             d = 1 if rr > 0.0 else -1
