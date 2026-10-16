@@ -5,39 +5,43 @@ Nutzer: **Alex**, Trader und Eigentümer des MT5-Expert-Advisors **DEADBAND**; h
 10k-Konto (Goat Funded Trader, bleibt bei GFT). Kommunikation **auf Deutsch**, knapp und ehrlich. Ich (Claude)
 entscheide selbst und frage nur, wenn ich blockiert bin.
 
-## Aktueller Stand (16.10.2026)
+## Aktueller Stand (17.10.2026)
 | Was | Wert |
 |-----|------|
-| **Beste Version** | **DEADBAND V12, Build 12.00** – `DEADBAND/V12/DEADBAND_V12.mq5` – **nie kompiliert**, nur statisch geprüft |
-| **Live** | Build **8.10** (V8) – bewährt; V10/V11/V12 noch nicht im Tester |
-| **Neu in 12.00** | N1030 handelt im Tick (`SRT1030`, `V12TickN1030`=an, 0,50 %), M5-N1030 nur virtuell; sonst wie 11.00 = 10.00 |
-| **Rückfall** | `V12TickN1030=false` = handelsgleich 11.00/10.00 |
-| **Bericht** | `DEADBAND/V12/DEADBAND_V12_Bericht.md` |
-| **Nächste Sitzung** | `DEADBAND/V12/PROMPT_DEADBAND_V13.md` (Abschnitt 5: Dateien und Daten laden) |
-| **Nachbau** | `DEADBAND/V12/Replikat_v12/` (Kursdaten nicht im Repo, Ladebefehle im Prompt V13) |
+| **Beste Version** | **DEADBAND V13, Build 13.00** – `DEADBAND/V13/DEADBAND_V13.mq5` – **kompiliert** (MetaEditor GFT, 0 Fehler/0 Warnungen), Tester offen |
+| **Live** | Build **8.10** (V8). **XA handelt live nie** (`FadeDurchlauf`/`frisch`, Signal direkt nach der Tagespause) → Live-Referenz im Nachbau = „V8 ohne XA“ |
+| **Neu in 13.00** | V12-Code mit `AsiaAktiv=false`, `SrRiskPct=0.05`, `V12TickN1030=false` (Handel = V10 mit SR 0,05 %, ohne XA) |
+| **Rückfall** | 12.00: `V12TickN1030=true`, `SrRiskPct=0.10`, `AsiaAktiv=true` · Live-Handel 8.10: `SrAktiv=false`, `V12TickN1030=false` |
+| **Bericht** | `DEADBAND/V13/DEADBAND_V13_Bericht.md` (Repo-Fassung ohne Kontodaten) |
+| **Nachbau** | `DEADBAND/V13/Replikat_v13/` = v12 + **GFT-Feed** (M1-Export, echte Spreads) + Windows-Prozess-Konfiguration (`gsetup.py`, `evl11.INIT`) |
+| **Prompt alt** | `DEADBAND/V12/PROMPT_DEADBAND_V13.md` (vor dem Live-Abgleich geschrieben – Abschnitt Ergebnisse überholt) |
 
-Replikat v12, Ausz./J (32 gepaarte Störungen, Schlupf ¼ Spread, 1-Jahres-Konten alle 7 Tage):
+V13 gegen den echten Live-Stand („V8 ohne XA“), Differenz Ausz./J, 32 gepaarte Störungen, 0 Busts überall:
 
-| Kontostart | V8 | V10 = V11 | **V12** |
-|---|---|---|---|
-| 2022 (Auswahl) | 9,70 | 12,27 | **12,93** |
-| 2023 | 11,63 | 13,20 | **14,49** |
-| 2024–25 | 7,54 | 7,68 | **7,61** (gleich) |
-| 2017–20 | 4,85 | 5,57 | **5,79** |
-| 2011–15 | 3,09 | 3,71 | **3,71** |
+| Kontostart | GFT-Feed Schlupf ¼ | Schlupf ½ | Spread ×2 | Fremddaten |
+|---|---|---|---|---|
+| 2022 | +0,20 | +0,09 | +1,42 | +1,32 |
+| 2023 | +1,72 | +0,83 | +2,38 | +2,75 |
+| 2024–25 | +1,09 | +1,39 | +0,88 | +0,79 |
+| 2025–26 (nur GFT) | +0,22 | +0,68 | +0,07 | – |
+| 2017–20 / 2011–15 | – | – | – | +0,29 / +0,53 |
 
-0 Busts überall. Vorbehalt V12: ohne Schlupf nur halber Vorteil, 2024–25 dann −0,38 ± 0,24 (nicht signifikant).
-→ Details: `memory/projects/deadband-v12.md`, verworfene Ideen: `memory/projects/deadband-verworfen.md`
+Wichtig: Der EA handelt Trade für Trade wie der Nachbau (29 Live-Trades geprüft). Das alte Spread-Modell ist bei
+heutigen Kursen ~2× zu teuer; auf dem GFT-Feed liegen alle Kontozahlen deutlich höher (V8 ohne XA 11–16 Ausz./J).
+V12 wie geliefert ist kostenempfindlich (Tick-N1030 2025–26 −0,9, Spread ×2 −3,7 Ausz./J).
+→ Details: `memory/projects/deadband-v13.md` (V12: `deadband-v12.md`), verworfene Ideen: `memory/projects/deadband-verworfen.md`
 
 ## Ziele des Nutzers (Rangfolge)
 1. **0 Busts** (harte Grenze) 2. mehr Auszahlungen/Jahr 3. größere Auszahlungen 4. kürzere Zyklen.
 Ertrag/Jahr (eigener Anteil) zählt, nicht die Trefferquote.
 
 ## Offene Punkte
-1. **MT5-Tester** (Echte Ticks, ab 2024): V12 `V12TickN1030` false/true, `SrAktiv` false/true – Ergebnisse auswerten
-2. **GFT-M5-Daten** als ZIPs < 10 MB vom Nutzer anfordern (Drive bricht bei 10 MB ab)
-3. Regime „Fades aus“ (2011–21, ~3,7–5,6 Ausz./J): nur Ströme mit **hoher Trefferquote** suchen
-4. Weitere Fades einzeln im Tick (N0930, N1300, N1800); Konto-Mechanik mit korrigiertem Motor nachrechnen
+1. **MT5-Tester** (Echte Ticks, ab 2024): V13 gegen V13 mit `SrAktiv=false` (= V8-Handel) und gegen V12-Werte – auswerten
+2. **Live-Wechsel V8 → V13** macht Alex (kontospezifische Eingaben übernehmen, Bericht V13 Abschnitt 7)
+3. **GFT-Kursdaten liegen vor** (M1/M5 ab 2010, NAS dicht ab 28.10.2019) im Drive `DEADBAND_Kursdaten_20261016_2245`,
+   ZIP je Jahr < 9 MB. Neue Ideen immer gegen „V8 ohne XA“ bzw. V13 auf GFT-Feed UND Fremddaten mit Kostenstress messen.
+4. Regime „Fades aus“ (2011–21): nur Ströme mit **hoher Trefferquote** suchen
+5. Tick-Module sind kostenempfindlich – neue Tick-Ideen nur mit Schlupf ½ und Spread ×2 bewerten
 
 ## Terms
 | Term | Meaning |
@@ -45,7 +49,9 @@ Ertrag/Jahr (eigener Anteil) zählt, nicht die Trefferquote.
 | **GFT** | Boden 6 % trailend am Equity-Hoch, Floating −1 %, Tag −3 % (17:00 NY), gültiger Tag ≥ 0,5 % + 0,50 $, 5 gültige Tage, Zyklus ≥ 14 Tage, Ausz. ≥ 105 $ (80 %), Gewinne < 120 s gestrichen, kein Hedging, Server = NY + 7 h |
 | **Fades** | 10 Listen-Fades (N1030 … X1000S), Fehlausbruch einer Sitzungs-Range, Portfolio-Wächter PF200 > 1,15 |
 | **Wächter live / Fades aus** | Fades handeln nur bei live Wächter: 2011–21 fast nie, ab 2023 fast immer |
-| **SR** | Sweep-Reclaim NAS im Tick, 4 Marken (IB, PRE, H12, PDN), 0,10 % (ab 10.00) |
+| **SR** | Sweep-Reclaim NAS im Tick, 4 Marken (IB, PRE, H12, PDN), 0,10 % (10.00–12.00), **0,05 % ab 13.00** |
+| **V8 ohne XA** | echter Live-Stand: XA (Gold-Asien) ist im Code an, handelt aber live nie (Signal nach der Tagespause, `frisch`) |
+| **GFT-Feed** | Nachbau auf dem M1-Export des GFT-Terminals mit echten Bar-Spreads (`xg.py`, `REP_SPREAD=gft`), Fenster 2022/2023/2024-25/2025-26 |
 | **SRT1030** | N1030 als Tick-Fade (Modul vom SR-Typ, 12.00) – handelt auch bei `SrAktiv=false` |
 | **LW / XA / TD / S0830** | Larry-Williams NAS · Gold-Asien Long · Trend-Day NAS 14:00 · Spike-Fade NAS 8:30 |
 | **RSI21 / Noise** | RSI-Pullback-Modul · NAS-Noise-Momentum long (3 Teile) |
@@ -59,8 +65,9 @@ Ertrag/Jahr (eigener Anteil) zählt, nicht die Trefferquote.
 ## Projects
 | Name | What |
 |------|------|
-| **DEADBAND V12** | aktuelle beste Version (s. oben) → `memory/projects/deadband-v12.md` |
-| **Build-Historie** | 6.x … 12.00 in einer Tabelle → `memory/projects/deadband-historie.md` |
+| **DEADBAND V13** | aktuelle beste Version (s. oben) → `memory/projects/deadband-v13.md` |
+| **DEADBAND V12** | Vorgänger (Tick-N1030, kostenempfindlich) → `memory/projects/deadband-v12.md` |
+| **Build-Historie** | 6.x … 13.00 in einer Tabelle → `memory/projects/deadband-historie.md` |
 | **DEADBAND V8** | Live-Stand 8.10, Konzept „Staffel“ → `memory/projects/deadband-v8.md` |
 | **Analyzer 3** | eigenes Forschungsprojekt, Branch `claude/analyzer3-forschung` (nicht DEADBAND-Build) |
 
@@ -73,3 +80,4 @@ Ertrag/Jahr (eigener Anteil) zählt, nicht die Trefferquote.
 - Kein `pkill -f`/`pgrep -f` mit Skriptnamen (trifft eigene Shell). Hintergrundbefehle enden nach **2 h** → Ketten teilen.
 - Nach Änderungen am Kontomotor `t12_engine_check.py` laufen lassen (abgeschalteter Strom darf nichts ändern).
 - Kursdaten, `cache/`, `.pkl` nie ins Repo. Erreichbar nur github.com und Drive (≤ 10 MB je Datei).
+- **Das Repo ist öffentlich:** keine Kontodaten (Saldo, Boden, Trade-Listen, Deals, Live-CSV, Login) ins Repo.

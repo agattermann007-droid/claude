@@ -1,0 +1,18 @@
+﻿=== Datensatz gft_gft_slip0.0 ===
+V8_ohneXA Auswahl 2022 Ausz/J 15.90  $/J  2916 (+offen  2950)  Ø  236$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA 2023         Ausz/J 14.38  $/J  3128 (+offen  3197)  Ø  280$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA Pruef 2024-25 Ausz/J 13.30  $/J  3102 (+offen  3090)  Ø  301$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=944
+V8_ohneXA Neu 2025-26  Ausz/J 12.03  $/J  2492 (+offen  2457)  Ø  267$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=560
+V8_ohneXA Start 2022   Ausz/J 15.92  $/J  2920 (+offen  2952)  Ø  236$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=832
+V8_ohneXA Start 2023   Ausz/J 14.38  $/J  3109 (+offen  3176)  Ø  279$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA Start 2024   Ausz/J 13.47  $/J  3156 (+offen  3163)  Ø  302$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=864
+V8_ohneXA Start 2025   Ausz/J 12.04  $/J  2526 (+offen  2473)  Ø  270$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=656
+V13 Auswahl 2022       Ausz/J 15.94  $/J  3015 (+offen  3055)  Ø  244$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V13 2023               Ausz/J 16.60  $/J  3712 (+offen  3811)  Ø  288$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V13 Pruef 2024-25      Ausz/J 14.17  $/J  3246 (+offen  3246)  Ø  295$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+V13 Neu 2025-26        Ausz/J 13.07  $/J  2617 (+offen  2577)  Ø  258$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=560
+V13 Start 2022         Ausz/J 15.94  $/J  3017 (+offen  3055)  Ø  244$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=832
+V13 Start 2023         Ausz/J 16.60  $/J  3690 (+offen  3787)  Ø  287$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V13 Start 2024         Ausz/J 14.32  $/J  3307 (+offen  3321)  Ø  298$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=864
+V13 Start 2025         Ausz/J 13.08  $/J  2648 (+offen  2602)  Ø  261$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=656
+V13 gg V8_ohneXA         2022 15.92(+0.07±0.12)  3035$( +78± 45) B0 | 2023 16.79(+2.41±0.12)  3737$(+595± 34) B0 | 2024-25 14.37(+1.09±0.15)  3297$(+189± 43) B0 | 2025-26 13.29(+1.53±0.30)  2672$(+218± 72) B0

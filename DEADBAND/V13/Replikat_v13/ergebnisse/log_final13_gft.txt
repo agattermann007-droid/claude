@@ -1,0 +1,36 @@
+﻿=== Datensatz gft_gft_slip0.25 ===
+V8_ohneXA Auswahl 2022 Ausz/J 15.61  $/J  2740 (+offen  2775)  Ø  226$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA 2023         Ausz/J 14.75  $/J  3165 (+offen  3242)  Ø  276$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA Pruef 2024-25 Ausz/J 12.47  $/J  2853 (+offen  2805)  Ø  295$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+V8_ohneXA Neu 2025-26  Ausz/J 11.30  $/J  2228 (+offen  2180)  Ø  254$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=560
+V8_ohneXA Start 2022   Ausz/J 15.63  $/J  2746 (+offen  2779)  Ø  226$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=832
+V8_ohneXA Start 2023   Ausz/J 14.73  $/J  3139 (+offen  3215)  Ø  275$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V8_ohneXA Start 2024   Ausz/J 12.76  $/J  2925 (+offen  2895)  Ø  296$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=864
+V8_ohneXA Start 2025   Ausz/J 11.17  $/J  2248 (+offen  2183)  Ø  259$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=656
+V13 Auswahl 2022       Ausz/J 15.99  $/J  2950 (+offen  2992)  Ø  238$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V13 2023               Ausz/J 16.46  $/J  3600 (+offen  3701)  Ø  282$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V13 Pruef 2024-25      Ausz/J 13.76  $/J  3161 (+offen  3160)  Ø  296$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+V13 Neu 2025-26        Ausz/J 11.75  $/J  2307 (+offen  2268)  Ø  253$  1.Ausz    18 T  ohne  0.0%  Bust 0  n=560
+V13 Start 2022         Ausz/J 16.01  $/J  2956 (+offen  2996)  Ø  238$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=832
+V13 Start 2023         Ausz/J 16.46  $/J  3574 (+offen  3673)  Ø  280$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V13 Start 2024         Ausz/J 13.94  $/J  3240 (+offen  3252)  Ø  299$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=864
+V13 Start 2025         Ausz/J 11.85  $/J  2350 (+offen  2305)  Ø  256$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=656
+V8 Auswahl 2022        Ausz/J 15.36  $/J  2751 (+offen  2787)  Ø  231$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+V8 2023                Ausz/J 15.67  $/J  3304 (+offen  3366)  Ø  272$  1.Ausz    15 T  ohne  0.0%  Bust 0  n=848
+V8 Pruef 2024-25       Ausz/J 13.56  $/J  3298 (+offen  3287)  Ø  313$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+V8 Neu 2025-26         Ausz/J 10.74  $/J  2387 (+offen  2298)  Ø  286$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=560
+V8 Start 2022          Ausz/J 15.36  $/J  2750 (+offen  2786)  Ø  231$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=832
+V8 Start 2023          Ausz/J 15.66  $/J  3287 (+offen  3346)  Ø  270$  1.Ausz    15 T  ohne  0.0%  Bust 0  n=848
+V8 Start 2024          Ausz/J 13.77  $/J  3332 (+offen  3335)  Ø  312$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=864
+V8 Start 2025          Ausz/J 10.92  $/J  2485 (+offen  2393)  Ø  293$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=656
+V12 Auswahl 2022       Ausz/J 16.80  $/J  3313 (+offen  3368)  Ø  254$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+V12 2023               Ausz/J 16.83  $/J  3705 (+offen  3730)  Ø  284$  1.Ausz    15 T  ohne  0.0%  Bust 0  n=848
+V12 Pruef 2024-25      Ausz/J  9.60  $/J  2342 (+offen  2269)  Ø  314$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+V12 Neu 2025-26        Ausz/J 10.89  $/J  2470 (+offen  2273)  Ø  292$  1.Ausz    18 T  ohne  0.0%  Bust 0  n=560
+V12 Start 2022         Ausz/J 16.76  $/J  3309 (+offen  3363)  Ø  254$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=832
+V12 Start 2023         Ausz/J 16.94  $/J  3709 (+offen  3737)  Ø  282$  1.Ausz    15 T  ohne  0.0%  Bust 0  n=848
+V12 Start 2024         Ausz/J  9.43  $/J  2299 (+offen  2222)  Ø  314$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=864
+V12 Start 2025         Ausz/J 11.02  $/J  2532 (+offen  2357)  Ø  296$  1.Ausz    18 T  ohne  0.0%  Bust 0  n=656
+V13 gg V8_ohneXA         2022 15.94(+0.20±0.12)  2931$(+155± 37) B0 | 2023 16.58(+1.72±0.13)  3578$(+384± 46) B0 | 2024-25 13.77(+1.09±0.14)  3153$(+253± 33) B0 | 2025-26 11.87(+0.22±0.27)  2322$( +15± 58) B0
+V8 gg V8_ohneXA          2022 15.52(-0.22±0.18)  2804$( +28± 40) B0 | 2023 15.80(+0.94±0.14)  3312$(+118± 58) B0 | 2024-25 13.47(+0.79±0.20)  3258$(+358± 47) B0 | 2025-26 10.78(-0.87±0.31)  2408$(+101± 67) B0
+V12 gg V8_ohneXA         2022 16.88(+1.14±0.18)  3374$(+598± 41) B0 | 2023 16.88(+2.02±0.11)  3645$(+450± 55) B0 | 2024-25  9.55(-3.12±0.23)  2328$(-572± 56) B0 | 2025-26 11.26(-0.39±0.32)  2552$(+245± 70) B0

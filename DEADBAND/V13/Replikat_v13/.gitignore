@@ -1,0 +1,5 @@
+cache*/
+erg_*/
+npz*/
+__pycache__/
+*.pkl

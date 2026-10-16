@@ -15,7 +15,8 @@ Jeder Build trägt die Kopfblöcke aller Vorgänger (oben in der .mq5). Zahlen s
 | 9.00 | 14.10. | + SR (Sweep-Reclaim im Tick) + Konsistenzregel GOAT | – |
 | 10.00 | 14.10. | V8 + SR 0,10 % (Premium, Konsistenz aus) | `DEADBAND/V11/DEADBAND_V10.mq5` |
 | 11.00 | 15.10. | handelt wie 10.00; SR-Marken erweitert (19 Felder), Testschalter `V11TickFades`, `V11GoldPdf` | `DEADBAND/V11/` |
-| **12.00** | 16.10. | + N1030 im Tick (`SRT1030`, 0,50 %) – **beste Version laut Nachbau v12, nicht kompiliert** | `DEADBAND/V12/` |
+| 12.00 | 16.10. | + N1030 im Tick (`SRT1030`, 0,50 %) – auf dem GFT-Feed kostenempfindlich (2025–26 −0,9 Ausz./J) | `DEADBAND/V12/` |
+| **13.00** | 17.10. | V12-Code: `AsiaAktiv=false` (XA handelte live nie), `SrRiskPct` 0,05, `V12TickN1030=false` – **beste Version, kompiliert (0/0), Tester offen** | `DEADBAND/V13/` |
 
 Nebenprojekte auf eigenen Branches: Intrabar-/Sidecar-Forschung auf Basis V8 (`claude/upbeat-maxwell-f7pmp0`),
 Analyzer 3 (`claude/analyzer3-forschung`), Trade-Analyser mt5 (`claude/peaceful-lamport-9we47e`),
@@ -26,4 +27,5 @@ RSI21 EK (`claude/dazzling-goldberg-xgo0ij`), Replikat-Vergleich 3.00 ↔ 8.10 (
 |---|---|---|
 | v5/v6 (eng6) | `DEADBAND/Replikat_v5`, `Replikat_v6` | Stand 6.10 + generische Ströme, V8-Bewertung |
 | v11 | `DEADBAND/V11/Replikat_v11/` | neu gebaut, M1, Schlupf ¼ Spread – **Noise-Fehler** (Kontozahlen überholt) |
-| **v12** | `DEADBAND/V12/Replikat_v12/` | Fehler behoben, Daten 2010–26, Prüffenster 2011–15, Unabhängigkeitstest |
+| v12 | `DEADBAND/V12/Replikat_v12/` | Fehler behoben, Daten 2010–26, Prüffenster 2011–15, Unabhängigkeitstest |
+| **v13** | `DEADBAND/V13/Replikat_v13/` | v12 + GFT-Feed (M1-Export, echte Spreads), Windows-Prozess-Konfiguration, Live-Abgleich; Referenz „V8 ohne XA“ |

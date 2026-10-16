@@ -1,0 +1,36 @@
+﻿V8_ohneXA Auswahl 2022 Ausz/J 15.61  $/J  2740 (+offen  2775)  Ø  226$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 601 WR 65%  gueltige Tage/J 95  Serienstopps/J 22.4  Bremsen/J 7.4  GS-Sperren/J 177.5  Engpass gueltig/Gewinn/14T 3384.0/5413.0/4512.0
+    N1030:102$/11  N1330:152$/37  S0830:145$/11  LW:758$/115  TD:76$/9  X0630:327$/41  X0400:-126$/22  N1800:313$/23  N0930:-73$/10  N1100:-57$/15  N1300:88$/26  X0300S:498$/30  X1000S:26$/10  nz:663$/189  r21:680$/50
+V8_ohneXA 2023         Ausz/J 14.75  $/J  3165 (+offen  3242)  Ø  276$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 572 WR 63%  gueltige Tage/J 91  Serienstopps/J 23.1  Bremsen/J 8.2  GS-Sperren/J 198.4  Engpass gueltig/Gewinn/14T 3668.0/4147.0/4850.0
+    N1030:371$/18  N1330:114$/35  S0830:318$/12  LW:369$/103  TD:27$/11  X0630:556$/42  X0400:244$/16  N1800:165$/21  N0930:49$/12  N1100:68$/12  N1300:161$/28  X0300S:507$/24  X1000S:308$/15  nz:267$/170  r21:654$/53
+V8_ohneXA Pruef 2024-25 Ausz/J 12.47  $/J  2853 (+offen  2805)  Ø  295$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+    Trades/J 513 WR 63%  gueltige Tage/J 79  Serienstopps/J 19.3  Bremsen/J 4.3  GS-Sperren/J 142.7  Engpass gueltig/Gewinn/14T 3554.0/3122.0/5154.0
+    N1030:371$/17  N1330:255$/35  S0830:36$/3  LW:1245$/83  TD:3$/11  X0630:71$/45  X0400:287$/28  N1800:116$/17  N0930:53$/10  N1100:243$/16  N1300:96$/25  X0300S:366$/31  X1000S:125$/14  nz:93$/142  r21:256$/37
+V8_ohneXA Neu 2025-26  Ausz/J 11.30  $/J  2228 (+offen  2180)  Ø  254$  1.Ausz    17 T  ohne  0.0%  Bust 0  n=560
+    Trades/J 609 WR 62%  gueltige Tage/J 73  Serienstopps/J 22.3  Bremsen/J 6.9  GS-Sperren/J 91.2  Engpass gueltig/Gewinn/14T 1880.0/2524.0/2224.0
+    N1030:245$/15  N1330:191$/43  S0830:76$/3  LW:181$/84  TD:-8$/20  X0630:323$/42  X0400:504$/31  N1800:32$/21  N0930:120$/14  N1100:226$/18  N1300:27$/34  X0300S:370$/19  X1000S:22$/17  nz:-32$/211  r21:532$/35
+V10_ohneXA Auswahl 2022 Ausz/J 15.63  $/J  3100 (+offen  3109)  Ø  256$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 864 WR 56%  gueltige Tage/J 93  Serienstopps/J 53.3  Bremsen/J 6.6  GS-Sperren/J 233.0  Engpass gueltig/Gewinn/14T 4405.0/4102.0/4831.0
+    N1030:227$/9  N1330:176$/34  S0830:177$/10  LW:1019$/99  TD:70$/10  SRIB:201$/71  SRPRE:78$/124  SRH12:107$/69  SRPDN:-39$/42  X0630:266$/42  X0400:-138$/22  N1800:304$/23  N0930:-32$/8  N1100:-70$/14  N1300:43$/23  X0300S:540$/31  X1000S:55$/10  nz:533$/176  r21:489$/48
+V10_ohneXA 2023        Ausz/J 16.04  $/J  3624 (+offen  3733)  Ø  291$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 778 WR 57%  gueltige Tage/J 96  Serienstopps/J 43.2  Bremsen/J 8.5  GS-Sperren/J 290.0  Engpass gueltig/Gewinn/14T 4975.0/3457.0/5403.0
+    N1030:374$/16  N1330:178$/29  S0830:273$/10  LW:879$/101  TD:59$/9  SRIB:156$/65  SRPRE:137$/108  SRH12:69$/51  SRPDN:8$/31  X0630:593$/41  X0400:231$/16  N1800:146$/21  N0930:65$/10  N1100:17$/11  N1300:124$/23  X0300S:562$/24  X1000S:261$/14  nz:233$/146  r21:443$/50
+V10_ohneXA Pruef 2024-25 Ausz/J 13.88  $/J  3156 (+offen  3132)  Ø  293$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+    Trades/J 703 WR 56%  gueltige Tage/J 84  Serienstopps/J 42.1  Bremsen/J 4.2  GS-Sperren/J 201.3  Engpass gueltig/Gewinn/14T 4370.0/2669.0/6241.0
+    N1030:301$/15  N1330:186$/29  S0830:32$/3  LW:1365$/84  TD:-4$/8  SRIB:150$/64  SRPRE:207$/97  SRH12:46$/52  SRPDN:90$/29  X0630:92$/43  X0400:251$/27  N1800:110$/17  N0930:64$/9  N1100:178$/13  N1300:55$/20  X0300S:450$/30  X1000S:137$/13  nz:66$/114  r21:259$/37
+V10_ohneXA Neu 2025-26 Ausz/J 10.93  $/J  2051 (+offen  2006)  Ø  242$  1.Ausz    18 T  ohne  0.0%  Bust 0  n=560
+    Trades/J 801 WR 54%  gueltige Tage/J 70  Serienstopps/J 52.9  Bremsen/J 5.6  GS-Sperren/J 151.3  Engpass gueltig/Gewinn/14T 1519.0/2449.0/2269.0
+    N1030:244$/13  N1330:122$/40  S0830:51$/3  LW:245$/72  TD:-42$/15  SRIB:80$/66  SRPRE:150$/113  SRH12:-13$/68  SRPDN:8$/40  X0630:249$/37  X0400:371$/29  N1800:106$/21  N0930:38$/10  N1100:168$/16  N1300:-76$/30  X0300S:417$/19  X1000S:82$/12  nz:-109$/162  r21:493$/34
+V12_ohneXA Auswahl 2022 Ausz/J 16.68  $/J  3355 (+offen  3384)  Ø  259$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 871 WR 56%  gueltige Tage/J 99  Serienstopps/J 52.1  Bremsen/J 4.6  GS-Sperren/J 245.1  Engpass gueltig/Gewinn/14T 4508.0/4005.0/5773.0
+    N1030:222$/21  N1330:183$/34  S0830:185$/10  LW:1077$/103  TD:69$/9  SRIB:194$/69  SRPRE:62$/123  SRH12:126$/65  SRPDN:-37$/42  X0630:264$/42  X0400:-130$/22  N1800:288$/23  N0930:44$/9  N1100:22$/12  N1300:43$/22  X0300S:537$/31  X1000S:70$/9  nz:629$/178  r21:509$/46
+V12_ohneXA 2023        Ausz/J 16.71  $/J  3660 (+offen  3757)  Ø  282$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=848
+    Trades/J 778 WR 57%  gueltige Tage/J 99  Serienstopps/J 44.8  Bremsen/J 7.8  GS-Sperren/J 301.7  Engpass gueltig/Gewinn/14T 4493.0/3320.0/6540.0
+    N1030:464$/25  N1330:180$/30  S0830:267$/10  LW:758$/100  TD:58$/8  SRIB:164$/65  SRPRE:130$/108  SRH12:93$/48  SRPDN:6$/31  X0630:585$/41  X0400:205$/16  N1800:131$/21  N0930:197$/10  N1100:32$/11  N1300:120$/22  X0300S:588$/24  X1000S:272$/13  nz:209$/147  r21:383$/49
+V12_ohneXA Pruef 2024-25 Ausz/J 13.62  $/J  3088 (+offen  3061)  Ø  292$  1.Ausz    16 T  ohne  0.0%  Bust 0  n=944
+    Trades/J 714 WR 56%  gueltige Tage/J 84  Serienstopps/J 43.8  Bremsen/J 3.8  GS-Sperren/J 205.5  Engpass gueltig/Gewinn/14T 4347.0/2597.0/6084.0
+    N1030:344$/27  N1330:183$/30  S0830:30$/3  LW:1330$/81  TD:-1$/8  SRIB:153$/63  SRPRE:193$/96  SRH12:52$/52  SRPDN:85$/28  X0630:39$/43  X0400:259$/27  N1800:109$/17  N0930:85$/9  N1100:168$/14  N1300:64$/20  X0300S:406$/30  X1000S:140$/12  nz:58$/116  r21:250$/37
+V12_ohneXA Neu 2025-26 Ausz/J 10.65  $/J  2012 (+offen  1958)  Ø  244$  1.Ausz    18 T  ohne  0.0%  Bust 0  n=560
+    Trades/J 841 WR 53%  gueltige Tage/J 71  Serienstopps/J 56.1  Bremsen/J 5.9  GS-Sperren/J 142.6  Engpass gueltig/Gewinn/14T 1312.0/2580.0/2236.0
+    N1030:191$/32  N1330:142$/39  S0830:59$/3  LW:178$/70  TD:4$/17  SRIB:89$/70  SRPRE:146$/115  SRH12:-10$/72  SRPDN:-17$/39  X0630:218$/39  X0400:403$/29  N1800:69$/21  N0930:28$/13  N1100:156$/16  N1300:-12$/30  X0300S:366$/19  X1000S:42$/14  nz:-50$/169  r21:523$/35

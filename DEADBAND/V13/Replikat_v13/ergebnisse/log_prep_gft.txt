@@ -1,0 +1,20 @@
+﻿XAU: 5490807 M1, 1101805 M5, 4041 D1  2011-01-02T17:01 .. 2026-10-16T16:46
+NAS: 7336 flache Kerzen 16:15-17:00 NY eingefuegt
+NAS: 2379992 M1, 475122 M5, 1743 D1  2019-10-27T18:00 .. 2026-10-16T16:59
+Daten 4 s %USERPROFILE%\Downloads\DEADBAND_V12_Live\cache_gft_gft
+Signale 32 s
+N1030 Signale 153 live 105
+N1330 Signale 361 live 228
+X0630 Signale 876 live 248
+X0400 Signale 538 live 131
+N1800 Signale 202 live 116
+N0930 Signale 146 live 102
+N1100 Signale 240 live 160
+N1300 Signale 279 live 178
+X0300S Signale 375 live 136
+X1000S Signale 315 live 100
+spike 53
+lw 1318
+xa 2004
+td 181
+SR [860, 1080, 861, 335] RSI21 2885 Noise 9844
