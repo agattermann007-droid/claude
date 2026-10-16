@@ -57,8 +57,17 @@ def lade_m5(sym, gft=None, frei=True, von=None, bis=None):
         f = pd.read_parquet(os.path.join(SCRATCH, f"{sym}_free_m1.parquet"))
         f5 = m1_zu_m5(f)
         if teile:
-            g0, g1 = teile[0].index[0], teile[0].index[-1]
-            f5 = f5[(f5.index < g0) | (f5.index > g1)]           # innerhalb der GFT-Spanne nur GFT
+            g = teile[0].index
+            g0, g1 = g[0], g[-1]
+            # innerhalb der GFT-Spanne nur GFT - ausser in echten Ausfaellen des Exports (Luecke zwischen zwei GFT-Kerzen
+            # > 3,5 Tage, also laenger als ein langes Wochenende; z. B. NAS 06.06.-23.08.2024, Gold 11.-28.10.2024)
+            gv = g.values
+            j = np.searchsorted(gv, f5.index.values)
+            innen = (f5.index >= g0) & (f5.index <= g1)
+            jj = np.clip(j, 1, len(gv) - 1)
+            luecke = (gv[jj] - gv[jj - 1]) > np.timedelta64(84, "h")
+            nicht_in_gft = ~np.isin(f5.index.values, gv)
+            f5 = f5[~innen | (luecke & nicht_in_gft)]
         teile.append(f5)
     df = pd.concat(teile)
     df = df[~df.index.duplicated(keep="first")].sort_index()
