@@ -1,37 +1,48 @@
 //+------------------------------------------------------------------+
-//| 9.00 Trendwende-Bericht (TW) - NUR JOURNAL, KEIN EINFLUSS AUF DEN |
-//|  HANDEL. Die Regeln wurden fuer V9 als Sperre/halbes Risiko der   |
-//|  NAS-Long-Fades (+S0830) bzw. gespiegelt der Gold-Short-Fades      |
-//|  geprueft und haben die Uebernahmeregeln NICHT bestanden (Bericht |
-//|  DEADBAND_V9_Bericht.md). Der Bericht zeigt ihren Stand, damit    |
-//|  der Live-Verlauf weiter beobachtet werden kann.                  |
-//|  Tagesregeln (nur abgeschlossene Servertage, 17:00-17:00 NY):     |
-//|   R1  Schluss < EMA20 und EMA20 faellt                            |
-//|   R2  Schluss - Schluss vor 5 Tagen <= -1,5 ATR14                 |
-//|   R3  Schluss < EMA20 und 5-Tage-Aenderung <= -1,0 ATR14          |
-//|   R4  Aenderung des letzten Tages <= -0,75 ATR14                  |
-//|   R5  Schluss unter dem Tief der 10 Tage davor, an bis ein        |
-//|       Schluss ueber EMA10 liegt                                   |
-//|   R6  Rendite 21 Tage < 0 und 252 Tage < 0 (Baer)                 |
-//|   R7  Rendite 21 Tage < 0 und 252 Tage > 0 (Korrektur)            |
-//|   R8  Schluss <= Hoch der letzten 20 Tage - 2 ATR14               |
-//|   R9  Tagesspanne 5 Tage / 50 Tage > 1,3 (Vola-Sprung)            |
-//|   R10 Rang der 10-Tage-Vola unter 252 Tagen > 0,8                 |
-//|  Aufwaertsregime spiegelbildlich (R9/R10 symmetrisch).            |
-//|  Intraday je NAS-Fade-Signal (Noise Area, Zarattini/Aziz/Barbon   |
-//|  2024; O = Open 9:30 NY, PC = Vortagesschluss, sigma = Mittel der |
-//|  letzten 14 Tage von |Schluss/O - 1| je 5-min-Block):             |
-//|   NA  Tief der Signalkerze < min(O,PC)*(1-sigma) - 0,25 sigma     |
-//|   TR  Schluss/O - 1 < -sigma                                      |
-//|  TwRegeln und TwNoise sind Zeile fuer Zeile wie regime9.py im     |
-//|  Replikat 9 und im C++-Pruefgeruest (build/tw_check.cpp) geprueft.|
+//| 9.00 TRENDWENDE-BERICHT (TW) - NUR JOURNAL, KEIN EINFLUSS AUF DEN |
+//|  HANDEL. Die Regeln wurden fuer V9 als Sperre bzw. halbes Risiko |
+//|  der NAS-Long-Fades (+S0830) und gespiegelt der Gold-Short-Fades |
+//|  geprueft und haben die Uebernahmeregeln NICHT bestanden (Bericht|
+//|  DEADBAND_V9_Bericht.md). Der Bericht zeigt ihren Stand, damit   |
+//|  der Live-Verlauf weiter beobachtet werden kann.                 |
+//|  Tagesregeln (nur abgeschlossene Servertage, 17:00-17:00 NY):    |
+//|   R1  Schluss < EMA20 und EMA20 faellt                           |
+//|   R2  Schluss - Schluss vor 5 Tagen <= -1,5 ATR14                |
+//|   R3  Schluss < EMA20 und 5-Tage-Aenderung <= -1,0 ATR14         |
+//|   R4  Aenderung des letzten Tages <= -0,75 ATR14                 |
+//|   R5  Schluss unter dem Tief der 10 Tage davor, an bis ein       |
+//|       Schluss ueber EMA10 liegt                                  |
+//|   R6  Rendite 21 Tage < 0 und 252 Tage < 0 (Baer)                |
+//|   R7  Rendite 21 Tage < 0 und 252 Tage > 0 (Korrektur)           |
+//|   R8  Schluss <= Hoch der letzten 20 Tage - 2 ATR14              |
+//|   R9  Tagesspanne 5 Tage / 50 Tage > 1,3 (Vola-Sprung)           |
+//|   R10 Rang der 10-Tage-Vola unter 252 Tagen > 0,8                |
+//|  Aufwaertsregime spiegelbildlich (R9/R10 symmetrisch).           |
+//|  Intraday je NAS-Signal (Noise Area nach Zarattini/Aziz/Barbon   |
+//|  2024; O = Open 9:30 NY, PC = Vortagesschluss, sigma = Mittel    |
+//|  der letzten 14 Tage von |Schluss/O - 1| je 5-min-Block):        |
+//|   NA  Tief der Signalkerze < min(O,PC)*(1-sigma) - 0,25 sigma    |
+//|   TR  Schluss/O - 1 < -sigma                                     |
+//|  Ablauf: FadeLive merkt sich nur das Signal (TwSignalMerken,     |
+//|  keine Kursabfrage vor der Order). Ausgabe am Ende von Durchlauf |
+//|  (TwBerichteAusgeben): einmal je Servertag der Tagesstand, dann  |
+//|  die gemerkten Signale.                                          |
+//|  TwRegeln/TwNoise: Rechenkern wie regime9.py (Replikat 9),       |
+//|  mechanisch nach C++ uebersetzt und dagegen geprueft             |
+//|  (build/tw_check.py + tw_check.cpp, Ergebnis im Bericht).        |
 //+------------------------------------------------------------------+
 #define TW_NR 10
+#define TW_Q  16
 int      twDn[MAXSYM];               // Bitmaske Abwaertsregime (Bit r-1 = Regel r) des letzten abgeschlossenen Servertags
 int      twUp[MAXSYM];               // Bitmaske Aufwaertsregime
 datetime twTag[MAXSYM];              // Servertag (D1-Kerze) des Stands, 0 = noch keiner
+datetime twStand[MAXSYM];            // Beginn des Servertags, fuer den der Tagesbericht lief (0 = noch nicht)
+datetime twVersuch = 0;              // letzter Versuch des Tagesberichts (fehlen Kerzen: hoechstens alle 60 s)
+int      twQn = 0, twQweg = 0;       // gemerkte Signale dieses Durchlaufs / verworfen (Ueberlauf)
+int      twQm[TW_Q], twQd[TW_Q];
+datetime twQt[TW_Q];
 
-// gleitender Mittelwert ueber Praefixsummen (wie regime9._sma), x[i] fuer i < len-1 ungueltig -> -1 in ok[]
+// gleitender Mittelwert ueber Praefixsummen (wie regime9._sma); ok[i] = false fuer i < len-1
 void TwSma(const double &x[], const int n, const int len, double &out[], bool &ok[])
   {
    double cs[];
@@ -157,8 +168,8 @@ bool TwNoise(const long &ny[], const double &o[], const double &l[], const doubl
    long dk = (long)MathFloor((double)ny[k] / 1440.0);
    int mk = (int)(ny[k] - dk * 1440);
    if(mk < 570 || mk >= 960) return false;
-   // Tagestabelle: je NY-Tag O, letzter Schluss 9:30-16:00, |Schluss/O - 1| je 5-min-Block
-   long   tday[]; double tO[], tLast[], tBl[];
+   // Tagestabelle: je NY-Tag O, letzter Schluss 9:30-16:00, |Schluss/O - 1| je 5-min-Block (-1 = kein Wert)
+   double tO[], tLast[], tBl[];
    int    nt = 0, qk = -1;
    int    i = 0;
    while(i < n)
@@ -174,8 +185,8 @@ bool TwNoise(const long &ny[], const double &o[], const double &l[], const doubl
         }
       if(f >= 0 && (int)(ny[f] - d * 1440) <= 575)
         {
-         ArrayResize(tday, nt + 1); ArrayResize(tO, nt + 1); ArrayResize(tLast, nt + 1); ArrayResize(tBl, (nt + 1) * 78);
-         tday[nt] = d; tO[nt] = o[f]; tLast[nt] = c[la];
+         ArrayResize(tO, nt + 1); ArrayResize(tLast, nt + 1); ArrayResize(tBl, (nt + 1) * 78);
+         tO[nt] = o[f]; tLast[nt] = c[la];
          for(int b = 0; b < 78; b++) tBl[nt * 78 + b] = -1.0;
          for(int q = f; q <= la; q++)
            {
@@ -188,9 +199,9 @@ bool TwNoise(const long &ny[], const double &o[], const double &l[], const doubl
       i = j;
      }
    if(qk < 15) return false;
-   int b = (mk - 570) / 5;
+   int bk = (mk - 570) / 5;
    double s = 0.0; int cnt = 0;
-   for(int q = qk - 14; q < qk; q++) { double v = tBl[q * 78 + b]; if(v >= 0.0) { s += v; cnt++; } }
+   for(int q = qk - 14; q < qk; q++) { double v = tBl[q * 78 + bk]; if(v >= 0.0) { s += v; cnt++; } }
    if(cnt == 0) return false;
    double sig = s / cnt;
    double O = tO[qk], pc = tLast[qk - 1];
@@ -203,23 +214,31 @@ bool TwNoise(const long &ny[], const double &o[], const double &l[], const doubl
 string TwListe(const int maske)
   {
    string t = "";
-   for(int r = 1; r <= TW_NR; r++) if(((maske >> (r - 1)) & 1) == 1) t += (StringLen(t) > 0 ? "," : "") + "R" + IntegerToString(r);
-   return (StringLen(t) > 0 ? t : "-");
+   for(int r = 1; r <= TW_NR; r++)
+     {
+      if(((maske >> (r - 1)) & 1) != 1) continue;
+      if(StringLen(t) > 0) t += ",";
+      t += "R" + IntegerToString(r);
+     }
+   if(StringLen(t) == 0) t = "-";
+   return t;
   }
 
-// Stand der Tagesregeln je Symbol aus den abgeschlossenen Servertagen (D1-Kerzen vor dem heutigen Servertag)
-void TwTagesbericht()
+// Stand der Tagesregeln je Symbol aus den abgeschlossenen Servertagen (D1-Kerzen vor dem heutigen Servertag).
+// Je Symbol einmal je Servertag; fehlen D1-Kerzen, neuer Versuch in einem spaeteren Durchlauf (fruehestens nach 60 s).
+void TwTagesbericht(const datetime heute0)
   {
-   datetime heute0 = TimeCurrent() - TimeCurrent() % 86400;          // Beginn des heutigen Servertags (GFT: 17:00 NY)
    for(int k = 0; k < nSym; k++)
      {
+      if(twStand[k] == heute0) continue;
       MqlRates r[];
       ArraySetAsSeries(r, false);
       int n0 = CopyRates(S[k].sym, PERIOD_D1, 0, 401, r);
-      if(n0 <= 0) { PrintFormat("DEADBAND9 TW %s: keine D1-Kerzen (Fehler %d) - Bericht folgt am naechsten Tag", S[k].sym, GetLastError()); continue; }
+      if(n0 <= 0) { PrintFormat("DEADBAND9 TW %s: keine D1-Kerzen (Fehler %d) - neuer Versuch spaeter", S[k].sym, GetLastError()); continue; }
+      twStand[k] = heute0;
       int n = n0;
       while(n > 0 && r[n - 1].time >= heute0) n--;                      // nur abgeschlossene Servertage
-      if(n < 30) { PrintFormat("DEADBAND9 TW %s: nur %d abgeschlossene D1-Kerzen - Bericht unvollstaendig", S[k].sym, n); continue; }
+      if(n < 30) { PrintFormat("DEADBAND9 TW %s: nur %d abgeschlossene D1-Kerzen - kein Tagesstand", S[k].sym, n); continue; }
       double o[], h[], l[], c[];
       int dn[], up[];
       ArrayResize(o, n); ArrayResize(h, n); ArrayResize(l, n); ArrayResize(c, n); ArrayResize(dn, n); ArrayResize(up, n);
@@ -232,19 +251,23 @@ void TwTagesbericht()
      }
   }
 
-// je Live-Signal eines Fade-artigen Moduls: Tagesregeln in Gegenrichtung und (NAS) Noise Area der Signalkerze
+// je Live-Signal eines Fade-artigen Moduls: Tagesregeln in Gegenrichtung und (NAS) Noise Area der Signalkerze.
+// tSig = Zeit der Einstiegskerze; die letzte M5-Kerze vor tSig ist die Signalkerze.
 void TwSignalBericht(const int m, const int d, const datetime tSig)
   {
    int k = F[m].k;
    if(k < 0 || k >= nSym) return;
    string intra = "-";
-   string su = S[k].sym; StringToUpper(su);
+   string su = S[k].sym;
+   StringToUpper(su);
    if(StringFind(su, "NAS") >= 0)
      {
       MqlRates r[];
       ArraySetAsSeries(r, false);
       int n = CopyRates(S[k].sym, PERIOD_M5, tSig - 45 * 86400, tSig - 1, r);   // bis einschliesslich Signalkerze
-      if(n > 0)
+      if(n > 0 && tSig - r[n - 1].time > 3600)                                 // Luecke: letzte Kerze ist nicht die Signalkerze
+         intra = StringFormat("M5-Historie endet %s vor der Signalkerze", TimeToString(r[n - 1].time, TIME_DATE|TIME_MINUTES));
+      else if(n > 0)
         {
          long ny[]; double o[], l[], c[];
          ArrayResize(ny, n); ArrayResize(o, n); ArrayResize(l, n); ArrayResize(c, n);
@@ -253,9 +276,31 @@ void TwSignalBericht(const int m, const int d, const datetime tSig)
          if(TwNoise(ny, o, l, c, n, n - 1, na, tr)) intra = StringFormat("NA %s, TR %s", (na ? "JA" : "nein"), (tr ? "JA" : "nein"));
          else intra = "Noise Area ohne Wert (ausserhalb 9:30-16:00 NY oder zu wenig Historie)";
         }
+      else intra = StringFormat("keine M5-Kerzen (Fehler %d)", GetLastError());
      }
    int maske = (d > 0 ? twDn[k] : twUp[k]);
    PrintFormat("DEADBAND9 TW Signal %s %s %s: Tagesregeln %s [%s] (Stand %s) | Intraday %s | nur Bericht, V9 handelt wie 8.10",
                FadeName(m), S[k].sym, (d > 0 ? "LONG" : "SHORT"), (d > 0 ? "abwaerts" : "aufwaerts"), TwListe(maske),
                (twTag[k] > 0 ? TimeToString(twTag[k], TIME_DATE) : "-"), intra);
+  }
+
+// aus FadeLive: Signal nur merken (keine Kursabfrage vor der Order)
+void TwSignalMerken(const int m, const int d, const datetime tSig)
+  {
+   if(twQn >= TW_Q) { twQweg++; return; }
+   twQm[twQn] = m; twQd[twQn] = d; twQt[twQn] = tSig; twQn++;
+  }
+
+// am Ende von Durchlauf: Tagesstand (einmal je Servertag), dann die gemerkten Signale
+void TwBerichteAusgeben()
+  {
+   datetime jetzt = TimeCurrent();
+   if(jetzt <= 0) return;
+   datetime heute0 = jetzt - jetzt % 86400;                         // Beginn des heutigen Servertags (GFT: 17:00 NY)
+   bool offen = false;
+   for(int k = 0; k < nSym; k++) if(twStand[k] != heute0) offen = true;
+   if(offen && (twQn > 0 || jetzt - twVersuch >= 60)) { twVersuch = jetzt; TwTagesbericht(heute0); }
+   for(int q = 0; q < twQn; q++) TwSignalBericht(twQm[q], twQd[q], twQt[q]);
+   if(twQweg > 0) PrintFormat("DEADBAND9 TW: %d Signal-Berichte ausgelassen (mehr als %d in einem Durchlauf)", twQweg, TW_Q);
+   twQn = 0; twQweg = 0;
   }
