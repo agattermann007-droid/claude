@@ -19,7 +19,7 @@ _sys.path.insert(0, _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dir
 import prep5 as P
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NG = 14                 # generische Stroeme, je Strom ein Platz je Symbol
+NG = 16                 # generische Stroeme, je Strom ein Platz je Symbol (V9: 16 statt 14 fuer Testmodule)
 NZ0 = 6
 NZ1 = 9
 G0 = 9
