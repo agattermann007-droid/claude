@@ -56,5 +56,18 @@ Fenster (`evl11.WIN5`): Auswahl 2022, 2023, Prüfung 2024-01 bis 2025-02, Prüfu
 | `t12_tick.py` | Tick-Fades mit kleinerem Risiko / nur N1030, Bust-Ursachen |
 | `t12_regsize.py` | Regime-Größe > 1 für bestehende Ströme |
 | `t12_engine_check.py` | Unabhängigkeitstest des Motors |
+| `t12_imom_diag.py` | IMOM im Konto (Modul-Ergebnis mit/ohne Abschluss-Ernte, Serienzähler) |
+| `t12_tickbust.py` | Bust-Ursachen der Tick-Fades (2011–15: alle am 10.10.2013) |
+| `t12_tick2.py` | Bestätigung N1030 im Tick: Risiko 0,40/0,60, Puffer 0,2/0,4, Gegenprobe M5 0,50 % |
+| `t12_srrisk.py` | SR-Risiko 0,05–0,30 % mit korrigiertem Motor |
+| `t12_final.py` | Endauswertung V10 gegen V12 (16 Seeds je Fenster/Startjahr, 32 Seeds gepaart, ohne Schlupf) |
+| `t12_bericht.py` | setzt die Tabellen aus `t12_final` in den Bericht ein |
+
+## 4. Ergebnis Build 12.00
+
+Übernommen: **N1030 im Tick mit 0,50 %** (`cand11.tick_fade("N1030")`, Stromnummer von N1030, `tpdelay` 4, Risiko 0,50).
+Gepaart gegen V10, 32 Störungen: 2022 +0,66 ± 0,12, 2023 +1,30 ± 0,14, 2024–25 −0,07 ± 0,17, 2017–20 +0,23 ± 0,03,
+2011–15 −0,01 Ausz./J, 0 Busts. Ohne Schlupf etwa halber Vorteil, 2024–25 −0,38 ± 0,24. Alles Weitere im Bericht
+`DEADBAND_V12_Bericht.md`.
 
 Laufzeit: 32 Störungen × 5 Fenster (≈ 630 Konten je Störung) ≈ 4 min auf 4 Kernen.

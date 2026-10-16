@@ -1,0 +1,50 @@
+"""Kopfblock Build 12.00 (ASCII, 70 Zeichen je Zeile wie die bisherigen Koepfe). Absaetze werden auf 64 Zeichen umbrochen."""
+import textwrap
+W = 64
+P = [
+ ("", "DEADBAND V12  -  Build 12.00, 16.10.2026"),
+ ("", "BUILD 12.00: N1030 IM TICK (SRT1030, 0,50 %), SONST WIE 11.00"),
+ ("", "Neu (Voreinstellung an = getestete Variante): V12TickN1030 = true. N1030 handelt im Tick als Modul SRT1030 "
+      "(Einstieg beim Ruecklauf in die Range 10:30-12:30 NY, Stop 0,3 x Range hinter dem Extrem, Ziel Range-Mitte, "
+      "Ausstieg 15:30 NY, nur bei live Fade-Regime), Risiko V12TickN1030Risk = 0,50 %. Das M5-Modul N1030 rechnet nur "
+      "noch virtuell (Portfolio-Waechter unveraendert)."),
+ ("", "Replikat v12 (M1, Schlupf 1/4 Spread, 1-Jahres-Konten alle 7 Tage, 32 gepaarte Stoerungen), Differenz "
+      "V12 - V11 in Ausz./J und $/J:"),
+ ("T", "  Start 2022 (Auswahl)  +0,66 +- 0,12  |  +112 +- 35 $"),
+ ("T", "  Start 2023            +1,30 +- 0,14  |  +235 +- 44 $"),
+ ("T", "  Start 2024-25         -0,07 +- 0,17  |   +21 +- 41 $ (gleich)"),
+ ("T", "  Start 2017-20         +0,23 +- 0,03  |   +61 +-  8 $"),
+ ("T", "  Start 2011-15 (neu)   -0,01 +- 0,00  |    -1 +-  1 $ (gleich)"),
+ ("  ", "0 Busts in allen Stoerungen. Plateau: Risiko 0,40-0,60 %, Stop-Puffer 0,2-0,4 x Range. Gegenprobe N1030 auf "
+        "M5 mit 0,50 %: ohne Wirkung - der Vorteil kommt vom Tick-Einstieg. Mit 0,75 % (= FadeRiskPct) Busts in 2011-15."),
+ ("  ", "Ohne Schlupf etwa halber Vorteil (2022 +0,33, 2023 +0,44), 2024-25 dann -0,38 +- 0,24 Ausz./J (nicht "
+        "signifikant, aber Richtung ueberall leicht negativ) - im Tester pruefen, Rueckfall unten."),
+ ("", "NACHBAU KORRIGIERT: Im Replikat v11 fielen Noise-Pruefungen aus, wenn bei flachem Konto keine anderen Signale "
+      "dazwischen lagen. Korrigiert ist V10/V11 in ALLEN Fenstern mindestens so gut wie V8, auch 2024-25 (der "
+      "V11-Befund 'SR dort nicht besser' war ein Artefakt)."),
+ ("", "GETESTET UND VERWORFEN (Bericht DEADBAND_V12_Bericht.md): 208 Kandidaten fuer das Regime 'Fades aus' (ORB, "
+      "Intraday-Momentum, Ausbruch statt Fade, Gold-Trend, Tick-Fades), davon 44 auf Kontoebene - keiner besteht "
+      "(Busts, weniger gueltige Tage). N1030+N1100 im Tick (Busts 10/2013 und 7/2025), N1100 im Tick, SR-Risiko "
+      "0,05-0,30, SR nur bei Fades live bzw. aus, nur SRPRE, je eine SR-Marke weg, SR ohne Serienzaehler, "
+      "Serien-Stopp aus bzw. 4, RegimeGroesse 1,25."),
+ ("", "RUECKFALL = 11.00: V12TickN1030 = false (handelsgleich 11.00/10.00). DEADBAND_V11.mq5 bleibt unveraendert."),
+ ("", "NICHT KOMPILIERT ERSTELLT - vor dem Einsatz im MetaEditor kompilieren und im Strategietester (Echte Ticks) "
+      "pruefen."),
+]
+lines = []
+for ind, txt in P:
+    if ind == "T":
+        lines.append(txt)
+    else:
+        lines += textwrap.wrap(txt, W, initial_indent=ind, subsequent_indent=ind + "  ")
+out = ["//+------------------------------------------------------------------+"]
+for s in lines:
+    t = "//|  " + s
+    if len(t) > 69:
+        raise SystemExit(f"zu lang ({len(t)}): {s}")
+    out.append(t.ljust(69) + "|")
+out.append("//+------------------------------------------------------------------+")
+txt = "\n".join(out) + "\n"
+txt.encode("ascii")
+open("kopf_v12.txt", "w", encoding="ascii").write(txt)
+print(txt)

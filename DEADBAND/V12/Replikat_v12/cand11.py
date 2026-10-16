@@ -23,12 +23,14 @@ def cand_block(name, **over):
                     p["tmode"], p["crv"], 99.0, p["dr"], name=name)
 
 
-def tick_fade(name, md=0.6, live_at=None):
+def tick_fade(name, md=0.6, live_at=None, buf_over=None):
     """Listen-Fade mit Einstieg im Tick (Ruecklauf in die Range). Nur, solange der Portfolio-Waechter (M5-virtuell) live ist."""
     for (nm, s, r0, L, tlen, xoff, buf, tgt, dirs, mx) in G.FADE_STANDARD:
         if nm != name:
             continue
         r1, te, xm = G.fade_times(r0, L, tlen, xoff)
+        if buf_over is not None:                 # v12: Nachbarn des Stop-Puffers pruefen
+            buf = buf_over
         b = PA.sweep(s, r0, r1, 0, r1, te, xm, 0.0, md, 0.0, 1, buf, 1 if tgt == 0 else 2, 0.0, mx, dirs if dirs != 0 else 1,
                      minsp=6.0, minatr=0.0, name=name + "T")
         if live_at is not None:

@@ -29,6 +29,15 @@ for n in (5, 10):
         for s in (0.10, 0.15):
             KAND[f"ORB{n}_d{dirs}_s{s}"] = (lambda n=n, dirs=dirs, s=s: R.orb(n, dirs, 0, s, 0.0))
 
+# TD-Generator (Zeile fuer Zeile wie TdKerze im EA) mit IMOM-Parametern: so wird das Modul im EA gebaut (zweites TD-Modul)
+for ein in (600, 630):
+    for s in (0.2, 0.25, 0.3):
+        for minr in (0.2, 0.3, 0.4):
+            for dirs in (0, 1):
+                KAND[f"TD{ein}_s{s}_m{minr}_d{dirs}"] = (lambda ein=ein, s=s, minr=minr, dirs=dirs:
+                                                          G.td(ein=ein, aus=955, schluss=960, min_atr=minr, stop_atr=s,
+                                                               ziel_r=0.0, richtung=dirs))
+
 W3 = {k: V.WIN5[k] for k in ("Auswahl 2022", "Pruef 2017-20", "Pruef 2011-15")}
 
 
@@ -54,7 +63,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "stufe1":
         S16 = tuple(range(1, 17))
         b16 = {w: base[w][:16] for w in W3}
-        for nm in KAND:
+        for nm in [k for k in KAND if not k.startswith("TD")]:
             lab, r = run([nm], 0.5, seeds=S16, windows=W3, base=b16)
             out[lab] = r
         pickle.dump(out, open("ergebnisse/t12_acct_stufe1.pkl", "wb"))
